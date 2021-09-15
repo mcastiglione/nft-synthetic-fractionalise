@@ -1,6 +1,4 @@
-const { ethers } = require("hardhat");
-
-async function deployContracts() {
+module.exports = async() => {
 
   const [owner] = await ethers.getSigners();
 
@@ -31,17 +29,6 @@ async function deployContracts() {
   const RewardManager = await ethers.getContractFactory("RewardManager");
   const RewardManagerDeploy = await RewardManager.deploy();
 
-  return {
-    Jot: JotDeploy,
-    JotStaking: JotStakingDeploy,
-    NFTPerpetualFutures: NFTPerpetualFuturesDeploy,
-    SyntheticERC721: SyntheticERC721Deploy,
-    SyntheticProtocolRouter: SyntheticProtocolRouterDeploy,
-    SyntheticProtocolManager: SyntheticProtocolManagerDeploy,
-    Governance: GovernanceDeploy,
-    PolygonValidatorOracle: PolygonValidatorOracleDeploy,
-    RewardManager: RewardManagerDeploy
-  };
 }
 
-deployContracts();
+module.exports.tags = ['DeployPolygon'];

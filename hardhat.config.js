@@ -4,6 +4,7 @@ require('@nomiclabs/hardhat-solhint');
 require('@nomiclabs/hardhat-web3');
 require('hardhat-gas-reporter');
 require('hardhat-contract-sizer');
+require('hardhat-deploy');
 require('./tasks/accounts');
 require('./tasks/balance');
 
@@ -38,7 +39,7 @@ module.exports = {
   },
   networks: {
     localhost: {
-      url: 'http://127.0.0.1:7545', // ganache local network
+      url: 'http://127.0.0.1:8545', // ganache local network
       accounts: { mnemonic: MNEMONIC },
     },
     // kovan: {
