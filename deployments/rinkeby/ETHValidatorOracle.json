@@ -1,0 +1,45 @@
+{
+  "address": "0x7C757d608dfF857Bd204D7FBD023461C35837D94",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    }
+  ],
+  "transactionHash": "0xe7ae1949cdf0d6520c2a202754837d87ba86af1078cf119e13149dcc94647b20",
+  "receipt": {
+    "to": null,
+    "from": "0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087",
+    "contractAddress": "0x7C757d608dfF857Bd204D7FBD023461C35837D94",
+    "transactionIndex": 17,
+    "gasUsed": "67066",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xa57f74e92bbae21be5752a5a97e65d4cac5f3ce6bd6bfd8d609952e3401bb1c3",
+    "transactionHash": "0xe7ae1949cdf0d6520c2a202754837d87ba86af1078cf119e13149dcc94647b20",
+    "logs": [],
+    "blockNumber": 9298220,
+    "cumulativeGasUsed": "29878665",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "c9b888447c5e4f777a99532e12ddac92",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.4+commit.c7e474f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/ethereum/ETHValidatorOracle.sol\":\"ETHValidatorOracle\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/ethereum/ETHValidatorOracle.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\r\\npragma solidity ^0.8.4;\\r\\n\\r\\ncontract ETHValidatorOracle {\\r\\n    constructor() {}    \\r\\n}\",\"keccak256\":\"0xdb9d68ffeb9c0a6acbb14b6622912b714f52de18b744fdc0f3fe2ca416f45eb1\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea2646970667358221220d53b3f23bf14ecf8f7f125730a45bdeae48fadef7e2e90f82a4af5a319153db964736f6c63430008040033",
+  "deployedBytecode": "0x6080604052600080fdfea2646970667358221220d53b3f23bf14ecf8f7f125730a45bdeae48fadef7e2e90f82a4af5a319153db964736f6c63430008040033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}

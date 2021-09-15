@@ -11,7 +11,8 @@ require('./tasks/balance');
 require('dotenv').config();
 
 const MNEMONIC = process.env.MNEMONIC;
-const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const MUMBAI_RPC_URL = process.env.MUMBAI_RPC_URL;
 const INFURA_API_KEY = process.env.INFURA_API_KEY;
 
 module.exports = {
@@ -37,9 +38,17 @@ module.exports = {
       },
     ],
   },
+  namedAccounts: {
+    deployer: 0,
+  },
   networks: {
+    hardhat: {
+      // forking: {
+      //   url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
+      // },
+    },
     localhost: {
-      url: 'http://127.0.0.1:8545', // ganache local network
+      url: 'http://127.0.0.1:7545', // ganache local network
       accounts: { mnemonic: MNEMONIC },
     },
     // kovan: {
@@ -53,11 +62,12 @@ module.exports = {
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${INFURA_API_KEY}`,
       accounts: { mnemonic: MNEMONIC },
+      deploy: ['deploy/ethereum/'],
     },
-    hardhat: {
-      forking: {
-        url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
-      },
+    mumbai: {
+      url: MUMBAI_RPC_URL,
+      accounts: [PRIVATE_KEY],
+      deploy: ['deploy/polygon'],
     },
   },
   gasReporter: {
