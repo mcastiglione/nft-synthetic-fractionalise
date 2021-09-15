@@ -79,20 +79,6 @@ ethers.getContractFactory('LToken'))
 (await ethers.getContractFactory('EverlastingOptionPricing'))
 ethers.getContractFactory('EverlastingOption'))
 
-=======
-# Deployment order:
-- ERC20 factory
-- Staking
-- NFT
-- Options
-
-# How to deploy
-
-- Install dependencies: npm install
-- Configure your .env with your mnemonic and Infura API key
-- Deploy with: npx hardhat run --network ropsten scripts/deploy.js
-Where ropsten is the network name. You can configure networks in hardhat.config.js
-
 # How to use
 
 First you have to deploy the ERC20Factory which generates the ERC20 fractions
@@ -115,6 +101,9 @@ You can generate options from an ERC20 token using the generateOption function. 
 
 ## Install proyect
 `npm install`
+
+## Configure .env
+Configure your .env with your Mnemonic, Infura API Key and Alchemy API Key
 
 ## Run the tests
 `npx hardhat test`
