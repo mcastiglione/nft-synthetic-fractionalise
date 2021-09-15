@@ -7,7 +7,7 @@ contract GovernanceData is Ownable {
     uint256 public bidOfferTimeLimit;
     uint256 public nftLockTime;
     uint256 public tradingFee;
-    
+
     /**
      * @dev set initial state of the data
      */
@@ -25,7 +25,7 @@ contract GovernanceData is Ownable {
         bidOfferTimeLimit = _bidOfferTimeLimit;
     }
 
-    function setNftLockTime(uint256 _nftLockTime) external onlyOwner {
+    function SetNftLockTime(uint256 _nftLockTime) external onlyOwner {
         nftLockTime = _nftLockTime;
     }
 
@@ -42,10 +42,6 @@ contract GovernanceData is Ownable {
             uint256
         )
     {
-        return (
-            bidOfferTimeLimit,
-            nftLockTime,
-            tradingFee
-        );
+        return (bidOfferTimeLimit, nftLockTime, tradingFee);
     }
 }
