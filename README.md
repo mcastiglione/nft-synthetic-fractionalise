@@ -121,13 +121,11 @@ Ethereum contracts:
 
 You can change localhost for any network configured in hardhat.config.js
 
-Try running some of the following tasks:
+## Try running some of the following tasks:
   * `npx hardhat accounts`
   * `npx hardhat compile`
-  * `npx hardhat test`
   * `npx hardhat node`
   <!-- the following line will change at the end of development  -->
-  * `node scripts/sample-script.js` 
   * `npx hardhat help`
 
 ## Recompile contracts
