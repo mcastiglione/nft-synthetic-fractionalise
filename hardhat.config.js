@@ -1,7 +1,11 @@
 require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-waffle');
+require('@nomiclabs/hardhat-solhint');
+require('@nomiclabs/hardhat-web3');
 require('hardhat-gas-reporter');
+require('hardhat-contract-sizer');
 require('./tasks/accounts');
+require('./tasks/balance');
 
 require('dotenv').config();
 
