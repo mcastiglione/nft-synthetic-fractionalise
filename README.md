@@ -1,3 +1,5 @@
+
+
 # Synthetic NFTs
 
 ![Architecture Diagram](images/architecture_diagram.png?raw=true "Title")
@@ -77,20 +79,6 @@ ethers.getContractFactory('LToken'))
 (await ethers.getContractFactory('EverlastingOptionPricing'))
 ethers.getContractFactory('EverlastingOption'))
 
-=======
-# Deployment order:
-- ERC20 factory
-- Staking
-- NFT
-- Options
-
-# How to deploy
-
-- Install dependencies: npm install
-- Configure your .env with your mnemonic and Infura API key
-- Deploy with: npx hardhat run --network ropsten scripts/deploy.js
-Where ropsten is the network name. You can configure networks in hardhat.config.js
-
 # How to use
 
 First you have to deploy the ERC20Factory which generates the ERC20 fractions
@@ -114,16 +102,30 @@ You can generate options from an ERC20 token using the generateOption function. 
 ## Install proyect
 `npm install`
 
+## Configure .env
+Configure your .env with your Mnemonic, Infura API Key and Alchemy API Key
+
 ## Run the tests
 `npx hardhat test`
 
-Try running some of the following tasks:
+## Deploy 
+
+All contracts:
+`npx hardhat test --network localhost deploy`
+
+Polygon contracts:
+`npx hardhat test --network localhost deploy --tags DeployPolygon`
+
+Ethereum contracts: 
+`npx hardhat test --network localhost deploy --tags DeployEthereum`
+
+You can change localhost for any network configured in hardhat.config.js
+
+## Try running some of the following tasks:
   * `npx hardhat accounts`
   * `npx hardhat compile`
-  * `npx hardhat test`
   * `npx hardhat node`
   <!-- the following line will change at the end of development  -->
-  * `node scripts/sample-script.js` 
   * `npx hardhat help`
 
 ## Recompile contracts
