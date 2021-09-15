@@ -1,3 +1,5 @@
+
+
 # Synthetic NFTs
 
 ![Architecture Diagram](images/architecture_diagram.png?raw=true "Title")
@@ -116,6 +118,19 @@ You can generate options from an ERC20 token using the generateOption function. 
 
 ## Run the tests
 `npx hardhat test`
+
+## Deploy 
+
+All contracts:
+`npx hardhat test --network localhost deploy`
+
+Polygon contracts:
+`npx hardhat test --network localhost deploy --tags DeployPolygon`
+
+Ethereum contracts: 
+`npx hardhat test --network localhost deploy --tags DeployEthereum`
+
+You can change localhost for any network configured in hardhat.config.js
 
 Try running some of the following tasks:
   * `npx hardhat accounts`
