@@ -49,11 +49,18 @@ contract NFTVaultManager is IERC721Receiver, Ownable {
         return previousOwner != address(0);
     }
 
+    /**
+     * @notice approve a collection contract
+     */
     function approveCollection(address collection_) external onlyOwner {
         require(!approvedCollections[msg.sender], "Collection already approved");
         approvedCollections[collection_] = true;
     }
 
+    /**
+     * @notice use ERC-165 to check for IERC721 interface in the collection contract
+     *         before approve
+     */
     function safeApproveCollection(address collection_) external onlyOwner {
         bytes4 erc721interfaceId = type(IERC721).interfaceId;
 
