@@ -1,0 +1,45 @@
+{
+  "address": "0x011589189F043266545d873Fb673a2bad102d410",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    }
+  ],
+  "transactionHash": "0x4bf67e9d1de51e9a816bdee3e9e533ea21ff8427492d1f7f5e91438b5395fd19",
+  "receipt": {
+    "to": null,
+    "from": "0xa5033D0b590539463209E0C26609BD571Acb57EE",
+    "contractAddress": "0x011589189F043266545d873Fb673a2bad102d410",
+    "transactionIndex": 0,
+    "gasUsed": "67066",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x6e87f23161e8542cd3bfe570aea1b760b604af430c379ed5180635975e95a5f8",
+    "transactionHash": "0x4bf67e9d1de51e9a816bdee3e9e533ea21ff8427492d1f7f5e91438b5395fd19",
+    "logs": [],
+    "blockNumber": 7,
+    "cumulativeGasUsed": "67066",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "ec762981dbd2f01ab005ea1ee87c8464",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.4+commit.c7e474f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/polygon/SyntheticProtocolRouter.sol\":\"SyntheticProtocolRouter\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/polygon/SyntheticProtocolRouter.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\r\\npragma solidity ^0.8.4;\\r\\n\\r\\ncontract SyntheticProtocolRouter {\\r\\n    constructor() {}    \\r\\n}\",\"keccak256\":\"0x585f0701335f0ca46d56f70d824a3039a3063eef68890b9611d563f64d1420c8\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea26469706673582212208e33a4c09c84fd2eaf104bc98d7e6168ef4840e75aac89921e51fe7633b393f164736f6c63430008040033",
+  "deployedBytecode": "0x6080604052600080fdfea26469706673582212208e33a4c09c84fd2eaf104bc98d7e6168ef4840e75aac89921e51fe7633b393f164736f6c63430008040033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
