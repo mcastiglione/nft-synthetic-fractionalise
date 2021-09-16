@@ -117,4 +117,27 @@ contract SyntheticProtocolRouter {
         //collectionmanager.safeMint(?,?,?)
         
     }
+
+
+    /** 
+     * @notice getter for Jot Address of a collection
+     */
+    function getJotsAddress(address collection) public view returns (address)  {
+        return collections[collection].JotAddress;
+    }
+
+    /** 
+     * @notice getter for Jot Staking Address of a collection
+     */
+    function getJotStakingAddress(address collection) public view returns (address) {
+        return collections[collection].JotStakingAddress;
+    }
+
+    /** 
+     * @notice getter for Collection Manager Address of a collection
+     */
+    function getCollectionManagerAddress(address collection) public view returns (address) {
+        return collections[collection].CollectionManagerAddress;
+    }
+
 }

@@ -1,15 +1,30 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./Jot.sol";
+import "./SyntheticProtocolRouter.sol";
 
 contract SyntheticCollectionManager is ERC721 {
+
     
+	using Counters for Counters.Counter;
+    
+    /**
+     * @notice Number of tokens in Vault
+     */ 
+	Counters.Counter public _tokenCounter;
+
     /**
      * @notice The current owner of the vault.
      */
     address public owner;
+
+    /**
+     * @notice the address of the Protocol Router
+     */
+    address public _syntheticProtocolRouterAddress;
 
     // token id => bool
     // false, an nft has not been registered
@@ -19,6 +34,14 @@ contract SyntheticCollectionManager is ERC721 {
     // URIs mapping
     // token id => metadata
 	mapping(uint => string) private _tokenMetadata;
+
+    // token id => metadata
+    // token supply to keep
+	mapping(uint => uint256) private _tokenSupplyToKeep;
+
+    // token id => metadata
+    // token fraction price
+    mapping(uint => uint256) private _tokenFractionPrice;
 
     // token id => erc20 address
     mapping(uint => address) private _jots;
@@ -45,6 +68,7 @@ contract SyntheticCollectionManager is ERC721 {
         symbol_
     ) {
         _originalCollectionAddress = originalCollectionAddress_;
+        _syntheticProtocolRouterAddress = msg.sender;
     }
 
     /**
@@ -62,7 +86,8 @@ contract SyntheticCollectionManager is ERC721 {
      * of the NFT. This should have been registered first by verifyNFT.
      */
     function getNFTMetadata(uint256 tokenId) private view returns (string memory) {
-        return _tokenMetadata[tokenId];
+        //TODO: get metadata from Oracle
+        return "";
     }
 
     /**
@@ -79,7 +104,7 @@ contract SyntheticCollectionManager is ERC721 {
      * been already minted.
      */
     function isSyntheticNFTCreated(uint256 tokenId) public view returns (bool) {
-        return true;
+        return _tokens[tokenId];
     }
 
     /**
@@ -94,12 +119,47 @@ contract SyntheticCollectionManager is ERC721 {
      * @notice Checks isSyntheticNFTCreated(address, id) is False. 
      * Then it mints a new NFT with: ”to”, ”id” and ”metadata”
      */
-	function generateSyntheticNFT(address to, uint tokenId, string memory metadata) public onlyOwner {
+	function generateSyntheticNFT(address to, uint tokenId, string memory metadata) private {
         require(isSyntheticNFTCreated(tokenId) == false, "Synthetic NFT already generated!");
 		_safeMint(to, tokenId);
         _tokens[tokenId] = true;
         _tokenMetadata[tokenId] = metadata;
 	}
+
+
+    /**
+    * @notice First
+    * it updates counter syntheticID++. Then:
+    * • generateSyntheticNFT(address, id)
+    * • Interacts with JOT contract for that address and:
+    * (a) Mints JotSupply (governance parameter)
+    * (b) Register ownerSupply (DO NOT SEND HIM/HER)
+    * (c) Register sellingSupply = (JotSupply-supplyToKeep)/2
+    * (d) Register soldSupply = 0
+    * (e) Register liquididitySupply = (JotSupply-supplyToKeep)/2.
+    * (f) Register liquiditySold = 0
+    *
+     */
+    function RegisterNFT(uint256 tokenId, uint256 supplyToKeep, uint256 priceFraction) public {
+
+        _tokenCounter.increment();
+        string memory metadata = getNFTMetadata(tokenId);
+        generateSyntheticNFT(msg.sender, tokenId, metadata);
+
+        SyntheticProtocolRouter router = SyntheticProtocolRouter(_syntheticProtocolRouterAddress);
+
+        address jotAddress = router.getJotStakingAddress(_originalCollectionAddress);
+
+        Jot jot = Jot(jotAddress);
+
+        //TODO: interact with Jot 
+        // (a) Mints JotSupply (governance parameter)
+        // (b) Register ownerSupply (DO NOT SEND HIM/HER)
+        // (c) Register sellingSupply = (JotSupply-supplyToKeep)/2
+        // (d) Register soldSupply = 0
+        // (e) Register liquididitySupply = (JotSupply-supplyToKeep)/2.
+        // (f) Register liquiditySold = 0
+    }
 
     /**
      * @notice First, checks isSyntheticNFTFractionalised(address, id) is False. 
@@ -107,16 +167,10 @@ contract SyntheticCollectionManager is ERC721 {
      * and with metadata = getNFTMetadata(address,id).
      */
     function generateJots(uint tokenId) public onlyOwner {
-        
         require(!isSyntheticNFTFractionalised(tokenId));
         //TODO: integrate with real Jot
         Jot jot = new Jot();
         _jots[tokenId] = address(jot);
-
-    }
-
-    function RegisterNFT(uint256 tokenId, uint256 supplyToKeep, uint256 priceFraction) public {
-        
     }
 
     function BuyJotTokens(uint256 tokenId, uint256 amount) public {
@@ -154,6 +208,7 @@ contract SyntheticCollectionManager is ERC721 {
 		_burn(tokenId);
         _tokens[tokenId] = false;
         _tokenMetadata[tokenId] = "";
+        _tokenCounter.decrement();
 	}
 
 }
