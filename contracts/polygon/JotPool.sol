@@ -18,14 +18,15 @@ contract JotPool is Initializable {
     event LiquidityRemoved(address provider, uint256 amount, uint256 liquidityBurnt);
 
     function initialize(address _jot) external initializer {
+        require(_jot != address(0), "Invalid Jot token");
         jot = _jot;
     }
 
     function addLiquidity(uint256 amount) external {
         require(amount > 0, "Invalid amount");
-        uint256 mintedLiquidity = totalLiquidity == 0
-            ? 100
-            : (totalLiquidity * amount) / IERC20(jot).balanceOf(address(this));
+        uint256 mintedLiquidity = totalLiquidity > 0
+            ? (totalLiquidity * amount) / IERC20(jot).balanceOf(address(this))
+            : 100;
         liquidity[msg.sender] += mintedLiquidity;
         totalLiquidity += mintedLiquidity;
         emit LiquidityAdded(msg.sender, amount, mintedLiquidity);
@@ -35,12 +36,12 @@ contract JotPool is Initializable {
     function removeLiquidity(uint256 amount) external {
         require(liquidity[msg.sender] >= amount, "Remove amount exceeds balance");
         uint256 liquidityBurnt = (IERC20(jot).balanceOf(address(this)) * amount) / totalLiquidity;
-        if (totalLiquidity - amount == 0) {
-            liquidity[msg.sender] = 100;
-            totalLiquidity = 100;
-        } else {
+        if (totalLiquidity - amount > 0) {
             liquidity[msg.sender] -= amount;
             totalLiquidity -= amount;
+        } else {
+            liquidity[msg.sender] = 100;
+            totalLiquidity = 100;
         }
 
         emit LiquidityRemoved(msg.sender, amount, liquidityBurnt);
