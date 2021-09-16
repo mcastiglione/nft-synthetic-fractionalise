@@ -95,7 +95,8 @@ contract SyntheticProtocolRouter {
         if (!isSyntheticCollectionRegistered(collection)) {
             collectionmanager = new SyntheticCollectionManager(collection, name_, symbol_);
             Jot jot = new Jot();
-            JotPool jotPool = new JotPool(address(jot));
+            //TODO: JotPool is Initializable, add Clones.clone()
+            JotPool jotPool = new JotPool();
 
             collections[collection] = SyntheticCollection(
                 address(collectionmanager), 
