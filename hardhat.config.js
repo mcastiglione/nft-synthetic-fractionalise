@@ -49,7 +49,6 @@ module.exports = {
     },
     localhost: {
       url: 'http://127.0.0.1:7545', // ganache local network
-      accounts: { mnemonic: MNEMONIC },
     },
     // kovan: {
     //   url: `https://kovan.infura.io/v3/${INFURA_API_KEY}`,
