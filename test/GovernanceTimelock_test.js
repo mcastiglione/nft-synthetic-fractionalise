@@ -33,41 +33,40 @@ describe('GovernorTimelockControl', function () {
     expect(await this.mock.timelock()).to.be.equal(this.timelock.address);
   });
 
-  // describe('nominal', function () {
-  //   beforeEach(async function () {
-  //     this.settings = {
-  //       proposal: [
-  //         [this.receiver.address],
-  //         [web3.utils.toWei('0')],
-  //         [this.receiver.contract.methods.mockFunction().encodeABI()],
-  //         '<proposal description>',
-  //       ],
-  //       voters: [{ voter: voter, support: Enums.VoteType.For }],
-  //       steps: {
-  //         queue: { delay: 3600 },
-  //       },
-  //     };
-  //   });
-  //   afterEach(async function () {
-  //     const timelockid = await this.timelock.hashOperationBatch(
-  //       ...this.settings.proposal.slice(0, 3),
-  //       '0x0',
-  //       this.descriptionHash
-  //     );
+  describe('nominal', function () {
+    beforeEach(async function () {
+      this.settings = {
+        proposal: [
+          [this.receiver.address],
+          [web3.utils.toWei('0')],
+          [this.receiver.interface.encodeFunctionData('mockFunction', [])],
+          '<proposal description>',
+        ],
+        voters: [{ voter: voter, support: Enums.VoteType.For }],
+        steps: {
+          queue: { delay: 3600 },
+          // execute: { error: 'TimelockController: operation is not ready' },
+        },
+      };
+    });
 
-  //     expectEvent(this.receipts.propose, 'ProposalCreated', { proposalId: this.id });
-  //     expectEvent(this.receipts.queue, 'ProposalQueued', { proposalId: this.id });
-  //     await expectEvent.inTransaction(this.receipts.queue.transactionHash, this.timelock, 'CallScheduled', {
-  //       id: timelockid,
-  //     });
-  //     expectEvent(this.receipts.execute, 'ProposalExecuted', { proposalId: this.id });
-  //     await expectEvent.inTransaction(this.receipts.execute.transactionHash, this.timelock, 'CallExecuted', {
-  //       id: timelockid,
-  //     });
-  //     await expectEvent.inTransaction(this.receipts.execute.transactionHash, this.receiver, 'MockFunctionCalled');
-  //   });
-  //   runGovernorWorkflow();
-  // });
+    afterEach(async function () {
+      const timelockid = await this.timelock.hashOperationBatch(
+        ...this.settings.proposal.slice(0, 3),
+        web3.eth.abi.encodeParameter('bytes32', '0x0'),
+        this.descriptionHash
+      );
+
+      await expect(this.receipts.propose).to.emit(this.mock, 'ProposalCreated');
+      await expect(this.receipts.queue).to.emit(this.mock, 'ProposalQueued');
+      await expect(this.receipts.queue).to.emit(this.timelock, 'CallScheduled');
+      await expect(this.receipts.execute).to.emit(this.mock, 'ProposalExecuted');
+      await expect(this.receipts.execute).to.emit(this.timelock, 'CallExecuted');
+      await expect(this.receipts.execute).to.emit(this.receiver, 'MockFunctionCalled');
+    });
+
+    runGovernorWorkflow();
+  });
 
   // describe('executed by other proposer', function () {
   //   beforeEach(async function () {
