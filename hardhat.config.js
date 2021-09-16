@@ -46,7 +46,8 @@ module.exports = {
       // forking: {
       //   url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
       // },
-	    },
+      tags: ['local'],
+    },
     localhost: {
       url: 'http://127.0.0.1:7545', // ganache local network
     },
