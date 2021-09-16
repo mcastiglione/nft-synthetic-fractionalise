@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
-contract JIX is ERC20, ERC20Votes {
+contract JIX is ERC20, ERC20Permit, ERC20Votes {
     // solhint-disable-next-line
     constructor() ERC20("Privi JIX", "JIX") ERC20Permit("Privi JIX") {}
 
