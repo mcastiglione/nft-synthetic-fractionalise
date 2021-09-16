@@ -32,6 +32,15 @@ describe('NFTVaultManager', async function () {
     assert.isTrue(approved, 'Invalid approval process');
   });
 
+  it('fails to safe approve collections to non IERC721 contracts', async () => {
+    let collection = vaultManager.address;
+
+    await expectRevert(
+      vaultManager.safeApproveCollection(collection),
+      "Transaction reverted: function selector was not recognized and there's no fallback function"
+    );
+  });
+
   it('should have on receive ERC721 check', async () => {
     let { deployer } = await getNamedAccounts();
     let collection = deployer;
