@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./SyntheticCollectionManager.sol";
 import "./Jot.sol";
-import "./JotStaking.sol";
+import "./JotPool.sol";
 
 contract SyntheticProtocolRouter {
 
@@ -95,12 +95,12 @@ contract SyntheticProtocolRouter {
         if (!isSyntheticCollectionRegistered(collection)) {
             collectionmanager = new SyntheticCollectionManager(collection, name_, symbol_);
             Jot jot = new Jot();
-            JotStaking jotstaking = new JotStaking();
+            JotPool jotPool = new JotPool(address(jot));
 
             collections[collection] = SyntheticCollection(
                 address(collectionmanager), 
                 address(jot), 
-                address(jotstaking)
+                address(jotPool)
             );
 
             protocolVaults.increment();
