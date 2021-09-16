@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./SyntheticCollectionManager.sol";
 import "./Jot.sol";
 import "./JotStaking.sol";
-import "./SyntheticERC721.sol";
 
 contract SyntheticProtocolRouter {
 
@@ -25,8 +24,7 @@ contract SyntheticProtocolRouter {
      * @dev collections struct
      */
     struct SyntheticCollection {
-        address CollectionManager;
-        address SyntheticERC721Address;
+        address CollectionManagerAddress;
         address JotAddress;
         address JotStakingAddress;
     }
@@ -53,7 +51,7 @@ contract SyntheticProtocolRouter {
     function isSyntheticCollectionRegistered(
         address collection
     ) public view returns (bool) {
-        return collections[collection].CollectionManager != address(0);
+        return collections[collection].CollectionManagerAddress != address(0);
     }
 
     /**
@@ -61,9 +59,17 @@ contract SyntheticProtocolRouter {
      */
     function isSyntheticNFTCreated(
         address collection, 
-        uint256 tokenid
+        uint256 tokenId
     ) public view returns (bool) {
-        return false;
+        // Collection must be registered first
+        require(isSyntheticCollectionRegistered(collection), "Collection not registered");
+        
+        // connect to collection manager
+        address collectionAddress = collections[collection].CollectionManagerAddress;
+        SyntheticCollectionManager collectionManager = SyntheticCollectionManager(collectionAddress);
+
+        // check whether a given id was minted or not
+        return collectionManager.tokens(tokenId);
     }
 
     /**
@@ -85,23 +91,28 @@ contract SyntheticProtocolRouter {
         // Checks whether a collection is registered or not
         // If not registered, then register it and increase the Vault counter
         if (!isSyntheticCollectionRegistered(collection)) {
-            SyntheticERC721 erc721 = new SyntheticERC721();
-            collectionmanager = new SyntheticCollectionManager(address(erc721));
+            collectionmanager = new SyntheticCollectionManager();
             Jot jot = new Jot();
             JotStaking jotstaking = new JotStaking();
 
             collections[collection] = SyntheticCollection(
                 address(collectionmanager), 
-                address(erc721), 
                 address(jot), 
                 address(jotstaking)
             );
 
             protocolVaults.increment();
+
+            //TODO: addSymbol with ”address” to the NFTPerpetualFutures
         } else {
-            collectionmanager = SyntheticCollectionManager(collections[collection].CollectionManager);
+
+            address collectionManagerAddress = collections[collection].CollectionManager;
+            collectionmanager = SyntheticCollectionManager(collectionManagerAddress);
         }
 
         // TODO: try to register a new NFT
+
+        //collectionmanager.safeMint(?,?,?)
+        
     }
 }
