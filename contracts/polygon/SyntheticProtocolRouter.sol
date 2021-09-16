@@ -69,7 +69,7 @@ contract SyntheticProtocolRouter {
         SyntheticCollectionManager collectionManager = SyntheticCollectionManager(collectionAddress);
 
         // check whether a given id was minted or not
-        return collectionManager.tokens(tokenId);
+        return collectionManager._tokens(tokenId);
     }
 
     /**
@@ -83,7 +83,9 @@ contract SyntheticProtocolRouter {
         address collection, 
         uint256 tokenid, 
         uint256 supplyToKeep, 
-        uint256 priceFraction
+        uint256 priceFraction,
+        string memory name_, 
+        string memory symbol_
     ) public onlyOwner {
         
         SyntheticCollectionManager collectionmanager; 
@@ -91,7 +93,7 @@ contract SyntheticProtocolRouter {
         // Checks whether a collection is registered or not
         // If not registered, then register it and increase the Vault counter
         if (!isSyntheticCollectionRegistered(collection)) {
-            collectionmanager = new SyntheticCollectionManager();
+            collectionmanager = new SyntheticCollectionManager(collection, name_, symbol_);
             Jot jot = new Jot();
             JotStaking jotstaking = new JotStaking();
 
@@ -106,7 +108,7 @@ contract SyntheticProtocolRouter {
             //TODO: addSymbol with ”address” to the NFTPerpetualFutures
         } else {
 
-            address collectionManagerAddress = collections[collection].CollectionManager;
+            address collectionManagerAddress = collections[collection].CollectionManagerAddress;
             collectionmanager = SyntheticCollectionManager(collectionManagerAddress);
         }
 

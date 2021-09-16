@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./SyntheticERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "./Jot.sol";
 
 contract SyntheticCollectionManager is ERC721 {
     
+    /**
+     * @notice The current owner of the vault.
+     */
+    address public owner;
+
     // token id => bool
     // false, an nft has not been registered
     // true, an nft has been registered
@@ -22,6 +27,14 @@ contract SyntheticCollectionManager is ERC721 {
      * @notice deployed synthetic NFT address
      */
     address public _originalCollectionAddress;
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner {
+        require(msg.sender == owner, "Ownable: caller is not the owner");
+        _;
+    }
 
     constructor(
         address originalCollectionAddress_, 
@@ -84,8 +97,8 @@ contract SyntheticCollectionManager is ERC721 {
 	function generateSyntheticNFT(address to, uint tokenId, string memory metadata) public onlyOwner {
         require(isSyntheticNFTCreated(tokenId) == false, "Synthetic NFT already generated!");
 		_safeMint(to, tokenId);
-        tokens[tokenId] = true;
-        tokenMetadata[tokenId] = metadata;
+        _tokens[tokenId] = true;
+        _tokenMetadata[tokenId] = metadata;
 	}
 
     /**
@@ -139,8 +152,8 @@ contract SyntheticCollectionManager is ERC721 {
      */
     function safeBurn(uint tokenId) public onlyOwner {
 		_burn(tokenId);
-        tokens[tokenId] = false;
-        tokenMetadata[tokenId] = "";
+        _tokens[tokenId] = false;
+        _tokenMetadata[tokenId] = "";
 	}
 
 }
