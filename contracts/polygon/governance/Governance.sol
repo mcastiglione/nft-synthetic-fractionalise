@@ -21,7 +21,7 @@ contract Governance is
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(4)
         GovernorTimelockControl(_timelock)
-    {}
+    {} // solhint-disable-line
 
     function votingDelay() public pure override returns (uint256) {
         return 1; // 1 block

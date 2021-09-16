@@ -8,4 +8,5 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
   });
 };
+
 module.exports.tags = ['validator_oracle'];
