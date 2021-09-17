@@ -21,6 +21,11 @@ contract SyntheticProtocolRouter {
     address public owner;
 
     /**
+     * @notice QuickSwap address
+     */
+    address public swapAddress;
+
+    /**
      * @dev collections struct
      */
     struct SyntheticCollection {
@@ -43,7 +48,9 @@ contract SyntheticProtocolRouter {
         _;
     }
 
-    constructor() {}
+    constructor(address _swapAddress) {
+        swapAddress = _swapAddress;
+    }
 
     /**
      * @notice checks whether a collection is registered or not
@@ -75,13 +82,13 @@ contract SyntheticProtocolRouter {
     /**
      *  @notice register an NFT
      *  @param collection the address of the collection
-     *  @param tokenid the token id 
+     *  @param tokenId the token id 
      *  @param supplyToKeep supply to keep 
      *  @param priceFraction the price for a fraction
      */
     function registerNFT(
         address collection, 
-        uint256 tokenid, 
+        uint256 tokenId, 
         uint256 supplyToKeep, 
         uint256 priceFraction,
         string memory name_, 
@@ -94,7 +101,8 @@ contract SyntheticProtocolRouter {
         // If not registered, then register it and increase the Vault counter
         if (!isSyntheticCollectionRegistered(collection)) {
             collectionmanager = new SyntheticCollectionManager(collection, name_, symbol_);
-            Jot jot = new Jot();
+            Jot jot = new Jot(address(collectionmanager), swapAddress);
+            collectionmanager.updateJotAddress(address(jot));
             //TODO: JotPool is Initializable, add Clones.clone()
             JotPool jotPool = new JotPool();
 
@@ -113,9 +121,7 @@ contract SyntheticProtocolRouter {
             collectionmanager = SyntheticCollectionManager(collectionManagerAddress);
         }
 
-        // TODO: try to register a new NFT
-
-        //collectionmanager.safeMint(?,?,?)
+        collectionmanager.register(tokenId, supplyToKeep, priceFraction);
         
     }
 
