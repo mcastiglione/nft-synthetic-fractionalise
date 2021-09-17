@@ -169,7 +169,7 @@ contract SyntheticCollectionManager is ERC721 {
     * (f) Register liquiditySold = 0
     *
      */
-    function register(uint256 tokenId, uint256 supplyToKeep, uint256 priceFraction) public {
+    function register(uint256 tokenId, uint256 supplyToKeep, uint256 priceFraction) public onlyOwner {
 
         _tokenCounter.increment();
         string memory metadata = getNFTMetadata(tokenId);
