@@ -28,7 +28,6 @@ contract Jot is ERC20{
      */
     address public uniswapV2Pair;
 
-
     constructor(address _owner, address swapAddress) ERC20("Privi Jot", "JOT") {
         owner = _owner;
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(swapAddress);

@@ -9,12 +9,12 @@ import "./SyntheticProtocolRouter.sol";
 
 contract SyntheticCollectionManager is ERC721 {
 
-	using Counters for Counters.Counter;
+    using Counters for Counters.Counter;
     
     /**
      * @notice Number of tokens in Vault
      */ 
-	Counters.Counter public _tokenCounter;
+    Counters.Counter public _tokenCounter;
 
     /**
      * @notice The current owner of the vault.
@@ -33,7 +33,7 @@ contract SyntheticCollectionManager is ERC721 {
 
     // URIs mapping
     // token id => metadata
-	mapping(uint => string) private _tokenMetadata;
+    mapping(uint => string) private _tokenMetadata;
 
     /**
      * @notice address of the original collection
@@ -148,12 +148,12 @@ contract SyntheticCollectionManager is ERC721 {
      * @notice Checks isSyntheticNFTCreated(address, id) is False. 
      * Then it mints a new NFT with: ”to”, ”id” and ”metadata”
      */
-	function generateSyntheticNFT(address to, uint tokenId, string memory metadata) private {
+    function generateSyntheticNFT(address to, uint tokenId, string memory metadata) private {
         require(isSyntheticNFTCreated(tokenId) == false, "Synthetic NFT already generated!");
-		_safeMint(to, tokenId);
+        _safeMint(to, tokenId);
         _tokens[tokenId] = true;
         _tokenMetadata[tokenId] = metadata;
-	}
+    }
 
 
     /**
@@ -226,9 +226,9 @@ contract SyntheticCollectionManager is ERC721 {
         _jots[tokenId].liquiditySold += msg.value;
 
         //If all jots have been sold, then add liquidity 
-		if (amount == amountLeft) {
-			addLiquidityToPool(tokenId);
-		}
+        if (amount == amountLeft) {
+            addLiquidityToPool(tokenId);
+        }
     }
 
     /**
@@ -276,18 +276,18 @@ contract SyntheticCollectionManager is ERC721 {
         uint256 liquiditySupply = _jots[tokenId].liquiditySupply;
         uint256 liquiditySold = _jots[tokenId].liquiditySold;
 
-		// approve token transfer to cover all possible scenarios
-		Jot(jotAddress).approve(address(uniswapV2Router), liquiditySupply);
+        // approve token transfer to cover all possible scenarios
+        Jot(jotAddress).approve(address(uniswapV2Router), liquiditySupply);
 
-		// add the liquidity
-		uniswapV2Router.addLiquidityETH{value: liquiditySold}(
-			jotAddress,
-			liquiditySupply,
-			0, // slippage is unavoidable
-			0, // slippage is unavoidable
-			owner,
-			block.timestamp
-		);
+        // add the liquidity
+        uniswapV2Router.addLiquidityETH{value: liquiditySold}(
+            jotAddress,
+            liquiditySupply,
+            0, // slippage is unavoidable
+            0, // slippage is unavoidable
+            owner,
+            block.timestamp
+        );
     }
 
     function isAllowedToFlip(uint256 tokenId) public view {
@@ -302,10 +302,10 @@ contract SyntheticCollectionManager is ERC721 {
      * @dev burn a token
      */
     function safeBurn(uint tokenId) public onlyOwner {
-		_burn(tokenId);
+        _burn(tokenId);
         _tokens[tokenId] = false;
         _tokenMetadata[tokenId] = "";
         _tokenCounter.decrement();
-	}
+    }
 
 }
