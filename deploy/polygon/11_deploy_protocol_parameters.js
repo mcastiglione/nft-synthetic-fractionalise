@@ -4,8 +4,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  // get the previously deployed contracts
-  let governance = await ethers.getContract('Governance');
+  // get the previously deployed governance (actuually the timelock controller)
+  let governance = await ethers.getContract('TimelockController');
 
   const defaultParameters = {
     jotsSupply: 100,

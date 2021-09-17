@@ -18,7 +18,7 @@ describe('GovernorTimelockControl', function () {
     this.token = await ethers.getContract('ERC20VotesMock');
     this.timelock = await ethers.getContract('TimelockController');
     this.mock = await ethers.getContract('GovernorTimelockControlMock');
-    this.receiver = await ethers.getContract('CallReceiverMock');
+    this.receiver = await ethers.getContract('ProtocolParameters');
   });
 
   shouldSupportInterfaces(['ERC165', 'Governor', 'GovernorTimelock']);
@@ -39,7 +39,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('mockFunction', [])],
+          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],
@@ -62,7 +62,7 @@ describe('GovernorTimelockControl', function () {
       await expect(this.receipts.queue).to.emit(this.timelock, 'CallScheduled');
       await expect(this.receipts.execute).to.emit(this.mock, 'ProposalExecuted');
       await expect(this.receipts.execute).to.emit(this.timelock, 'CallExecuted');
-      await expect(this.receipts.execute).to.emit(this.receiver, 'MockFunctionCalled');
+      await expect(this.receipts.execute).to.emit(this.receiver, 'JotsSupplyUpdated');
     });
 
     runGovernorWorkflow();
@@ -74,7 +74,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('mockFunction', [])],
+          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],
@@ -108,7 +108,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('mockFunction', [])],
+          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],
@@ -132,7 +132,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('mockFunction', [])],
+          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],
@@ -155,7 +155,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('mockFunction', [])],
+          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],
@@ -186,7 +186,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('mockFunction', [])],
+          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],
@@ -221,7 +221,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('mockFunction', [])],
+          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],

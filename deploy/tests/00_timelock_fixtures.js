@@ -1,4 +1,4 @@
-const { constants } = require('@openzeppelin/test-helpers');
+const { time, constants } = require('@openzeppelin/test-helpers');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
@@ -27,10 +27,17 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [name, token.address, 4, 16, timelock.address, 0],
   });
 
-  await deploy('CallReceiverMock', {
+  const defaultParameters = {
+    jotsSupply: 100,
+    flippingInterval: String(time.duration.days(1)),
+    flippingReward: 1,
+    flippingAmount: 1,
+  };
+
+  await deploy('ProtocolParameters', {
     from: deployer,
     log: true,
-    args: [],
+    args: [...Object.values(defaultParameters), timelock.address],
   });
 
   timelock = await ethers.getContractAt('TimelockController', timelock.address);

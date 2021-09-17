@@ -20,6 +20,11 @@ contract ProtocolParameters is Ownable {
     // amount of jots into play in each flip
     uint256 public flippingAmount;
 
+    event JotsSupplyUpdated(uint256 value);
+    event FlippingIntervalUpdated(uint256 value);
+    event FlippingRewardUpdated(uint256 value);
+    event FlippingAmountUpdated(uint256 value);
+
     /**
      * @dev sets the default (initial) values of the parameters
      *      also transfers the ownership to the governance
@@ -45,17 +50,21 @@ contract ProtocolParameters is Ownable {
 
     function setJotsSupply(uint256 jotsSupply_) external onlyOwner {
         jotsSupply = jotsSupply_;
+        emit JotsSupplyUpdated(jotsSupply_);
     }
 
     function setFlippingInterval(uint256 flippingInterval_) external onlyOwner {
         flippingInterval = flippingInterval_;
+        emit FlippingIntervalUpdated(flippingInterval_);
     }
 
     function setFlippingReward(uint256 flippingReward_) external onlyOwner {
         flippingReward = flippingReward_;
+        emit FlippingRewardUpdated(flippingReward_);
     }
 
     function setFlippingAmount(uint256 flippingAmount_) external onlyOwner {
         flippingAmount = flippingAmount_;
+        emit FlippingAmountUpdated(flippingAmount_);
     }
 }
