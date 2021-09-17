@@ -309,7 +309,7 @@ contract SyntheticCollectionManager is ERC721 {
     }
 
     function getRemainingSupply(uint256 tokenId) public view returns (uint256) {
-        return _jots[tokenId].sellingSupply - _jots[tokenId].soldSupply;
+        return _jots[tokenId].ownerSupply;
     }
 
 }
