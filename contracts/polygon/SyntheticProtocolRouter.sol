@@ -49,13 +49,12 @@ contract SyntheticProtocolRouter is Ownable {
 
     /**
      *  @notice register an NFT
-     *  @param collection the address of the collection
+     *  @param collection the original address of the collection
      *  @param tokenId the token id
      *  @param supplyToKeep supply to keep
      *  @param priceFraction the price for a fraction
      *  @param originalName the original collection name
      *  @param originalSymbol the original collection symbol
-     *  @param originalAddress the original collection address in ethereum
      */
     function registerNFT(
         address collection,
@@ -63,8 +62,7 @@ contract SyntheticProtocolRouter is Ownable {
         uint256 supplyToKeep,
         uint256 priceFraction,
         string memory originalName,
-        string memory originalSymbol,
-        address originalAddress
+        string memory originalSymbol
     ) public onlyOwner {
         address collectionAddress;
 
@@ -89,7 +87,7 @@ contract SyntheticProtocolRouter is Ownable {
                 string(abi.encodePacked("Synthetic ", originalName)),
                 string(abi.encodePacked("s", originalSymbol)),
                 jotAddress,
-                originalAddress
+                collection
             );
 
             collections[collection] = SyntheticCollection({
