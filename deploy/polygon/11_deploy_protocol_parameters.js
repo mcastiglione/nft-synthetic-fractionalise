@@ -14,19 +14,17 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
     flippingAmount: 1,
   };
 
+  let owner = governance.address;
+
   if (network.tags.testnet) {
-    await deploy('ProtocolParametersMock', {
-      from: deployer,
-      log: true,
-      args: [...Object.values(defaultParameters)],
-    });
-  } else {
-    await deploy('ProtocolParameters', {
-      from: deployer,
-      log: true,
-      args: [...Object.values(defaultParameters), governance.address],
-    });
+    owner = deployer;
   }
+
+  await deploy('ProtocolParameters', {
+    from: deployer,
+    log: true,
+    args: [...Object.values(defaultParameters), owner],
+  });
 };
 
 module.exports.tags = ['protocol_parameters'];

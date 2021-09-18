@@ -3,10 +3,9 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./AuctionsManager.sol";
 
 contract NFTAuction is Initializable {
-    uint256 private constant BIDING_TIME = 1 weeks;
-
     // parameters of the auction. Times are either
     // absolute unix timestamps (seconds since 1970-01-01)
     // or time periods in seconds.
@@ -17,9 +16,11 @@ contract NFTAuction is Initializable {
     uint256 public highestBid;
 
     // getters
+    uint256 public nftId;
     address public jot;
     address public jotPool;
     address public syntheticCollection;
+    address public auctionsManager;
 
     // allowed withdrawals of previous bids
     mapping(address => uint256) private _pendingReturns;
@@ -28,24 +29,32 @@ contract NFTAuction is Initializable {
     // by default initialized to `false`.
     bool private _claimed;
 
+    uint256 private _jotSupply;
+
     // events that will be emitted on changes.
     event HighestBidIncreased(address bidder, uint256 amount);
     event AuctionEnded(address winner, uint256 amount);
 
-    /// create a simple auction with `BIDING_TIME`
+    /// create a simple auction
     function initialize(
+        uint256 nftId_,
         address jot_,
         address jotPool_,
         address syntheticCollection_,
+        uint256 jotSupply_,
         uint256 initialBid_,
+        uint256 auctionDuration_,
         address initialBidder_
     ) external initializer {
-        auctionEndTime = block.timestamp + BIDING_TIME; // solhint-disable-line
+        nftId = nftId_;
+        auctionEndTime = block.timestamp + auctionDuration_; // solhint-disable-line
         highestBid = initialBid_;
+        _jotSupply = jotSupply_;
         jot = jot_;
         jotPool = jotPool_;
         syntheticCollection = syntheticCollection_;
         highestBidder = initialBidder_;
+        auctionsManager = msg.sender;
     }
 
     /// bid on the auction.
@@ -89,15 +98,23 @@ contract NFTAuction is Initializable {
     }
 
     /// winner can claim the token after auction end time
-    function claim() public {
+    function endAuction() public {
         // solhint-disable-next-line
         require(block.timestamp >= auctionEndTime, "Auction not yet ended");
-        require(msg.sender == highestBidder, "Only the winner can claim");
         require(!_claimed, "Token has already been claimed");
 
         _claimed = true;
-        emit AuctionEnded(highestBidder, highestBid);
 
-        // TODO: transfer the synthetic token
+        // transfer the jots
+        require(IERC20(jot).transfer(jot, _jotSupply), "Unable to transfer jots");
+
+        if (highestBid - _jotSupply > 0) {
+            require(IERC20(jot).transfer(jotPool, highestBid - _jotSupply), "Unable to transfer jots");
+        }
+
+        // reassign the NFT in the synthetic collection
+        AuctionsManager(auctionsManager).reassignNFT(syntheticCollection, nftId, highestBidder, _jotSupply);
+
+        emit AuctionEnded(highestBidder, highestBid);
     }
 }

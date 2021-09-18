@@ -20,10 +20,14 @@ contract ProtocolParameters is Ownable {
     // amount of jots into play in each flip
     uint256 public flippingAmount;
 
+    // the duration of an NFT auction in seconds
+    uint256 public auctionDuration;
+
     event JotsSupplyUpdated(uint256 value);
     event FlippingIntervalUpdated(uint256 value);
     event FlippingRewardUpdated(uint256 value);
     event FlippingAmountUpdated(uint256 value);
+    event AuctionDurationUpdated(uint256 value);
 
     /**
      * @dev sets the default (initial) values of the parameters
@@ -63,5 +67,10 @@ contract ProtocolParameters is Ownable {
     function setFlippingAmount(uint256 flippingAmount_) external onlyOwner {
         flippingAmount = flippingAmount_;
         emit FlippingAmountUpdated(flippingAmount_);
+    }
+
+    function setAuctionDuration(uint256 auctionDuration_) external onlyOwner {
+        auctionDuration = auctionDuration_;
+        emit AuctionDurationUpdated(auctionDuration_);
     }
 }
