@@ -3,18 +3,24 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "../governance/ProtocolParameters.sol";
 import "../implementations/SyntheticCollectionManager.sol";
 import "../SyntheticProtocolRouter.sol";
 import "./NFTAuction.sol";
 
-contract AuctionsManager is AccessControl {
+contract AuctionsManager is AccessControl, Initializable {
     bytes32 private constant COLLECTION_MANAGER = keccak256("COLLECTION_MANAGER");
     bytes32 private constant AUCTION = keccak256("AUCTION");
 
-    ProtocolParameters private _protocol;
-    SyntheticProtocolRouter private _router;
+    /**
+     * @dev the implementation to deploy through minimal proxies
+     */
+    address private immutable _nftAuctionImplementation;
+
+    ProtocolParameters public protocol;
+    SyntheticProtocolRouter public router;
 
     mapping(address => mapping(uint256 => bool)) private _whitelistedTokens;
 
@@ -25,19 +31,13 @@ contract AuctionsManager is AccessControl {
         uint256 openingBid
     );
 
-    /**
-     * @dev the implementation to deploy through minimal proxies
-     */
-    address private _nftAuctionImplementation;
-
-    constructor(
-        address router_,
-        address protocol_,
-        address nftAuction_
-    ) {
-        _router = SyntheticProtocolRouter(router_);
-        _protocol = ProtocolParameters(protocol_);
+    constructor(address nftAuction_) {
         _nftAuctionImplementation = nftAuction_;
+    }
+
+    function initialize(address protocol_, address router_) external initializer {
+        protocol = ProtocolParameters(protocol_);
+        router = SyntheticProtocolRouter(router_);
     }
 
     function whitelistNFT(address collection_, uint256 nftId_) external onlyRole(COLLECTION_MANAGER) {
@@ -62,26 +62,26 @@ contract AuctionsManager is AccessControl {
         uint256 nftId_,
         uint256 openingBid_
     ) external {
-        uint256 jotsSupply = _protocol.jotsSupply();
+        uint256 jotsSupply = protocol.jotsSupply();
         require(_whitelistedTokens[collection_][nftId_], "Token can't be auctioned");
         require(openingBid_ >= jotsSupply, "Opening bid too low");
-        require(_router.isSyntheticNFTCreated(collection_, nftId_), "Non registered token");
+        require(router.isSyntheticNFTCreated(collection_, nftId_), "Non registered token");
 
         // blacklist the nft to avoid start a new auction
         _whitelistedTokens[collection_][nftId_] = false;
 
-        address jotToken = _router.getJotsAddress(collection_);
+        address jotToken = router.getJotsAddress(collection_);
 
         // deploys a minimal proxy contract from privi nft auction implementation
         address auctionAddress = Clones.clone(_nftAuctionImplementation);
         NFTAuction(auctionAddress).initialize(
             nftId_,
             jotToken,
-            _router.getJotStakingAddress(collection_),
-            _router.getCollectionManagerAddress(collection_),
+            router.getJotStakingAddress(collection_),
+            router.getCollectionManagerAddress(collection_),
             jotsSupply,
             openingBid_,
-            _protocol.auctionDuration(),
+            protocol.auctionDuration(),
             msg.sender
         );
 
