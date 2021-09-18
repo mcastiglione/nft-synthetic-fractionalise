@@ -11,5 +11,5 @@ module.exports = async ({ deployments }) => {
   await auctionsManager.initialize(protocol.address, router.address);
 };
 
-module.exports.tags = ['auction_manager_initialization'];
+module.exports.tags = ['auctions_manager_initialization'];
 module.exports.dependencies = ['auctions_manager', 'synthetic_router', 'protocol_parameters'];
