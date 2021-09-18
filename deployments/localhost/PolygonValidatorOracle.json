@@ -1,0 +1,45 @@
+{
+  "address": "0x67B5E749D4333922cda95C9b98a8371037E88c80",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    }
+  ],
+  "transactionHash": "0x894450ede63a4a5b8892ec7bdf1152b349f519f7b6fac3f1e80c517e8b5a158d",
+  "receipt": {
+    "to": null,
+    "from": "0x9B9A579593497e7b745E8fe2bEb4Be5885318f1C",
+    "contractAddress": "0x67B5E749D4333922cda95C9b98a8371037E88c80",
+    "transactionIndex": 0,
+    "gasUsed": "67066",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x49b16a0447c77b85f632b77c81e8488fb80cd23fa9aa8e3963427a4fe0adcff7",
+    "transactionHash": "0x894450ede63a4a5b8892ec7bdf1152b349f519f7b6fac3f1e80c517e8b5a158d",
+    "logs": [],
+    "blockNumber": 96,
+    "cumulativeGasUsed": "67066",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "096c993c46fe5dd07beb8dba9f371c56",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.4+commit.c7e474f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/polygon/PolygonValidatorOracle.sol\":\"PolygonValidatorOracle\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/polygon/PolygonValidatorOracle.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\r\\npragma solidity ^0.8.4;\\r\\n\\r\\ncontract PolygonValidatorOracle {\\r\\n    constructor() {}    \\r\\n}\",\"keccak256\":\"0x47be3609658d9ce9160d41f0237a1054795d6c08244a25890cbc76e528ef3cf8\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea26469706673582212207ddc06abea849f1177a90a3ecbcc101a1cc11ca2ae6beef090b20d6f739c0c9164736f6c63430008040033",
+  "deployedBytecode": "0x6080604052600080fdfea26469706673582212207ddc06abea849f1177a90a3ecbcc101a1cc11ca2ae6beef090b20d6f739c0c9164736f6c63430008040033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}

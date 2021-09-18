@@ -1,0 +1,45 @@
+{
+  "address": "0xdf0CbbBECd7615358c309Af963178aaE27D3aB13",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    }
+  ],
+  "transactionHash": "0xd055b7ca4bbc7ebc3b07d5fd268912afe8210485683fea4c4c9f4e58b35b52df",
+  "receipt": {
+    "to": null,
+    "from": "0x9B9A579593497e7b745E8fe2bEb4Be5885318f1C",
+    "contractAddress": "0xdf0CbbBECd7615358c309Af963178aaE27D3aB13",
+    "transactionIndex": 0,
+    "gasUsed": "67066",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xe890b520c7b3a6b6890335f3940c057d0f8941e88bb378560ebb9e10b15d4029",
+    "transactionHash": "0xd055b7ca4bbc7ebc3b07d5fd268912afe8210485683fea4c4c9f4e58b35b52df",
+    "logs": [],
+    "blockNumber": 91,
+    "cumulativeGasUsed": "67066",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "830aab7411fa9b9814a7a776e357e030",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.4+commit.c7e474f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/polygon/NFTPerpetualFutures.sol\":\"NFTPerpetualFutures\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/polygon/NFTPerpetualFutures.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\r\\npragma solidity ^0.8.4;\\r\\n\\r\\ncontract NFTPerpetualFutures {\\r\\n    constructor() {}    \\r\\n}\",\"keccak256\":\"0xd31d9a4ba37acedb1b10bf4cd8b1844be419dc10dff50ff9550a9a860b854cdd\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea26469706673582212207acae38dd3b301b70247dee574102b2df6e718026d6c3c7fa913914cf786bd2964736f6c63430008040033",
+  "deployedBytecode": "0x6080604052600080fdfea26469706673582212207acae38dd3b301b70247dee574102b2df6e718026d6c3c7fa913914cf786bd2964736f6c63430008040033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
