@@ -52,13 +52,13 @@ contract SyntheticProtocolRouter is Ownable {
 
     /**
      *  @notice register an NFT
-     *  @param collection the address of the collection
+     *  @param collection the address of the synthetic collection
      *  @param tokenId the token id
      *  @param supplyToKeep supply to keep
      *  @param priceFraction the price for a fraction
      *  @param originalName the original collection name
      *  @param originalSymbol the original collection symbol
-     *  @param originalAddress the original collection address in ethereum
+     *  @param originalSymbol the original address of the collection
      */
     function registerNFT(
         address collection,
