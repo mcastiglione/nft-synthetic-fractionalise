@@ -4,7 +4,7 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  // get the previously deployed governance (actuually the timelock controller)
+  // get the previously deployed governance (actually the timelock controller)
   let governance = await ethers.getContract('TimelockController');
 
   const defaultParameters = {

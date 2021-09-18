@@ -17,8 +17,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   });
 
   // give the proposer role to governance and renounce admin role
-  timelock.grantRole(PROPOSER_ROLE, governance.address);
-  timelock.renounceRole(ADMIN_ROLE, deployer);
+  await timelock.grantRole(PROPOSER_ROLE, governance.address);
+  await timelock.renounceRole(ADMIN_ROLE, deployer);
 };
 
 module.exports.tags = ['governance'];
