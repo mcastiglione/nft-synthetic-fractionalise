@@ -66,8 +66,7 @@ contract SyntheticProtocolRouter is Ownable {
         uint256 supplyToKeep,
         uint256 priceFraction,
         string memory originalName,
-        string memory originalSymbol,
-        address originalAddress
+        string memory originalSymbol
     ) public onlyOwner {
         address collectionAddress;
 
@@ -92,7 +91,7 @@ contract SyntheticProtocolRouter is Ownable {
                 string(abi.encodePacked("Synthetic ", originalName)),
                 string(abi.encodePacked("s", originalSymbol)),
                 jotAddress,
-                originalAddress,
+                collection,
                 _auctionManager
             );
 
