@@ -75,7 +75,8 @@ contract SyntheticProtocolRouter is Ownable {
             address jotAddress = Clones.clone(_jot);
             Jot(jotAddress).initialize(
                 string(abi.encodePacked("Privi Jot ", originalName)),
-                string(abi.encodePacked("Jot", originalName))
+                string(abi.encodePacked("Jot", originalName)),
+                swapAddress
             );
 
             // deploys a minimal proxy contract from the jotPool contract implementation
