@@ -2,13 +2,22 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./interfaces.sol";
-import "./SyntheticCollectionManager.sol";
-import "./Jot.sol";
-import "./JotPool.sol";
+import "@openzeppelin/contracts/proxy/Clones.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./implementations/SyntheticCollectionManager.sol";
+import "./implementations/Jot.sol";
+import "./implementations/JotPool.sol";
+import "./Structs.sol";
 
-contract SyntheticProtocolRouter {
+contract SyntheticProtocolRouter is Ownable {
     using Counters for Counters.Counter;
+
+    /**
+     * @dev implementation addresses for proxies
+     */
+    address private _jot;
+    address private _jotPool;
+    address private _collectionManager;
 
     /**
      * @notice number of registered collections
@@ -16,23 +25,9 @@ contract SyntheticProtocolRouter {
     Counters.Counter public protocolVaults;
 
     /**
-     * @notice The current owner of the vault.
-     */
-    address public owner;
-
-    /**
      * @notice QuickSwap address
      */
     address public swapAddress;
-
-    /**
-     * @dev collections struct
-     */
-    struct SyntheticCollection {
-        address CollectionManagerAddress;
-        address JotAddress;
-        address JotStakingAddress;
-    }
 
     /**
      * @dev collections map.
@@ -40,24 +35,85 @@ contract SyntheticProtocolRouter {
      */
     mapping(address => SyntheticCollection) private collections;
 
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Ownable: caller is not the owner");
-        _;
+    constructor(
+        address _swapAddress,
+        address jot_,
+        address jotPool_,
+        address collectionManager_
+    ) {
+        swapAddress = _swapAddress;
+        _jot = jot_;
+        _jotPool = jotPool_;
+        _collectionManager = collectionManager_;
     }
 
-    constructor(address _swapAddress) {
-        swapAddress = _swapAddress;
-        owner = msg.sender;
+    /**
+     *  @notice register an NFT
+     *  @param collection the address of the collection
+     *  @param tokenId the token id
+     *  @param supplyToKeep supply to keep
+     *  @param priceFraction the price for a fraction
+     *  @param originalName the original collection name
+     *  @param originalSymbol the original collection symbol
+     *  @param originalAddress the original collection address in ethereum
+     */
+    function registerNFT(
+        address collection,
+        uint256 tokenId,
+        uint256 supplyToKeep,
+        uint256 priceFraction,
+        string memory originalName,
+        string memory originalSymbol,
+        address originalAddress
+    ) public onlyOwner {
+        address collectionAddress;
+
+        // Checks whether a collection is registered or not
+        // If not registered, then register it and increase the Vault counter
+        if (!isSyntheticCollectionRegistered(collection)) {
+            // deploys a minimal proxy contract from the jot contract implementation
+            address jotAddress = Clones.clone(_jot);
+            Jot(jotAddress).initialize(
+                string(abi.encodePacked("Privi Jot ", originalName)),
+                string(abi.encodePacked("Jot", originalName))
+            );
+
+            // deploys a minimal proxy contract from the jotPool contract implementation
+            address jotPoolAddress = Clones.clone(_jotPool);
+            JotPool(jotPoolAddress).initialize(jotAddress);
+
+            // deploys a minimal proxy contract from the collectionManager contract implementation
+            collectionAddress = Clones.clone(_collectionManager);
+            SyntheticCollectionManager(collectionAddress).initialize(
+                string(abi.encodePacked("Synthetic ", originalName)),
+                string(abi.encodePacked("s", originalSymbol)),
+                jotAddress,
+                originalAddress
+            );
+
+            collections[collection] = SyntheticCollection({
+                collectionManagerAddress: collectionAddress,
+                jotAddress: jotAddress,
+                jotStakingAddress: jotPoolAddress
+            });
+
+            protocolVaults.increment();
+
+            //TODO: addSymbol with ”address” to the NFTPerpetualFutures
+        } else {
+            collectionAddress = collections[collection].collectionManagerAddress;
+        }
+
+        SyntheticCollectionManager collectionManager = SyntheticCollectionManager(collectionAddress);
+
+        collectionManager.register(tokenId, supplyToKeep, priceFraction);
     }
 
     /**
      * @notice checks whether a collection is registered or not
      */
     function isSyntheticCollectionRegistered(address collection) public view returns (bool) {
-        return collections[collection].CollectionManagerAddress != address(0);
+        return collections[collection].collectionManagerAddress != address(0);
     }
 
     /**
@@ -68,7 +124,7 @@ contract SyntheticProtocolRouter {
         require(isSyntheticCollectionRegistered(collection), "Collection not registered");
 
         // connect to collection manager
-        address collectionAddress = collections[collection].CollectionManagerAddress;
+        address collectionAddress = collections[collection].collectionManagerAddress;
         SyntheticCollectionManager collectionManager = SyntheticCollectionManager(collectionAddress);
 
         // check whether a given id was minted or not
@@ -76,69 +132,23 @@ contract SyntheticProtocolRouter {
     }
 
     /**
-     *  @notice register an NFT
-     *  @param collection the address of the collection
-     *  @param tokenId the token id
-     *  @param supplyToKeep supply to keep
-     *  @param priceFraction the price for a fraction
-     */
-    function registerNFT(
-        address collection,
-        uint256 tokenId,
-        uint256 supplyToKeep,
-        uint256 priceFraction,
-        string memory name_,
-        string memory symbol_,
-        address managerFactoryAddress
-    ) public onlyOwner {
-        ICollectionManagerFactory factory = ICollectionManagerFactory(managerFactoryAddress);
-        SyntheticCollectionManager collectionmanager;
-
-        // Checks whether a collection is registered or not
-        // If not registered, then register it and increase the Vault counter
-        if (!isSyntheticCollectionRegistered(collection)) {
-            address managerAddress = factory.deploy(collection, name_, symbol_);
-            collectionmanager = SyntheticCollectionManager(managerAddress);
-            Jot jot = new Jot(address(collectionmanager), swapAddress);
-            collectionmanager.updateJotAddress(address(jot));
-            //TODO: JotPool is Initializable, add Clones.clone()
-            JotPool jotPool = new JotPool();
-
-            collections[collection] = SyntheticCollection(
-                address(collectionmanager),
-                address(jot),
-                address(jotPool)
-            );
-
-            protocolVaults.increment();
-
-            //TODO: addSymbol with ”address” to the NFTPerpetualFutures
-        } else {
-            address collectionManagerAddress = collections[collection].CollectionManagerAddress;
-            collectionmanager = SyntheticCollectionManager(collectionManagerAddress);
-        }
-
-        collectionmanager.register(tokenId, supplyToKeep, priceFraction);
-    }
-
-    /**
      * @notice getter for Jot Address of a collection
      */
     function getJotsAddress(address collection) public view returns (address) {
-        return collections[collection].JotAddress;
+        return collections[collection].jotAddress;
     }
 
     /**
      * @notice getter for Jot Staking Address of a collection
      */
     function getJotStakingAddress(address collection) public view returns (address) {
-        return collections[collection].JotStakingAddress;
+        return collections[collection].jotStakingAddress;
     }
 
     /**
      * @notice getter for Collection Manager Address of a collection
      */
     function getCollectionManagerAddress(address collection) public view returns (address) {
-        return collections[collection].CollectionManagerAddress;
+        return collections[collection].collectionManagerAddress;
     }
 }

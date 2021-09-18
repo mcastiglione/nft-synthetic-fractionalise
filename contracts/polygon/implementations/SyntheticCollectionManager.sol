@@ -2,23 +2,22 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "./interfaces.sol";
-import "./SyntheticProtocolRouter.sol";
+import "../SyntheticProtocolRouter.sol";
+import "../Interfaces.sol";
+import "./Structs.sol";
 
-contract SyntheticCollectionManager is ERC721 {
+contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
+    bytes32 public constant ROUTER = keccak256("ROUTER");
 
     using Counters for Counters.Counter;
-    
-    /**
-     * @notice Number of tokens in Vault
-     */ 
     Counters.Counter public _tokenCounter;
 
-    /**
-     * @notice The current owner of the vault.
-     */
-    address public owner;
+    // proxied values for the erc721 attributes
+    string private _proxiedName;
+    string private _proxiedSymbol;
 
     /**
      * @notice the address of the Protocol Router
@@ -28,11 +27,11 @@ contract SyntheticCollectionManager is ERC721 {
     // token id => bool
     // false, an nft has not been registered
     // true, an nft has been registered
-    mapping(uint => bool) public _tokens;
+    mapping(uint256 => bool) public _tokens;
 
     // URIs mapping
     // token id => metadata
-    mapping(uint => string) private _tokenMetadata;
+    mapping(uint256 => string) private _tokenMetadata;
 
     /**
      * @notice address of the original collection
@@ -40,56 +39,40 @@ contract SyntheticCollectionManager is ERC721 {
     address public _originalCollectionAddress;
 
     /**
-    * @dev ERC20 totalSupply (governance) parameter
-    * TODO: get from governance
+     * @dev ERC20 totalSupply (governance) parameter
+     * TODO: get from governance
      */
     uint256 private jotSupply;
 
     /**
-    * @notice jot Address for this collection
+     * @notice jot Address for this collection
      */
     address public jotAddress;
 
-    struct JotsData {
-        address nftOwner;
-        uint256 ownerSupply;
-        uint256 sellingSupply;
-        uint256 soldSupply;
-        uint256 liquiditySupply;
-        uint256 liquiditySold;
-        uint256 fractionPrices;    
-    }
-
     /**
-    * @notice Jot data for each token
+     * @notice Jot data for each token
      */
-    mapping(uint256 => JotsData) public  _jots;
+    mapping(uint256 => JotsData) public _jots;
 
     IUniswapV2Router02 public uniswapV2Router;
 
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner {
-        require(msg.sender == owner, "Ownable: caller is not the owner");
-        _;
-    }
+    // solhint-disable-next-line
+    constructor() ERC721("Privi Colecction Token", "PCT") {}
 
-    constructor(
-        address originalCollectionAddress_, 
-        string memory name_, 
-        string memory symbol_
-    ) ERC721(
-        name_, 
-        symbol_
-    ) {
+    function initialize(
+        string calldata _name,
+        string calldata _symbol,
+        address _jotAddress,
+        address originalCollectionAddress_
+    ) external initializer {
+        _proxiedName = _name;
+        _proxiedSymbol = _symbol;
+
+        jotAddress = _jotAddress;
         _originalCollectionAddress = originalCollectionAddress_;
         _syntheticProtocolRouterAddress = msg.sender;
-        owner = msg.sender;
-    }
 
-    function updateJotAddress(address jotAddress_) public onlyOwner {
-        jotAddress = jotAddress_;
+        _setupRole(ROUTER, msg.sender);
     }
 
     /**
@@ -97,7 +80,7 @@ contract SyntheticCollectionManager is ERC721 {
      * verifies if the NFT has been locked on NFTVaultManager. In addition
      * gets the metadata of the NFT
      */
-    function verifyNFT (uint256 tokenId) public view returns (bool) {
+    function verifyNFT(uint256 tokenId) public view returns (bool) {
         // TODO: call chainlink Oracle
         return true;
     }
@@ -112,7 +95,7 @@ contract SyntheticCollectionManager is ERC721 {
     }
 
     /**
-    * @notice Get the owner of the NFT
+     * @notice Get the owner of the NFT
      */
     function getNFTOwner(uint256 tokenId) private view returns (address) {
         //TODO: get owner from Oracle
@@ -123,7 +106,7 @@ contract SyntheticCollectionManager is ERC721 {
      * @notice returns the Quickswap pool address
      */
     function poolAddress() public view returns (address) {
-        //TODO: check if pool is initiated 
+        //TODO: check if pool is initiated
         return IJot(jotAddress).uniswapV2Pair();
     }
 
@@ -144,32 +127,38 @@ contract SyntheticCollectionManager is ERC721 {
     }
 
     /**
-     * @notice Checks isSyntheticNFTCreated(address, id) is False. 
+     * @notice Checks isSyntheticNFTCreated(address, id) is False.
      * Then it mints a new NFT with: ”to”, ”id” and ”metadata”
      */
-    function generateSyntheticNFT(address to, uint tokenId, string memory metadata) private {
+    function generateSyntheticNFT(
+        address to,
+        uint256 tokenId,
+        string memory metadata
+    ) private {
         require(isSyntheticNFTCreated(tokenId) == false, "Synthetic NFT already generated!");
         _safeMint(to, tokenId);
         _tokens[tokenId] = true;
         _tokenMetadata[tokenId] = metadata;
     }
 
-
     /**
-    * @notice First
-    * it updates counter syntheticID++. Then:
-    * • generateSyntheticNFT(address, id)
-    * • Interacts with JOT contract for that address and:
-    * (a) Mints JotSupply (governance parameter)
-    * (b) Register ownerSupply (DO NOT SEND HIM/HER)
-    * (c) Register sellingSupply = (JotSupply-supplyToKeep)/2
-    * (d) Register soldSupply = 0
-    * (e) Register liquiditySupply = (JotSupply-supplyToKeep)/2.
-    * (f) Register liquiditySold = 0
-    *
+     * @notice First
+     * it updates counter syntheticID++. Then:
+     * • generateSyntheticNFT(address, id)
+     * • Interacts with JOT contract for that address and:
+     * (a) Mints JotSupply (governance parameter)
+     * (b) Register ownerSupply (DO NOT SEND HIM/HER)
+     * (c) Register sellingSupply = (JotSupply-supplyToKeep)/2
+     * (d) Register soldSupply = 0
+     * (e) Register liquiditySupply = (JotSupply-supplyToKeep)/2.
+     * (f) Register liquiditySold = 0
+     *
      */
-    function register(uint256 tokenId, uint256 supplyToKeep, uint256 priceFraction) public onlyOwner {
-
+    function register(
+        uint256 tokenId,
+        uint256 supplyToKeep,
+        uint256 priceFraction
+    ) public onlyRole(ROUTER) {
         _tokenCounter.increment();
         string memory metadata = getNFTMetadata(tokenId);
         generateSyntheticNFT(msg.sender, tokenId, metadata);
@@ -178,17 +167,17 @@ contract SyntheticCollectionManager is ERC721 {
 
         jot.safeMint(address(this), jotSupply);
 
-        uint256 sellingSupply = (jotSupply-supplyToKeep)/2;
-        uint256 liquiditySupply = (jotSupply-supplyToKeep)/2;
+        uint256 sellingSupply = (jotSupply - supplyToKeep) / 2;
+        uint256 liquiditySupply = (jotSupply - supplyToKeep) / 2;
         address nftOwner = getNFTOwner(tokenId);
 
         JotsData memory data = JotsData(
             nftOwner,
-            supplyToKeep, 
-            sellingSupply, 
-            0, 
-            liquiditySupply, 
-            0, 
+            supplyToKeep,
+            sellingSupply,
+            0,
+            liquiditySupply,
+            0,
             priceFraction
         );
 
@@ -196,10 +185,9 @@ contract SyntheticCollectionManager is ERC721 {
     }
 
     /**
-    * @notice allows the caller to buy Jots
+     * @notice allows the caller to buy Jots
      */
-    function BuyJotTokens(uint256 tokenId) payable public{
-
+    function BuyJotTokens(uint256 tokenId) public payable {
         // Calculate amount to be bought
         uint256 amount = msg.value / _jots[tokenId].fractionPrices;
         require(amount > 0, "You need to send some ether");
@@ -209,7 +197,7 @@ contract SyntheticCollectionManager is ERC721 {
 
         // If amount left is lesser than buying amount
         // then buying amount = amount left
-        
+
         if (amountLeft < amount) {
             amount = amountLeft;
         }
@@ -219,12 +207,12 @@ contract SyntheticCollectionManager is ERC721 {
 
         // Transfer Jots
         IJot(jotAddress).transferFrom(address(this), msg.sender, amount);
-        
+
         //Increase sold supply (amount in token) and liquidity sold (amount in ether)
         _jots[tokenId].soldSupply += amount;
         _jots[tokenId].liquiditySold += msg.value;
 
-        //If all jots have been sold, then add liquidity 
+        //If all jots have been sold, then add liquidity
         if (amount == amountLeft) {
             addLiquidityToPool(tokenId);
         }
@@ -239,8 +227,8 @@ contract SyntheticCollectionManager is ERC721 {
         require(msg.sender == _jots[tokenId].nftOwner, "You are not the owner of the NFT!");
         require(_jots[tokenId].ownerSupply >= amount, "You do not have enough tokens left");
         _jots[tokenId].ownerSupply -= amount;
-        _jots[tokenId].sellingSupply += amount/2;
-        _jots[tokenId].liquiditySupply += amount/2;
+        _jots[tokenId].sellingSupply += amount / 2;
+        _jots[tokenId].liquiditySupply += amount / 2;
     }
 
     /**
@@ -249,13 +237,12 @@ contract SyntheticCollectionManager is ERC721 {
      */
     function decreaseSellingSupply(uint256 tokenId, uint256 amount) public {
         require(msg.sender == _jots[tokenId].nftOwner, "You are not the owner of the NFT!");
-        require(_jots[tokenId].liquiditySupply >= amount/2, "You do not have enough liquidity left");
-        require(_jots[tokenId].sellingSupply >= amount/2, "You do not have enough selling supply left");
+        require(_jots[tokenId].liquiditySupply >= amount / 2, "You do not have enough liquidity left");
+        require(_jots[tokenId].sellingSupply >= amount / 2, "You do not have enough selling supply left");
 
         _jots[tokenId].ownerSupply += amount;
-        _jots[tokenId].sellingSupply -= amount/2;
-        _jots[tokenId].liquiditySupply -= amount/2;
-
+        _jots[tokenId].sellingSupply -= amount / 2;
+        _jots[tokenId].liquiditySupply -= amount / 2;
     }
 
     /**
@@ -266,7 +253,6 @@ contract SyntheticCollectionManager is ERC721 {
         require(msg.sender == _jots[tokenId].nftOwner, "You are not the owner of the NFT!");
         _jots[tokenId].fractionPrices = newFractionPrice;
     }
-
 
     /**
      * @notice add available liquidity for a given token to UniSwap pool
@@ -284,23 +270,19 @@ contract SyntheticCollectionManager is ERC721 {
             liquiditySupply,
             0, // slippage is unavoidable
             0, // slippage is unavoidable
-            owner,
+            address(0),
             block.timestamp
         );
     }
 
-    function isAllowedToFlip(uint256 tokenId) public view {
-        
-    }
+    function isAllowedToFlip(uint256 tokenId) public view {}
 
-    function flipJot(uint256 tokenId, uint256 prediction) public {
-        
-    }
+    function flipJot(uint256 tokenId, uint256 prediction) public {}
 
     /**
      * @dev burn a token
      */
-    function safeBurn(uint tokenId) public onlyOwner {
+    function safeBurn(uint256 tokenId) public onlyRole(ROUTER) {
         _burn(tokenId);
         _tokens[tokenId] = false;
         _tokenMetadata[tokenId] = "";
@@ -311,4 +293,27 @@ contract SyntheticCollectionManager is ERC721 {
         return _jots[tokenId].ownerSupply;
     }
 
+    /**
+     * @dev Returns the name of the token.
+     */
+    function name() public view virtual override returns (string memory) {
+        return _proxiedName;
+    }
+
+    /**
+     * @dev Returns the symbol of the token, usually a shorter version of the
+     * name.
+     */
+    function symbol() public view virtual override returns (string memory) {
+        return _proxiedSymbol;
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, AccessControl)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
 }
