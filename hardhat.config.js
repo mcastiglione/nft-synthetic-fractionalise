@@ -66,12 +66,12 @@ module.exports = {
       deploy: ['deploy/ethereum/'],
       tags: ['testnet'],
     },
-    //mumbai: {
-    //  url: MUMBAI_RPC_URL,
-    //  accounts: [PRIVATE_KEY],
-    //  deploy: ['deploy/polygon'],
-    //  tags: ['testnet'],
-    //},
+    mumbai: {
+      url: MUMBAI_RPC_URL,
+      accounts: [PRIVATE_KEY],
+      deploy: ['deploy/polygon'],
+      tags: ['testnet'],
+    },
   },
   gasReporter: {
     enabled: true,

@@ -92,8 +92,14 @@ contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
         // the auction could only be started if ownerSupply is 0
         assert(data.ownerSupply == 0);
 
-        data.nftOwner = newOwner_;
-        data.ownerSupply = jotsSupply_;
+        // TODO: implement this logic
+
+        // data.ownerSupply = jotsSupply_;
+        // data.sellingSupply = 0;
+        // data.soldSupply = 0;
+        // data.liquiditySupply = 0;
+        // data.liquiditySold = 0;
+        // data.fractionPrices = 0;
     }
 
     /**
