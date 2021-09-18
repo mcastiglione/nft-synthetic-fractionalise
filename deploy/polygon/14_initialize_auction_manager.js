@@ -1,5 +1,9 @@
-module.exports = async ({ deployments }) => {
+module.exports = async ({ getNamedAccounts, deployments }) => {
   const { log } = deployments;
+  const { deployer } = await getNamedAccounts();
+
+  // keccak256 combined with bytes conversion (identity function)
+  const DEPLOYER = ethers.utils.id('DEPLOYER');
 
   // get the previously deployed contracts
   let protocol = await ethers.getContract('ProtocolParameters');
@@ -8,7 +12,11 @@ module.exports = async ({ deployments }) => {
 
   log('Initializing AuctionsManager contract...');
 
-  await auctionsManager.initialize(protocol.address, router.address);
+  // give the proposer role to governance and renounce admin role
+  if (await auctionsManager.hasRole(DEPLOYER, deployer)) {
+    await auctionsManager.initialize(protocol.address, router.address);
+    await auctionsManager.renounceRole(DEPLOYER, deployer);
+  }
 };
 
 module.exports.tags = ['auctions_manager_initialization'];
