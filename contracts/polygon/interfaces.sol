@@ -1,5 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+
+interface ICollectionManagerFactory {
+	function deploy(
+        address originalCollectionAddress_, 
+        string memory name_, 
+        string memory symbol_
+    ) external returns (address);
+}
+
+interface IJot is IERC20 {
+
+	function uniswapV2Pair() external view returns (address);
+
+    function safeMint(address account, uint256 amount) external;
+
+}
+
 
 interface IUniswapV2Factory {
 	event PairCreated(address indexed token0, address indexed token1, address pair, uint);

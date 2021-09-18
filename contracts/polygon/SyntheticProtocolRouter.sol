@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./interfaces.sol";
 import "./SyntheticCollectionManager.sol";
 import "./Jot.sol";
 import "./JotPool.sol";
@@ -50,6 +51,7 @@ contract SyntheticProtocolRouter {
 
     constructor(address _swapAddress) {
         swapAddress = _swapAddress;
+        owner = msg.sender;
     }
 
     /**
@@ -92,15 +94,19 @@ contract SyntheticProtocolRouter {
         uint256 supplyToKeep, 
         uint256 priceFraction,
         string memory name_, 
-        string memory symbol_
+        string memory symbol_,
+        address managerFactoryAddress
     ) public onlyOwner {
         
+        ICollectionManagerFactory factory = ICollectionManagerFactory(managerFactoryAddress);
         SyntheticCollectionManager collectionmanager; 
         
         // Checks whether a collection is registered or not
         // If not registered, then register it and increase the Vault counter
         if (!isSyntheticCollectionRegistered(collection)) {
-            collectionmanager = new SyntheticCollectionManager(collection, name_, symbol_);
+
+            address managerAddress = factory.deploy(collection, name_, symbol_);
+            collectionmanager = SyntheticCollectionManager(managerAddress);
             Jot jot = new Jot(address(collectionmanager), swapAddress);
             collectionmanager.updateJotAddress(address(jot));
             //TODO: JotPool is Initializable, add Clones.clone()
@@ -124,7 +130,6 @@ contract SyntheticProtocolRouter {
         collectionmanager.register(tokenId, supplyToKeep, priceFraction);
         
     }
-
 
     /** 
      * @notice getter for Jot Address of a collection
