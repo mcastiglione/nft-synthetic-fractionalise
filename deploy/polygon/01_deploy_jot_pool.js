@@ -8,4 +8,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
   });
 };
-module.exports.tags = ['jot_pool'];
+module.exports.tags = ['jot_pool_implementation'];
