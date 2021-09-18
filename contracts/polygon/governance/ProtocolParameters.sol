@@ -41,9 +41,6 @@ contract ProtocolParameters is Ownable {
         flippingReward = flippingReward_;
         flippingAmount = flippingAmount_;
 
-        // ensure the initialization of the ownership
-        super;
-
         // transfer ownership
         transferOwnership(governanceContractAddress_);
     }
