@@ -1,0 +1,45 @@
+{
+  "address": "0x3E99fe58c3BA092671B5edAf9E4027aAfdf4Cc82",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    }
+  ],
+  "transactionHash": "0xe7a8915c87bf2a2a209fcce47c9c9afb72ba4ffae6ac7d3ff7de69a2c199527b",
+  "receipt": {
+    "to": null,
+    "from": "0xa5033D0b590539463209E0C26609BD571Acb57EE",
+    "contractAddress": "0x3E99fe58c3BA092671B5edAf9E4027aAfdf4Cc82",
+    "transactionIndex": 0,
+    "gasUsed": "67066",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x5930a346ce16f78cdde5196584482c7ddc4a6f1dae6eccdd28e98df1be4c0e97",
+    "transactionHash": "0xe7a8915c87bf2a2a209fcce47c9c9afb72ba4ffae6ac7d3ff7de69a2c199527b",
+    "logs": [],
+    "blockNumber": 11,
+    "cumulativeGasUsed": "67066",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "857348074fbe796116e3bd687d5072fb",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.4+commit.c7e474f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/polygon/RewardManager.sol\":\"RewardManager\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/polygon/RewardManager.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\r\\npragma solidity ^0.8.4;\\r\\n\\r\\ncontract RewardManager {\\r\\n    constructor() {}    \\r\\n}\",\"keccak256\":\"0x22b4ba4f76f9ff6978da4407b1d805aff80a091b99549eea7403f04de6c62476\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea2646970667358221220fefd801d0c4df067ba98a4072b738315bdb944dfdc2d3dffddb7fb03ef18dbb764736f6c63430008040033",
+  "deployedBytecode": "0x6080604052600080fdfea2646970667358221220fefd801d0c4df067ba98a4072b738315bdb944dfdc2d3dffddb7fb03ef18dbb764736f6c63430008040033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}

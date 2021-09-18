@@ -1,0 +1,45 @@
+{
+  "address": "0x5CB3Aa43a1E0574567e47eCe985Fea2f460400E5",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    }
+  ],
+  "transactionHash": "0xa830a1460bbbc62dd04c48bc060c3ff4a9db97b01a545168b3bf0b46962e0790",
+  "receipt": {
+    "to": null,
+    "from": "0xa5033D0b590539463209E0C26609BD571Acb57EE",
+    "contractAddress": "0x5CB3Aa43a1E0574567e47eCe985Fea2f460400E5",
+    "transactionIndex": 0,
+    "gasUsed": "67066",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x7e88e505af74e59f96eada6e5238531eb8cff1613257a753d6424f0638de1ea4",
+    "transactionHash": "0xa830a1460bbbc62dd04c48bc060c3ff4a9db97b01a545168b3bf0b46962e0790",
+    "logs": [],
+    "blockNumber": 8,
+    "cumulativeGasUsed": "67066",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "5f9426865f2afd7348a3e0d9797bf85b",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.4+commit.c7e474f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/polygon/SyntheticProtocolManager.sol\":\"SyntheticProtocolManager\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/polygon/SyntheticProtocolManager.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\r\\npragma solidity ^0.8.4;\\r\\n\\r\\ncontract SyntheticProtocolManager {\\r\\n    constructor() {}    \\r\\n}\",\"keccak256\":\"0xcad2a5f46c0cabbae2c8babe1a31c0f36c4ea0341d1bfaabfa3f7a765b0eb685\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea26469706673582212207a93868e2afb80a4ee0d51324e131016782e66f1be80817b5d8884c9d35cdb2964736f6c63430008040033",
+  "deployedBytecode": "0x6080604052600080fdfea26469706673582212207a93868e2afb80a4ee0d51324e131016782e66f1be80817b5d8884c9d35cdb2964736f6c63430008040033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
