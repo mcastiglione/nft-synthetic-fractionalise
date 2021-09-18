@@ -18,6 +18,7 @@ contract SyntheticProtocolRouter is Ownable {
     address private _jot;
     address private _jotPool;
     address private _collectionManager;
+    address private _auctionManager;
 
     /**
      * @notice number of registered collections
@@ -39,12 +40,14 @@ contract SyntheticProtocolRouter is Ownable {
         address _swapAddress,
         address jot_,
         address jotPool_,
-        address collectionManager_
+        address collectionManager_,
+        address auctionManager_
     ) {
         swapAddress = _swapAddress;
         _jot = jot_;
         _jotPool = jotPool_;
         _collectionManager = collectionManager_;
+        _auctionManager = auctionManager_;
     }
 
     /**
@@ -89,7 +92,8 @@ contract SyntheticProtocolRouter is Ownable {
                 string(abi.encodePacked("Synthetic ", originalName)),
                 string(abi.encodePacked("s", originalSymbol)),
                 jotAddress,
-                originalAddress
+                originalAddress,
+                _auctionManager
             );
 
             collections[collection] = SyntheticCollection({

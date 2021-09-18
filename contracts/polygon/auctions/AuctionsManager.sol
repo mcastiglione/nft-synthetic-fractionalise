@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "../governance/ProtocolParameters.sol";
+import "../implementations/SyntheticCollectionManager.sol";
 import "../SyntheticProtocolRouter.sol";
 import "./NFTAuction.sol";
 
@@ -53,7 +54,7 @@ contract AuctionsManager is AccessControl {
         address newOwner_,
         uint256 jotsSupply_
     ) external onlyRole(AUCTION) {
-        _whitelistedTokens[collection_][nftId_] = false;
+        SyntheticCollectionManager(collection_).reassignNFT(nftId_, newOwner_, jotsSupply_);
     }
 
     function startAuction(
