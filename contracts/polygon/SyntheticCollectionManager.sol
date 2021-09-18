@@ -4,7 +4,6 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./interfaces.sol";
-import "./Jot.sol";
 import "./SyntheticProtocolRouter.sol";
 
 contract SyntheticCollectionManager is ERC721 {
@@ -125,7 +124,7 @@ contract SyntheticCollectionManager is ERC721 {
      */
     function poolAddress() public view returns (address) {
         //TODO: check if pool is initiated 
-        return Jot(jotAddress).uniswapV2Pair();
+        return IJot(jotAddress).uniswapV2Pair();
     }
 
     /**
@@ -175,7 +174,7 @@ contract SyntheticCollectionManager is ERC721 {
         string memory metadata = getNFTMetadata(tokenId);
         generateSyntheticNFT(msg.sender, tokenId, metadata);
 
-        Jot jot = Jot(jotAddress);
+        IJot jot = IJot(jotAddress);
 
         jot.safeMint(address(this), jotSupply);
 
@@ -219,7 +218,7 @@ contract SyntheticCollectionManager is ERC721 {
         require(amount != 0, "No tokens left!");
 
         // Transfer Jots
-        Jot(jotAddress).transferFrom(address(this), msg.sender, amount);
+        IJot(jotAddress).transferFrom(address(this), msg.sender, amount);
         
         //Increase sold supply (amount in token) and liquidity sold (amount in ether)
         _jots[tokenId].soldSupply += amount;
@@ -277,7 +276,7 @@ contract SyntheticCollectionManager is ERC721 {
         uint256 liquiditySold = _jots[tokenId].liquiditySold;
 
         // approve token transfer to cover all possible scenarios
-        Jot(jotAddress).approve(address(uniswapV2Router), liquiditySupply);
+        IJot(jotAddress).approve(address(uniswapV2Router), liquiditySupply);
 
         // add the liquidity
         uniswapV2Router.addLiquidityETH{value: liquiditySold}(

@@ -2,7 +2,7 @@ require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-waffle');
 require('@nomiclabs/hardhat-solhint');
 require('@nomiclabs/hardhat-web3');
-require('solidity-coverage');
+//require('solidity-coverage');
 require('hardhat-gas-reporter');
 require('hardhat-contract-sizer');
 require('hardhat-deploy');
@@ -50,7 +50,7 @@ module.exports = {
       tags: ['local'],
     },
     localhost: {
-      url: 'http://127.0.0.1:7545', // ganache local network
+      url: 'http://127.0.0.1:8545', // ganache local network
     },
     // kovan: {
     //   url: `https://kovan.infura.io/v3/${INFURA_API_KEY}`,
@@ -60,11 +60,11 @@ module.exports = {
     //   url: `https://ropsten.infura.io/v3/${INFURA_API_KEY}`,
     //   accounts: { mnemonic: MNEMONIC },
     // },
-    //rinkeby: {
-    //  url: `https://rinkeby.infura.io/v3/${INFURA_API_KEY}`,
-    //  accounts: { mnemonic: MNEMONIC },
-    //  deploy: ['deploy/ethereum/'],
-    //},
+    rinkeby: {
+      url: `https://rinkeby.infura.io/v3/${INFURA_API_KEY}`,
+      accounts: { mnemonic: MNEMONIC },
+      deploy: ['deploy/ethereum/'],
+    },
     //mumbai: {
     //  url: MUMBAI_RPC_URL,
     //  accounts: [PRIVATE_KEY],
