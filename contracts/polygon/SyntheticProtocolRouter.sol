@@ -87,18 +87,16 @@ contract SyntheticProtocolRouter {
         uint256 tokenId,
         uint256 supplyToKeep,
         uint256 priceFraction,
-        string memory name_, 
+        string memory name_,
         string memory symbol_,
         address managerFactoryAddress
     ) public onlyOwner {
-        
         ICollectionManagerFactory factory = ICollectionManagerFactory(managerFactoryAddress);
-        SyntheticCollectionManager collectionmanager; 
-        
+        SyntheticCollectionManager collectionmanager;
+
         // Checks whether a collection is registered or not
         // If not registered, then register it and increase the Vault counter
         if (!isSyntheticCollectionRegistered(collection)) {
-
             address managerAddress = factory.deploy(collection, name_, symbol_);
             collectionmanager = SyntheticCollectionManager(managerAddress);
             Jot jot = new Jot(address(collectionmanager), swapAddress);
@@ -123,11 +121,7 @@ contract SyntheticProtocolRouter {
         collectionmanager.register(tokenId, supplyToKeep, priceFraction);
     }
 
-<<<<<<< HEAD
-    /** 
-=======
     /**
->>>>>>> e439ee13cd39ff936eabf6d4ca4f98b3d2d2d301
      * @notice getter for Jot Address of a collection
      */
     function getJotsAddress(address collection) public view returns (address) {
