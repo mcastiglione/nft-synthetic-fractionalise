@@ -1,6 +1,6 @@
 const { time } = require('@openzeppelin/test-helpers');
 
-module.exports = async ({ getNamedAccounts, deployments }) => {
+module.exports = async ({ getNamedAccounts, deployments, network }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
@@ -14,11 +14,19 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     flippingAmount: 1,
   };
 
-  await deploy('ProtocolParameters', {
-    from: deployer,
-    log: true,
-    args: [...Object.values(defaultParameters), governance.address],
-  });
+  if (network.tags.testnet) {
+    await deploy('ProtocolParametersMock', {
+      from: deployer,
+      log: true,
+      args: [...Object.values(defaultParameters)],
+    });
+  } else {
+    await deploy('ProtocolParameters', {
+      from: deployer,
+      log: true,
+      args: [...Object.values(defaultParameters), governance.address],
+    });
+  }
 };
 
 module.exports.tags = ['protocol_parameters'];
