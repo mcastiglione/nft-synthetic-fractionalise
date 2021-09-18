@@ -12,6 +12,7 @@ import "./NFTAuction.sol";
 
 contract AuctionsManager is AccessControl, Initializable {
     bytes32 private constant COLLECTION_MANAGER = keccak256("COLLECTION_MANAGER");
+    bytes32 private constant DEPLOYER = keccak256("DEPLOYER");
     bytes32 private constant AUCTION = keccak256("AUCTION");
 
     /**
@@ -33,9 +34,11 @@ contract AuctionsManager is AccessControl, Initializable {
 
     constructor(address nftAuction_) {
         _nftAuctionImplementation = nftAuction_;
+
+        _setupRole(DEPLOYER, msg.sender);
     }
 
-    function initialize(address protocol_, address router_) external initializer {
+    function initialize(address protocol_, address router_) external initializer onlyRole(DEPLOYER) {
         protocol = ProtocolParameters(protocol_);
         router = SyntheticProtocolRouter(router_);
     }
