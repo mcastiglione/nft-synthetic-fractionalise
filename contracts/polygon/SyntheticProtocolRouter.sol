@@ -20,6 +20,7 @@ contract SyntheticProtocolRouter is Ownable {
     address private _jotPool;
     address private _collectionManager;
     address private _syntheticNFT;
+    address private _auctionManager;
 
     /**
      * @notice number of registered collections
@@ -42,23 +43,26 @@ contract SyntheticProtocolRouter is Ownable {
         address jot_,
         address jotPool_,
         address collectionManager_,
-        address syntheticNFT_
+        address syntheticNFT_,
+        address auctionManager_
     ) {
         swapAddress = _swapAddress;
         _jot = jot_;
         _jotPool = jotPool_;
         _collectionManager = collectionManager_;
         _syntheticNFT = syntheticNFT_;
+        _auctionManager = auctionManager_;
     }
 
     /**
      *  @notice register an NFT
-     *  @param collection the original address of the collection
+     *  @param collection the address of the synthetic collection
      *  @param tokenId the token id
      *  @param supplyToKeep supply to keep
      *  @param priceFraction the price for a fraction
      *  @param originalName the original collection name
      *  @param originalSymbol the original collection symbol
+     *  @param originalSymbol the original address of the collection
      */
     function registerNFT(
         address collection,
@@ -93,7 +97,8 @@ contract SyntheticProtocolRouter is Ownable {
             SyntheticCollectionManager(collectionAddress).initialize(
                 jotAddress,
                 collection,
-                syntheticNFTAddress
+                syntheticNFTAddress,
+                _auctionManager
             );
 
             collections[collection] = SyntheticCollection({

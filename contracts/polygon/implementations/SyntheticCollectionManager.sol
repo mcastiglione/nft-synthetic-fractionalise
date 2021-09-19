@@ -12,6 +12,7 @@ import "./Structs.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     bytes32 public constant ROUTER = keccak256("ROUTER");
+    bytes32 public constant AUCTION_MANAGER = keccak256("AUCTION_MANAGER");
 
     using Counters for Counters.Counter;
     Counters.Counter public _tokenCounter;
@@ -64,7 +65,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function initialize(
         address _jotAddress,
         address originalCollectionAddress_,
-        address _erc721address
+        address _erc721address,
+        address auctionManagerAddress
     ) external initializer {
 
         jotAddress = _jotAddress;
@@ -74,6 +76,31 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         _setupRole(ROUTER, msg.sender);
 
+        _setupRole(AUCTION_MANAGER, auctionManagerAddress);
+    }
+
+    /**
+     * @dev we need to pass the jobSupply here to work well even when the governance
+     *      changes this protocol parameter in the middle of the auction
+     */
+    function reassignNFT(
+        uint256 nftId_,
+        address newOwner_,
+        uint256 jotsSupply_
+    ) external onlyRole(AUCTION_MANAGER) {
+        JotsData storage data = _jots[nftId_];
+
+        // the auction could only be started if ownerSupply is 0
+        assert(data.ownerSupply == 0);
+
+        // TODO: implement this logic
+
+        // data.ownerSupply = jotsSupply_;
+        // data.sellingSupply = 0;
+        // data.soldSupply = 0;
+        // data.liquiditySupply = 0;
+        // data.liquiditySold = 0;
+        // data.fractionPrices = 0;
     }
 
     /**

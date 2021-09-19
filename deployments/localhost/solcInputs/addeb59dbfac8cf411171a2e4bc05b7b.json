@@ -1,8 +1,8 @@
 {
   "language": "Solidity",
   "sources": {
-    "contracts/polygon/SyntheticProtocolRouter.sol": {
-      "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.4;\r\n\r\ncontract SyntheticProtocolRouter {\r\n    constructor() {}    \r\n}"
+    "contracts/polygon/RewardManager.sol": {
+      "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.4;\r\n\r\ncontract RewardManager {\r\n    constructor() {\r\n        super;\r\n    }\r\n}\r\n"
     }
   },
   "settings": {

@@ -50,7 +50,7 @@ module.exports = {
       tags: ['local'],
     },
     localhost: {
-      url: 'http://127.0.0.1:8545', // ganache local network
+      url: 'http://127.0.0.1:7545', // ganache local network
     },
     // kovan: {
     //   url: `https://kovan.infura.io/v3/${INFURA_API_KEY}`,
@@ -66,12 +66,12 @@ module.exports = {
       deploy: ['deploy/ethereum/'],
       tags: ['testnet'],
     },
-    //mumbai: {
-    //  url: MUMBAI_RPC_URL,
-    //  accounts: [PRIVATE_KEY],
-    //  deploy: ['deploy/polygon'],
-    //  tags: ['testnet'],
-    //},
+    mumbai: {
+      url: MUMBAI_RPC_URL,
+      accounts: [PRIVATE_KEY],
+      deploy: ['deploy/polygon'],
+      tags: ['testnet'],
+    },
   },
   gasReporter: {
     enabled: true,
