@@ -44,8 +44,7 @@ contract SyntheticProtocolRouter is Ownable {
      */
 
     // a new Synthetic NFT collection manager is registered
-    // syntheticNFTAddress, originalName, originalSymbol, jotPoolAddress, jotAddress
-    event collectionManagerRegistered(address, string, string, address, address);
+    event collectionManagerRegistered(address syntheticNFTAddress, string originalName, string originalSymbol, address jotPoolAddress, address jotAddress);
 
     /**
      * Constructor
