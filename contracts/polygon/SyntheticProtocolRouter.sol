@@ -21,6 +21,7 @@ contract SyntheticProtocolRouter is Ownable {
     address private _collectionManager;
     address private _syntheticNFT;
     address private _auctionManager;
+    address private _protocol;
 
     /**
      * @notice number of registered collections
@@ -44,7 +45,8 @@ contract SyntheticProtocolRouter is Ownable {
         address jotPool_,
         address collectionManager_,
         address syntheticNFT_,
-        address auctionManager_
+        address auctionManager_,
+        address protocol_
     ) {
         swapAddress = _swapAddress;
         _jot = jot_;
@@ -52,6 +54,7 @@ contract SyntheticProtocolRouter is Ownable {
         _collectionManager = collectionManager_;
         _syntheticNFT = syntheticNFT_;
         _auctionManager = auctionManager_;
+        _protocol = protocol_;
     }
 
     /**
@@ -98,7 +101,8 @@ contract SyntheticProtocolRouter is Ownable {
                 jotAddress,
                 collection,
                 syntheticNFTAddress,
-                _auctionManager
+                _auctionManager,
+                _protocol
             );
 
             collections[collection] = SyntheticCollection({

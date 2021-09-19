@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
 import "./Structs.sol";
+import "../governance/ProtocolParameters.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     bytes32 public constant ROUTER = keccak256("ROUTER");
@@ -21,6 +22,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice the address of the Protocol Router
      */
     address public _syntheticProtocolRouterAddress;
+
+    ProtocolParameters public protocol;
 
     // token id => bool
     // false, an nft has not been registered
@@ -40,7 +43,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @dev ERC20 totalSupply (governance) parameter
      * TODO: get from governance
      */
-    uint256 private jotSupply;
+    uint256 private jotsSupply;
 
     /**
      * @notice jot Address for this collection
@@ -66,13 +69,16 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address _jotAddress,
         address originalCollectionAddress_,
         address _erc721address,
-        address auctionManagerAddress
+        address auctionManagerAddress,
+        address protocol_
     ) external initializer {
-
         jotAddress = _jotAddress;
         erc721address = _erc721address;
         _originalCollectionAddress = originalCollectionAddress_;
         _syntheticProtocolRouterAddress = msg.sender;
+        protocol = ProtocolParameters(protocol_);
+
+        jotsSupply = protocol.jotsSupply();
 
         _setupRole(ROUTER, msg.sender);
 
@@ -189,10 +195,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         string memory metadata = getNFTMetadata(tokenId);
         generateSyntheticNFT(msg.sender, tokenId, metadata);
 
-        IJot(jotAddress).safeMint(address(this), jotSupply);
+        IJot(jotAddress).safeMint(address(this), jotsSupply);
 
-        uint256 sellingSupply = (jotSupply - supplyToKeep) / 2;
-        uint256 liquiditySupply = (jotSupply - supplyToKeep) / 2;
+        uint256 sellingSupply = (jotsSupply - supplyToKeep) / 2;
+        uint256 liquiditySupply = (jotsSupply - supplyToKeep) / 2;
 
         JotsData memory data = JotsData(
             supplyToKeep,

@@ -9,11 +9,13 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   let jotPool = await ethers.getContract('JotPool');
   let collectionManager = await ethers.getContract('SyntheticCollectionManager');
   let auctionsManager = await ethers.getContract('AuctionsManager');
+  let syntheticNFT = await ethers.getContract('SyntheticNFT');
+  let protocol = await ethers.getContract('ProtocolParameters');
 
   await deploy('SyntheticProtocolRouter', {
     from: deployer,
     log: true,
-    args: [constants.ZERO_ADDRESS, jot.address, jotPool.address, collectionManager.address, auctionsManager.address],
+    args: [constants.ZERO_ADDRESS, jot.address, jotPool.address, collectionManager.address, syntheticNFT.address, auctionsManager.address, protocol.address],
   });
 };
 
