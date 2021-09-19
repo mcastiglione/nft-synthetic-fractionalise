@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./implementations/SyntheticCollectionManager.sol";
 import "./implementations/Jot.sol";
 import "./implementations/JotPool.sol";
+import "./implementations/SyntheticNFT.sol";
 import "./Structs.sol";
 
 contract SyntheticProtocolRouter is Ownable {
@@ -18,6 +19,7 @@ contract SyntheticProtocolRouter is Ownable {
     address private _jot;
     address private _jotPool;
     address private _collectionManager;
+    address private _syntheticNFT;
 
     /**
      * @notice number of registered collections
@@ -39,12 +41,14 @@ contract SyntheticProtocolRouter is Ownable {
         address _swapAddress,
         address jot_,
         address jotPool_,
-        address collectionManager_
+        address collectionManager_,
+        address syntheticNFT_
     ) {
         swapAddress = _swapAddress;
         _jot = jot_;
         _jotPool = jotPool_;
         _collectionManager = collectionManager_;
+        _syntheticNFT = syntheticNFT_;
     }
 
     /**
@@ -73,7 +77,7 @@ contract SyntheticProtocolRouter is Ownable {
             address jotAddress = Clones.clone(_jot);
             Jot(jotAddress).initialize(
                 string(abi.encodePacked("Privi Jot ", originalName)),
-                string(abi.encodePacked("Jot", originalName)),
+                string(abi.encodePacked("Jot", originalSymbol)),
                 swapAddress
             );
 
@@ -81,19 +85,22 @@ contract SyntheticProtocolRouter is Ownable {
             address jotPoolAddress = Clones.clone(_jotPool);
             JotPool(jotPoolAddress).initialize(jotAddress);
 
+            address syntheticNFTAddress = Clones.clone(_syntheticNFT);
+            SyntheticNFT(syntheticNFTAddress).initialize(originalName, originalSymbol);
+
             // deploys a minimal proxy contract from the collectionManager contract implementation
             collectionAddress = Clones.clone(_collectionManager);
             SyntheticCollectionManager(collectionAddress).initialize(
-                string(abi.encodePacked("Synthetic ", originalName)),
-                string(abi.encodePacked("s", originalSymbol)),
                 jotAddress,
-                collection
+                collection,
+                syntheticNFTAddress
             );
 
             collections[collection] = SyntheticCollection({
                 collectionManagerAddress: collectionAddress,
                 jotAddress: jotAddress,
-                jotStakingAddress: jotPoolAddress
+                jotStakingAddress: jotPoolAddress,
+                syntheticNFTAddress: syntheticNFTAddress
             });
 
             protocolVaults.increment();

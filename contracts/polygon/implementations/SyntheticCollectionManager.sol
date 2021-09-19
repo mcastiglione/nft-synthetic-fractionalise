@@ -2,22 +2,19 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
 import "./Structs.sol";
 
-contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
+contract SyntheticCollectionManager is AccessControl, Initializable {
     bytes32 public constant ROUTER = keccak256("ROUTER");
 
     using Counters for Counters.Counter;
     Counters.Counter public _tokenCounter;
-
-    // proxied values for the erc721 attributes
-    string private _proxiedName;
-    string private _proxiedSymbol;
 
     /**
      * @notice the address of the Protocol Router
@@ -54,25 +51,29 @@ contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
      */
     mapping(uint256 => JotsData) public _jots;
 
+    /**
+     * @notice Synthetic NFT Address  for this collection
+     */
+    address public erc721address; 
+
     IUniswapV2Router02 public uniswapV2Router;
 
     // solhint-disable-next-line
-    constructor() ERC721("Privi Colecction Token", "PCT") {}
+    constructor() {}
 
     function initialize(
-        string calldata _name,
-        string calldata _symbol,
         address _jotAddress,
-        address originalCollectionAddress_
+        address originalCollectionAddress_,
+        address _erc721address
     ) external initializer {
-        _proxiedName = _name;
-        _proxiedSymbol = _symbol;
 
         jotAddress = _jotAddress;
+        erc721address = _erc721address;
         _originalCollectionAddress = originalCollectionAddress_;
         _syntheticProtocolRouterAddress = msg.sender;
 
         _setupRole(ROUTER, msg.sender);
+
     }
 
     /**
@@ -97,17 +98,9 @@ contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
     /**
      * @notice Get the owner of the NFT
      */
-    function getNFTOwner(uint256 tokenId) private view returns (address) {
-        //TODO: get owner from Oracle
-        return address(0);
-    }
-
-    /**
-     * @notice Get the owner of the NFT
-     */
     function getSyntheticNFTOwner(uint256 tokenId) private view returns (address) {
         //TODO: get owner from Oracle
-        return ownerOf(tokenId);
+        return IERC721(erc721address).ownerOf(tokenId);
     }
 
     /**
@@ -123,7 +116,7 @@ contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
      * been already minted.
      */
     function isSyntheticNFTCreated(uint256 tokenId) public view returns (bool) {
-        return _tokens[tokenId];
+        return ISyntheticNFT(erc721address).exists(tokenId);
     }
 
     /**
@@ -144,9 +137,7 @@ contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
         string memory metadata
     ) private {
         require(isSyntheticNFTCreated(tokenId) == false, "Synthetic NFT already generated!");
-        _safeMint(to, tokenId);
-        _tokens[tokenId] = true;
-        _tokenMetadata[tokenId] = metadata;
+        ISyntheticNFT(erc721address).safeMint(to, tokenId, metadata);
     }
 
     /**
@@ -171,9 +162,7 @@ contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
         string memory metadata = getNFTMetadata(tokenId);
         generateSyntheticNFT(msg.sender, tokenId, metadata);
 
-        IJot jot = IJot(jotAddress);
-
-        jot.safeMint(address(this), jotSupply);
+        IJot(jotAddress).safeMint(address(this), jotSupply);
 
         uint256 sellingSupply = (jotSupply - supplyToKeep) / 2;
         uint256 liquiditySupply = (jotSupply - supplyToKeep) / 2;
@@ -289,9 +278,7 @@ contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
      * @dev burn a token
      */
     function safeBurn(uint256 tokenId) public onlyRole(ROUTER) {
-        _burn(tokenId);
-        _tokens[tokenId] = false;
-        _tokenMetadata[tokenId] = "";
+        ISyntheticNFT(erc721address).safeBurn(tokenId);
         _tokenCounter.decrement();
     }
 
@@ -299,25 +286,10 @@ contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
         return _jots[tokenId].ownerSupply;
     }
 
-    /**
-     * @dev Returns the name of the token.
-     */
-    function name() public view virtual override returns (string memory) {
-        return _proxiedName;
-    }
-
-    /**
-     * @dev Returns the symbol of the token, usually a shorter version of the
-     * name.
-     */
-    function symbol() public view virtual override returns (string memory) {
-        return _proxiedSymbol;
-    }
-
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721, AccessControl)
+        override
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
