@@ -2,7 +2,6 @@
 pragma solidity ^0.8.4;
 
 struct JotsData {
-    address nftOwner;
     uint256 ownerSupply;
     uint256 sellingSupply;
     uint256 soldSupply;

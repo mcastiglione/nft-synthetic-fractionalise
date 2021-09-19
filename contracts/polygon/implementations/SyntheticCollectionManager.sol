@@ -103,6 +103,14 @@ contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
     }
 
     /**
+     * @notice Get the owner of the NFT
+     */
+    function getSyntheticNFTOwner(uint256 tokenId) private view returns (address) {
+        //TODO: get owner from Oracle
+        return ownerOf(tokenId);
+    }
+
+    /**
      * @notice returns the Quickswap pool address
      */
     function poolAddress() public view returns (address) {
@@ -169,10 +177,8 @@ contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
 
         uint256 sellingSupply = (jotSupply - supplyToKeep) / 2;
         uint256 liquiditySupply = (jotSupply - supplyToKeep) / 2;
-        address nftOwner = getNFTOwner(tokenId);
 
         JotsData memory data = JotsData(
-            nftOwner,
             supplyToKeep,
             sellingSupply,
             0,
@@ -224,7 +230,7 @@ contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
      */
 
     function increaseSellingSupply(uint256 tokenId, uint256 amount) public {
-        require(msg.sender == _jots[tokenId].nftOwner, "You are not the owner of the NFT!");
+        require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
         require(_jots[tokenId].ownerSupply >= amount, "You do not have enough tokens left");
         _jots[tokenId].ownerSupply -= amount;
         _jots[tokenId].sellingSupply += amount / 2;
@@ -236,7 +242,7 @@ contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
      * caller must be the owner of the NFT
      */
     function decreaseSellingSupply(uint256 tokenId, uint256 amount) public {
-        require(msg.sender == _jots[tokenId].nftOwner, "You are not the owner of the NFT!");
+        require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
         require(_jots[tokenId].liquiditySupply >= amount / 2, "You do not have enough liquidity left");
         require(_jots[tokenId].sellingSupply >= amount / 2, "You do not have enough selling supply left");
 
@@ -250,7 +256,7 @@ contract SyntheticCollectionManager is ERC721, AccessControl, Initializable {
      * caller must be the owner
      */
     function updatePriceFraction(uint256 tokenId, uint256 newFractionPrice) public {
-        require(msg.sender == _jots[tokenId].nftOwner, "You are not the owner of the NFT!");
+        require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
         _jots[tokenId].fractionPrices = newFractionPrice;
     }
 
