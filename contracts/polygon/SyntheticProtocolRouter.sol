@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./chainlink/RandomNumberConsumer.sol";
 import "./implementations/SyntheticCollectionManager.sol";
 import "./implementations/Jot.sol";
 import "./implementations/JotPool.sol";
@@ -22,7 +23,9 @@ contract SyntheticProtocolRouter is Ownable {
     address private _syntheticNFT;
     address private _auctionManager;
     address private _protocol;
-    address private fundingTokenAddress;
+    address private _fundingTokenAddress;
+    address private _randomConsumerAddress;
+
     /**
      * @notice number of registered collections
      */
@@ -46,10 +49,10 @@ contract SyntheticProtocolRouter is Ownable {
     // a new Synthetic NFT collection manager is registered
     event collectionManagerRegistered(
         uint256 collectionManagerID,
-        address collectionManagerAddress, 
+        address collectionManagerAddress,
         address jotAddress,
-        address jotStakingAddress, 
-        address syntheticNFTAddress, 
+        address jotStakingAddress,
+        address syntheticNFTAddress,
         address quickSwapAddress,
         address auctionAddress
     );
@@ -65,7 +68,8 @@ contract SyntheticProtocolRouter is Ownable {
         address syntheticNFT_,
         address auctionManager_,
         address protocol_,
-        address fundingTokenAddress_
+        address fundingTokenAddress_,
+        address randomConsumerAddress_
     ) {
         swapAddress = _swapAddress;
         _jot = jot_;
@@ -74,7 +78,8 @@ contract SyntheticProtocolRouter is Ownable {
         _syntheticNFT = syntheticNFT_;
         _auctionManager = auctionManager_;
         _protocol = protocol_;
-        fundingTokenAddress = fundingTokenAddress_;
+        _fundingTokenAddress = fundingTokenAddress_;
+        _randomConsumerAddress = randomConsumerAddress_;
     }
 
     /**
@@ -96,7 +101,6 @@ contract SyntheticProtocolRouter is Ownable {
     ) public {
         address collectionAddress;
 
-
         // Checks whether a collection is registered or not
         // If not registered, then register it and increase the Vault counter
         if (!isSyntheticCollectionRegistered(collection)) {
@@ -106,7 +110,7 @@ contract SyntheticProtocolRouter is Ownable {
                 string(abi.encodePacked("Privi Jot ", originalName)),
                 string(abi.encodePacked("JOT_", originalSymbol)),
                 swapAddress,
-                fundingTokenAddress
+                _fundingTokenAddress
             );
 
             // deploys a minimal proxy contract from the jotPool contract implementation
@@ -117,18 +121,21 @@ contract SyntheticProtocolRouter is Ownable {
 
             // deploys a minimal proxy contract from the collectionManager contract implementation
             collectionAddress = Clones.clone(_collectionManager);
-            SyntheticCollectionManager(collectionAddress).initialize(
+            SyntheticCollectionManager collectionContract = SyntheticCollectionManager(collectionAddress);
+            collectionContract.initialize(
                 jotAddress,
                 collection,
                 syntheticNFTAddress,
                 _auctionManager,
                 _protocol,
-                fundingTokenAddress,
+                _fundingTokenAddress,
                 jotPoolAddress
             );
 
+            collectionContract.grantRole(collectionContract.RANDOM_ORACLE(), _randomConsumerAddress);
+
             SyntheticNFT(syntheticNFTAddress).initialize(
-                string(abi.encodePacked("Privi Synthetic ", originalName)), 
+                string(abi.encodePacked("Privi Synthetic ", originalName)),
                 string(abi.encodePacked("pS_", originalSymbol)),
                 collectionAddress
             );
@@ -139,6 +146,10 @@ contract SyntheticProtocolRouter is Ownable {
                 jotStakingAddress: jotPoolAddress,
                 syntheticNFTAddress: syntheticNFTAddress
             });
+
+            // whitelist the new collection contract on the random number consumer
+            RandomNumberConsumer(_randomConsumerAddress).whitelistCollection(collectionAddress);
+
             emit collectionManagerRegistered(
                 protocolVaults.current(),
                 collectionAddress,
@@ -146,7 +157,8 @@ contract SyntheticProtocolRouter is Ownable {
                 jotPoolAddress,
                 syntheticNFTAddress,
                 swapAddress,
-                _auctionManager);
+                _auctionManager
+            );
 
             protocolVaults.increment();
 

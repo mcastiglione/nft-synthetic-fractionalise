@@ -11,23 +11,25 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   let auctionsManager = await ethers.getContract('AuctionsManager');
   let syntheticNFT = await ethers.getContract('SyntheticNFT');
   let protocol = await ethers.getContract('ProtocolParameters');
+  let randomConsumer = await ethers.getContract('RandomNumberConsumer');
 
   await deploy('SyntheticProtocolRouter', {
     from: deployer,
     log: true,
     args: [
-      constants.ZERO_ADDRESS, 
-      jot.address, 
-      jotPool.address, 
-      collectionManager.address, 
-      syntheticNFT.address, 
-      auctionsManager.address, 
-      protocol.address, 
-      constants.ZERO_ADDRESS
+      constants.ZERO_ADDRESS,
+      jot.address,
+      jotPool.address,
+      collectionManager.address,
+      syntheticNFT.address,
+      auctionsManager.address,
+      protocol.address,
+      constants.ZERO_ADDRESS,
+      randomConsumer.address,
     ],
   });
 };
- 
+
 module.exports.tags = ['synthetic_router'];
 module.exports.dependencies = [
   'auctions_manager',
