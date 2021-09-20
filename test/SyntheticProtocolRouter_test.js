@@ -14,12 +14,6 @@ describe('SyntheticProtocolRouter', async function () {
   });
 
   it('should be able to register an NFT', async () => {
-    // address collection,
-    //     uint256 tokenId,
-    //     uint256 supplyToKeep,
-    //     uint256 priceFraction,
-    //     string memory originalName,
-    //     string memory originalSymbol
     await router.registerNFT('0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087', '1', 10, 5, 'My Collection', 'MYC');
   });
 });
