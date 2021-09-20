@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
 import "./Structs.sol";
@@ -51,6 +52,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     address public jotAddress;
 
     /**
+     * @notice funding token address
+     */
+    address public fundingTokenAddress;
+
+    /**
      * @notice Jot data for each token
      */
     mapping(uint256 => JotsData) public _jots;
@@ -70,15 +76,16 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address originalCollectionAddress_,
         address _erc721address,
         address auctionManagerAddress,
-        address protocol_
+        address protocol_,
+        address fundingTokenAddress_
     ) external initializer {
         jotAddress = _jotAddress;
         erc721address = _erc721address;
         _originalCollectionAddress = originalCollectionAddress_;
         _syntheticProtocolRouterAddress = msg.sender;
         protocol = ProtocolParameters(protocol_);
-
         jotsSupply = protocol.jotsSupply();
+        fundingTokenAddress = fundingTokenAddress_;
 
         _setupRole(ROUTER, msg.sender);
 
@@ -213,12 +220,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
-     * @notice allows the caller to buy Jots
-     */
-    function BuyJotTokens(uint256 tokenId) public payable {
-        // Calculate amount to be bought
-        uint256 amount = msg.value / _jots[tokenId].fractionPrices;
-        require(amount > 0, "You need to send some ether");
+    * @notice allows the caller to buy jots using the Funding token
+    */
+    function BuyJotTokens(uint256 tokenId, uint256 buyAmount) public {
+        amount = buyAmount * _jots[tokenId].fractionPrices;
+        require(amount > 0, "Amount can't be zero!");
 
         // Calculate amount left
         uint256 amountLeft = _jots[tokenId].sellingSupply - _jots[tokenId].soldSupply;
@@ -233,17 +239,20 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // Can't sell zero tokens
         require(amount != 0, "No tokens left!");
 
+        // Transfer funding tokens
+        IERC20(fundingTokenAddress).transferFrom(msg.sender, address(this), amount);
+
         // Transfer Jots
-        IJot(jotAddress).transferFrom(address(this), msg.sender, amount);
+        IJot(jotAddress).transferFrom(address(this), msg.sender, buyAmount);
 
         //Increase sold supply (amount in token) and liquidity sold (amount in ether)
-        _jots[tokenId].soldSupply += amount;
-        _jots[tokenId].liquiditySold += msg.value;
+        _jots[tokenId].soldSupply += buyAmount;
+        _jots[tokenId].liquiditySold += amount;
 
         //If all jots have been sold, then add liquidity
         if (amount == amountLeft) {
             addLiquidityToPool(tokenId);
-        }
+        }   
     }
 
     /**
@@ -292,10 +301,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // approve token transfer to cover all possible scenarios
         IJot(jotAddress).approve(address(uniswapV2Router), liquiditySupply);
 
+        IERC20(fundingTokenAddress).approve(address(uniswapV2Router), liquiditySold);
+
         // add the liquidity
-        uniswapV2Router.addLiquidityETH{value: liquiditySold}(
+        uniswapV2Router.addLiquidity(
             jotAddress,
+            fundingTokenAddress,
             liquiditySupply,
+            liquiditySold,
             0, // slippage is unavoidable
             0, // slippage is unavoidable
             address(0),

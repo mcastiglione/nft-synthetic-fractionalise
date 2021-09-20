@@ -26,7 +26,7 @@ contract Jot is ERC20, AccessControl, Initializable {
     // solhint-disable-next-line
     constructor() ERC20("Privi Jot Token Implementation", "pJOTI") {}
 
-    function initialize(string calldata _name, string calldata _symbol, address swapAddress) external initializer {
+    function initialize(string calldata _name, string calldata _symbol, address swapAddress, address fundingTokenAddress) external initializer {
         _proxiedName = _name;
         _proxiedSymbol = _symbol;
 
@@ -36,7 +36,7 @@ contract Jot is ERC20, AccessControl, Initializable {
 		uniswapV2Router = _uniswapV2Router;
 
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
-			.createPair(address(this), _uniswapV2Router.WETH());
+			.createPair(address(this), fundingTokenAddress);
     }
 
 
