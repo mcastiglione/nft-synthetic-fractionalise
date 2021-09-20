@@ -16,7 +16,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     log: true,
     args: [
-      constants.ZERO_ADDRESS, 
+      "0xbdd4e5660839a088573191A9889A262c0Efc0983", //constants.ZERO_ADDRESS, 
       jot.address, 
       jotPool.address, 
       collectionManager.address, 
