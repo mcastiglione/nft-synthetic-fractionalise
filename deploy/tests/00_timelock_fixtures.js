@@ -31,14 +31,15 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     log: true,
     args: [],
-  })
+  });
 
   const defaultParameters = {
     jotsSupply: 100,
     flippingInterval: String(time.duration.days(1)),
     flippingReward: 1,
     flippingAmount: 1,
-    flipCoinGenerator: mockFCG.address
+    auctionDuration: String(time.duration.weeks(1)),
+    flipCoinGenerator: mockFCG.address,
   };
 
   await deploy('ProtocolParameters', {
