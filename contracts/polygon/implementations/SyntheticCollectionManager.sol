@@ -223,7 +223,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     * @notice allows the caller to buy jots using the Funding token
     */
     function BuyJotTokens(uint256 tokenId, uint256 buyAmount) public {
-        amount = buyAmount * _jots[tokenId].fractionPrices;
+        uint256 amount = buyAmount * _jots[tokenId].fractionPrices;
         require(amount > 0, "Amount can't be zero!");
 
         // Calculate amount left

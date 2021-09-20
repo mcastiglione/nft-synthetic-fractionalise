@@ -22,7 +22,7 @@ contract SyntheticProtocolRouter is Ownable {
     address private _syntheticNFT;
     address private _auctionManager;
     address private _protocol;
-
+    address private fundingTokenAddress;
     /**
      * @notice number of registered collections
      */
@@ -44,7 +44,7 @@ contract SyntheticProtocolRouter is Ownable {
      */
 
     // a new Synthetic NFT collection manager is registered
-    event collectionManagerRegistered(address syntheticNFTAddress, string originalName, string originalSymbol, address jotPoolAddress, address jotAddress);
+    event collectionManagerRegistered(address syntheticNFTAddress, address jotPoolAddress, address jotAddress);
 
     /**
      * Constructor
@@ -56,7 +56,8 @@ contract SyntheticProtocolRouter is Ownable {
         address collectionManager_,
         address syntheticNFT_,
         address auctionManager_,
-        address protocol_
+        address protocol_,
+        address fundingTokenAddress_
     ) {
         swapAddress = _swapAddress;
         _jot = jot_;
@@ -65,6 +66,7 @@ contract SyntheticProtocolRouter is Ownable {
         _syntheticNFT = syntheticNFT_;
         _auctionManager = auctionManager_;
         _protocol = protocol_;
+        fundingTokenAddress = fundingTokenAddress_;
     }
 
     /**
@@ -73,15 +75,13 @@ contract SyntheticProtocolRouter is Ownable {
      *  @param tokenId the token id
      *  @param supplyToKeep supply to keep
      *  @param priceFraction the price for a fraction
-     *  @param originalName the original collection name
-     *  @param originalSymbol the original collection symbol
-     *  @param originalSymbol the original address of the collection
      */
     function registerNFT(
         address collection,
         uint256 tokenId,
         uint256 supplyToKeep,
         uint256 priceFraction
+
     ) public onlyOwner {
         address collectionAddress;
 
@@ -94,7 +94,8 @@ contract SyntheticProtocolRouter is Ownable {
             Jot(jotAddress).initialize(
                 string(abi.encodePacked("Privi Jot ")),
                 string(abi.encodePacked("Jot")),
-                swapAddress
+                swapAddress,
+                fundingTokenAddress
             );
 
             // deploys a minimal proxy contract from the jotPool contract implementation
@@ -111,7 +112,8 @@ contract SyntheticProtocolRouter is Ownable {
                 collection,
                 syntheticNFTAddress,
                 _auctionManager,
-                _protocol
+                _protocol,
+                fundingTokenAddress
             );
 
             collections[collection] = SyntheticCollection({
@@ -120,7 +122,7 @@ contract SyntheticProtocolRouter is Ownable {
                 jotStakingAddress: jotPoolAddress,
                 syntheticNFTAddress: syntheticNFTAddress
             });
-            emit collectionManagerRegistered(syntheticNFTAddress, originalName, originalSymbol, jotPoolAddress, jotAddress);
+            emit collectionManagerRegistered(syntheticNFTAddress, jotPoolAddress, jotAddress);
 
             protocolVaults.increment();
 

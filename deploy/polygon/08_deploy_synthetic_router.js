@@ -15,10 +15,19 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await deploy('SyntheticProtocolRouter', {
     from: deployer,
     log: true,
-    args: [constants.ZERO_ADDRESS, jot.address, jotPool.address, collectionManager.address, syntheticNFT.address, auctionsManager.address, protocol.address],
+    args: [
+      constants.ZERO_ADDRESS, 
+      jot.address, 
+      jotPool.address, 
+      collectionManager.address, 
+      syntheticNFT.address, 
+      auctionsManager.address, 
+      protocol.address, 
+      constants.ZERO_ADDRESS
+    ],
   });
 };
-
+ 
 module.exports.tags = ['synthetic_router'];
 module.exports.dependencies = [
   'auctions_manager',
