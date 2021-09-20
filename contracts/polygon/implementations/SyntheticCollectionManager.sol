@@ -11,8 +11,9 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../chainlink/RandomNumberConsumer.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
-import "./Structs.sol";
 import "../governance/ProtocolParameters.sol";
+import "./Jot.sol";
+import "./Structs.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
@@ -223,7 +224,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         string memory metadata = getNFTMetadata(tokenId);
         generateSyntheticNFT(msg.sender, tokenId, metadata);
 
-        IJot(jotAddress).safeMint(address(this), jotsSupply);
+        Jot(jotAddress).mint(address(this), jotsSupply);
 
         uint256 sellingSupply = (jotsSupply - supplyToKeep) / 2;
         uint256 liquiditySupply = (jotsSupply - supplyToKeep) / 2;

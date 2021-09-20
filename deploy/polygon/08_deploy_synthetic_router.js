@@ -13,7 +13,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   let protocol = await ethers.getContract('ProtocolParameters');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
 
-  await deploy('SyntheticProtocolRouter', {
+  let router = await deploy('SyntheticProtocolRouter', {
     from: deployer,
     log: true,
     args: [
@@ -28,6 +28,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       randomConsumer.address,
     ],
   });
+
+  await randomConsumer.transferOwnership(router.address);
 };
 
 module.exports.tags = ['synthetic_router'];
@@ -36,4 +38,5 @@ module.exports.dependencies = [
   'jot_implementation',
   'jot_pool_implementation',
   'synthetic_manager_implementation',
+  'protocol_parameters',
 ];

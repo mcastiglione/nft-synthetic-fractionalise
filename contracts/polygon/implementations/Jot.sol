@@ -19,26 +19,32 @@ contract Jot is ERC20, AccessControl, Initializable {
     IUniswapV2Router02 public uniswapV2Router;
 
     /**
-    * @notice pair address
+     * @notice pair address
      */
     address public uniswapV2Pair;
 
     // solhint-disable-next-line
     constructor() ERC20("Privi Jot Token Implementation", "pJOTI") {}
 
-    function initialize(string calldata _name, string calldata _symbol, address swapAddress, address fundingTokenAddress) external initializer {
+    function initialize(
+        string calldata _name,
+        string calldata _symbol,
+        address swapAddress,
+        address fundingTokenAddress
+    ) external initializer {
         _proxiedName = _name;
         _proxiedSymbol = _symbol;
 
-        _setupRole(MINTER, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(swapAddress);
-		uniswapV2Router = _uniswapV2Router;
+        uniswapV2Router = _uniswapV2Router;
 
-        uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
-			.createPair(address(this), fundingTokenAddress);
+        // uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
+        //     address(this),
+        //     fundingTokenAddress
+        // );
     }
-
 
     function mint(address account, uint256 amount) public onlyRole(MINTER) {
         _mint(account, amount);
