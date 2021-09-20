@@ -13,7 +13,8 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
     flippingInterval: String(time.duration.days(1)),
     flippingReward: 1,
     flippingAmount: 1,
-    flipCoinGenerator: flipcoinGenerator.address
+    auctionDuration: String(time.duration.weeks(1)),
+    flipCoinGenerator: flipcoinGenerator.address,
   };
 
   let owner = governance.address;

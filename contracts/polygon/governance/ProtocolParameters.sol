@@ -42,13 +42,15 @@ contract ProtocolParameters is Ownable {
         uint256 flippingInterval_,
         uint256 flippingReward_,
         uint256 flippingAmount_,
-        address governanceContractAddress_,
-        address flipCoinGenerator_
+        uint256 auctionDuration_,
+        address flipCoinGenerator_,
+        address governanceContractAddress_
     ) {
         jotsSupply = jotsSupply_;
         flippingInterval = flippingInterval_;
         flippingReward = flippingReward_;
         flippingAmount = flippingAmount_;
+        auctionDuration = auctionDuration_;
         flipCoinGenerator = flipCoinGenerator_;
 
         // transfer ownership
