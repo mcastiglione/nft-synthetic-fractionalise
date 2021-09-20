@@ -23,11 +23,15 @@ contract ProtocolParameters is Ownable {
     // the duration of an NFT auction in seconds
     uint256 public auctionDuration;
 
+    // the implementation of FlipCoinGenerator
+    address public flipCoinGenerator;
+
     event JotsSupplyUpdated(uint256 value);
     event FlippingIntervalUpdated(uint256 value);
     event FlippingRewardUpdated(uint256 value);
     event FlippingAmountUpdated(uint256 value);
     event AuctionDurationUpdated(uint256 value);
+    event FlipCoinGeneratorUpdated(address value);
 
     /**
      * @dev sets the default (initial) values of the parameters
@@ -38,12 +42,14 @@ contract ProtocolParameters is Ownable {
         uint256 flippingInterval_,
         uint256 flippingReward_,
         uint256 flippingAmount_,
-        address governanceContractAddress_
+        address governanceContractAddress_,
+        address flipCoinGenerator_
     ) {
         jotsSupply = jotsSupply_;
         flippingInterval = flippingInterval_;
         flippingReward = flippingReward_;
         flippingAmount = flippingAmount_;
+        flipCoinGenerator = flipCoinGenerator_;
 
         // transfer ownership
         transferOwnership(governanceContractAddress_);
@@ -72,5 +78,10 @@ contract ProtocolParameters is Ownable {
     function setAuctionDuration(uint256 auctionDuration_) external onlyOwner {
         auctionDuration = auctionDuration_;
         emit AuctionDurationUpdated(auctionDuration_);
+    }
+
+    function setFlipCoinGenerator(address flipCoinGenerator_) external onlyOwner {
+        flipCoinGenerator = flipCoinGenerator_;
+        emit FlipCoinGeneratorUpdated(flipCoinGenerator_);
     }
 }

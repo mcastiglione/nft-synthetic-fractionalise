@@ -330,7 +330,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function flipJot(uint256 tokenId, uint256 prediction) public {
         require(isAllowedToFlip(tokenId), "Flip is not allowed yet");
         _jots[tokenId].lastFlipTime = block.timestamp;
-        uint256 outcome = 0; //TODO generate outcome using FlipCoinGenerator.sol
+        uint8 outcome = 0; //TODO generate outcome using FlipCoinGenerator.sol
         uint256 poolAmount;
         if (outcome == 0) {
             _jots[tokenId].ownerSupply -= protocol.flippingAmount();

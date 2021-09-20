@@ -3,6 +3,9 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
+interface IFlipCoinGenerator {
+	function generateRandom() external view returns(uint8);
+}
 
 interface ISyntheticNFT is IERC721Metadata {
 	function exists(uint256 tokenId) external view returns (bool);		
