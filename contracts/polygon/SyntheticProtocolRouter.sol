@@ -71,11 +71,10 @@ contract SyntheticProtocolRouter is Ownable {
         address collection,
         uint256 tokenId,
         uint256 supplyToKeep,
-        uint256 priceFraction,
-        string memory originalName,
-        string memory originalSymbol
+        uint256 priceFraction
     ) public onlyOwner {
         address collectionAddress;
+
 
         // Checks whether a collection is registered or not
         // If not registered, then register it and increase the Vault counter
@@ -83,8 +82,8 @@ contract SyntheticProtocolRouter is Ownable {
             // deploys a minimal proxy contract from the jot contract implementation
             address jotAddress = Clones.clone(_jot);
             Jot(jotAddress).initialize(
-                string(abi.encodePacked("Privi Jot ", originalName)),
-                string(abi.encodePacked("Jot", originalSymbol)),
+                string(abi.encodePacked("Privi Jot ")),
+                string(abi.encodePacked("Jot")),
                 swapAddress
             );
 
@@ -93,7 +92,7 @@ contract SyntheticProtocolRouter is Ownable {
             JotPool(jotPoolAddress).initialize(jotAddress);
 
             address syntheticNFTAddress = Clones.clone(_syntheticNFT);
-            SyntheticNFT(syntheticNFTAddress).initialize(originalName, originalSymbol);
+            SyntheticNFT(syntheticNFTAddress).initialize("NFT", "NFT");
 
             // deploys a minimal proxy contract from the collectionManager contract implementation
             collectionAddress = Clones.clone(_collectionManager);
