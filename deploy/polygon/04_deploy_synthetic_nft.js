@@ -2,9 +2,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  let jot = await ethers.getContract('Jot');
-
-  await deploy('JotPool', {
+  await deploy('SyntheticNFT', {
     from: deployer,
     log: true,
     args: [],
