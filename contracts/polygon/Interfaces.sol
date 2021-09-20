@@ -5,8 +5,6 @@ import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
 interface IFlipCoinGenerator {
     function generateRandom() external view returns (uint8);
-
-    function requestRandomSeed() external;
 }
 
 interface ISyntheticNFT is IERC721Metadata {

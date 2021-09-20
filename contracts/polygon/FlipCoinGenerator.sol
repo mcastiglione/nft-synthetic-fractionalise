@@ -15,9 +15,5 @@ contract FlipCoinGenerator is IFlipCoinGenerator, VRFConsumerBase {
         return 0;
     }
 
-    function requestRandomSeed() external override {
-        // requestRandomness();
-    }
-
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {}
 }
