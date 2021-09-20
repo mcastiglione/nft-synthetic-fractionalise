@@ -23,12 +23,13 @@ contract SyntheticNFT is ERC721, Initializable, AccessControl {
 
     function initialize(
         string memory name_,
-        string memory symbol_
+        string memory symbol_,
+        address collectionManager
     ) external initializer {
         _proxiedName = name_;
         _proxiedSymbol = symbol_;
 
-        _setupRole(MANAGER, msg.sender);
+        _setupRole(MANAGER, collectionManager);
     }
 
     /**
