@@ -114,10 +114,6 @@ contract SyntheticProtocolRouter is Ownable {
             JotPool(jotPoolAddress).initialize(jotAddress);
 
             address syntheticNFTAddress = Clones.clone(_syntheticNFT);
-            SyntheticNFT(syntheticNFTAddress).initialize(
-                string(abi.encodePacked("Privi Synthetic ", originalName)), 
-                string(abi.encodePacked("pS_", originalSymbol))
-            );
 
             // deploys a minimal proxy contract from the collectionManager contract implementation
             collectionAddress = Clones.clone(_collectionManager);
@@ -129,6 +125,12 @@ contract SyntheticProtocolRouter is Ownable {
                 _protocol,
                 fundingTokenAddress,
                 jotPoolAddress
+            );
+
+            SyntheticNFT(syntheticNFTAddress).initialize(
+                string(abi.encodePacked("Privi Synthetic ", originalName)), 
+                string(abi.encodePacked("pS_", originalSymbol)),
+                collectionAddress
             );
 
             collections[collection] = SyntheticCollection({
