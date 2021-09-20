@@ -44,7 +44,15 @@ contract SyntheticProtocolRouter is Ownable {
      */
 
     // a new Synthetic NFT collection manager is registered
-    event collectionManagerRegistered(address syntheticNFTAddress, address jotPoolAddress, address jotAddress);
+    event collectionManagerRegistered(
+        uint256 collectionManagerID,
+        address collectionManagerAddress, 
+        address jotAddress,
+        address jotStakingAddress, 
+        address syntheticNFTAddress, 
+        address quickSwapAddress,
+        address auctionAddress
+    );
 
     /**
      * Constructor
@@ -122,7 +130,14 @@ contract SyntheticProtocolRouter is Ownable {
                 jotStakingAddress: jotPoolAddress,
                 syntheticNFTAddress: syntheticNFTAddress
             });
-            emit collectionManagerRegistered(syntheticNFTAddress, jotPoolAddress, jotAddress);
+            emit collectionManagerRegistered(
+                protocolVaults.current(),
+                collectionAddress,
+                jotAddress,
+                jotPoolAddress,
+                syntheticNFTAddress,
+                swapAddress,
+                _auctionManager);
 
             protocolVaults.increment();
 
