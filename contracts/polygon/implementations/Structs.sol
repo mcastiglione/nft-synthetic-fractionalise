@@ -8,4 +8,5 @@ struct JotsData {
     uint256 liquiditySupply;
     uint256 liquiditySold;
     uint256 fractionPrices;
+    uint256 lastFlipTime;
 }

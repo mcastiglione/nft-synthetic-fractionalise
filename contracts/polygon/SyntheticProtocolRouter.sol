@@ -127,7 +127,8 @@ contract SyntheticProtocolRouter is Ownable {
                 syntheticNFTAddress,
                 _auctionManager,
                 _protocol,
-                fundingTokenAddress
+                fundingTokenAddress,
+                jotPoolAddress
             );
 
             collections[collection] = SyntheticCollection({

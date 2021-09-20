@@ -34,7 +34,7 @@ contract Governance is
     function proposalThreshold() public pure override returns (uint256) {
         return 5e18;
     }
-
+    
     // The following functions are overrides required by Solidity.
 
     function quorum(uint256 blockNumber)

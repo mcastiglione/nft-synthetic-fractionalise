@@ -7,12 +7,15 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
 import "./Structs.sol";
 import "../governance/ProtocolParameters.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
+    using SafeERC20 for IERC20;
+
     bytes32 public constant ROUTER = keccak256("ROUTER");
     bytes32 public constant AUCTION_MANAGER = keccak256("AUCTION_MANAGER");
 
@@ -64,9 +67,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice Synthetic NFT Address  for this collection
      */
-    address public erc721address; 
+    address public erc721address;
 
     IUniswapV2Router02 public uniswapV2Router;
+
+    address public jotPool;
 
     // solhint-disable-next-line
     constructor() {}
@@ -77,13 +82,16 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address _erc721address,
         address auctionManagerAddress,
         address protocol_,
-        address fundingTokenAddress_
+        address fundingTokenAddress_,
+        address jotPool_
     ) external initializer {
         jotAddress = _jotAddress;
         erc721address = _erc721address;
         _originalCollectionAddress = originalCollectionAddress_;
         _syntheticProtocolRouterAddress = msg.sender;
         protocol = ProtocolParameters(protocol_);
+        jotPool = jotPool_;
+
         jotsSupply = protocol.jotsSupply();
         fundingTokenAddress = fundingTokenAddress_;
 
@@ -207,14 +215,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 sellingSupply = (jotsSupply - supplyToKeep) / 2;
         uint256 liquiditySupply = (jotsSupply - supplyToKeep) / 2;
 
-        JotsData memory data = JotsData(
-            supplyToKeep,
-            sellingSupply,
-            0,
-            liquiditySupply,
-            0,
-            priceFraction
-        );
+        JotsData memory data = JotsData(supplyToKeep, sellingSupply, 0, liquiditySupply, 0, priceFraction, 0);
 
         _jots[tokenId] = data;
     }
@@ -316,9 +317,38 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         );
     }
 
-    function isAllowedToFlip(uint256 tokenId) public view {}
+    function isAllowedToFlip(uint256 tokenId) public view returns (bool) {
+        return
+            block.timestamp - _jots[tokenId].lastFlipTime >= protocol.flippingInterval() &&
+            IERC20(jotAddress).balanceOf(jotPool) > 0 &&
+            isSyntheticNFTFractionalised(tokenId);
+    }
 
-    function flipJot(uint256 tokenId, uint256 prediction) public {}
+    function flipJot(uint256 tokenId, uint256 prediction) public {
+        require(isAllowedToFlip(tokenId), "Flip is not allowed yet");
+        _jots[tokenId].lastFlipTime = block.timestamp;
+        uint8 outcome = IFlipCoinGenerator(protocol.flipCoinGenerator()).generateRandom();
+        uint256 poolAmount;
+        if (outcome == 0) {
+            _jots[tokenId].ownerSupply -= protocol.flippingAmount();
+            if (outcome != prediction) {
+                poolAmount = protocol.flippingAmount();
+            } else {
+                poolAmount = protocol.flippingAmount() - protocol.flippingReward();
+                IERC20(jotAddress).safeTransfer(msg.sender, protocol.flippingReward());
+            }
+            IERC20(jotAddress).safeTransfer(jotPool, poolAmount);
+        } else {
+            _jots[tokenId].ownerSupply += protocol.flippingAmount();
+            if (outcome != prediction) {
+                poolAmount = protocol.flippingAmount();
+            } else {
+                poolAmount = protocol.flippingAmount() - protocol.flippingReward();
+                IERC20(jotAddress).safeTransfer(msg.sender, protocol.flippingReward());
+            }
+            IERC20(jotAddress).safeTransferFrom(jotPool, address(this), poolAmount);
+        }
+    }
 
     /**
      * @dev burn a token
@@ -332,12 +362,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         return _jots[tokenId].ownerSupply;
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }
