@@ -7,10 +7,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-<<<<<<< HEAD
-=======
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
->>>>>>> Initial implementation of flipJot
 import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
 import "./Structs.sol";
