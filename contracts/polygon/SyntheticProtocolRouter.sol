@@ -62,6 +62,12 @@ contract SyntheticProtocolRouter is Ownable {
         address auctionAddress
     );
 
+    event tokenRegistered(
+        address collectionManagerAddress,
+        uint256 collectionManagerID,
+        uint256 syntheticTokenId
+    );
+
     /**
      * Constructor
      */
@@ -105,7 +111,7 @@ contract SyntheticProtocolRouter is Ownable {
         string memory originalSymbol
     ) public {
         address collectionAddress;
-
+        uint256 collectionID = protocolVaults.current();
         // Checks whether a collection is registered or not
         // If not registered, then register it and increase the Vault counter
         if (!isSyntheticCollectionRegistered(collection)) {
@@ -149,7 +155,7 @@ contract SyntheticProtocolRouter is Ownable {
                 collectionAddress
             );
 
-            uint256 collectionID = protocolVaults.current();
+            
 
             collections[collection] = SyntheticCollection({
                 collectionID: collectionID,
@@ -158,7 +164,7 @@ contract SyntheticProtocolRouter is Ownable {
                 jotPoolAddress: jotPoolAddress,
                 syntheticNFTAddress: syntheticNFTAddress
             });
-
+            
             collectionIdToAddress[collectionID] = collectionAddress;
 
             // whitelist the new collection contract on the random number consumer
@@ -184,6 +190,8 @@ contract SyntheticProtocolRouter is Ownable {
         SyntheticCollectionManager collectionManager = SyntheticCollectionManager(collectionAddress);
 
         collectionManager.register(tokenId, supplyToKeep, priceFraction);
+
+        emit tokenRegistered(collectionAddress, collectionID, tokenId);
     }
 
     /**
@@ -243,7 +251,7 @@ contract SyntheticProtocolRouter is Ownable {
     function getCollectionID(address collection) public view returns (uint256) {
         return collections[collection].collectionID;
     }
-
+    
     /**
      * @notice get collection address from collection ID
      */
