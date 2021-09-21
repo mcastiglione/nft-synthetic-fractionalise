@@ -18,22 +18,21 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     log: true,
     args: [
-      "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", //constants.ZERO_ADDRESS,
+      '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D', //constants.ZERO_ADDRESS,
       jot.address,
       jotPool.address,
       collectionManager.address,
       syntheticNFT.address,
       auctionsManager.address,
       protocol.address,
-      funding.address,//constants.ZERO_ADDRESS,
+      funding.address, //constants.ZERO_ADDRESS,
       randomConsumer.address,
     ],
   });
 
-  await syntheticNFT.initialize("TEST", "TEST", router.address);
+  await syntheticNFT.initialize('TEST', 'TEST', router.address);
 
   await randomConsumer.transferOwnership(router.address);
-
 };
 
 module.exports.tags = ['synthetic_router'];
