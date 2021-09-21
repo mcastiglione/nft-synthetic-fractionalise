@@ -9,6 +9,7 @@ import "./implementations/SyntheticCollectionManager.sol";
 import "./implementations/Jot.sol";
 import "./implementations/JotPool.sol";
 import "./implementations/SyntheticNFT.sol";
+import "./auctions/AuctionsManager.sol";
 import "./Structs.sol";
 
 contract SyntheticProtocolRouter is Ownable {
@@ -143,6 +144,11 @@ contract SyntheticProtocolRouter is Ownable {
                 jotPoolAddress
             );
 
+            AuctionsManager(_auctionManager).grantRole(
+                AuctionsManager(_auctionManager).COLLECTION_MANAGER(),
+                collectionAddress
+            );
+
             collectionContract.grantRole(collectionContract.RANDOM_ORACLE(), _randomConsumerAddress);
             Jot(jotAddress).grantRole(Jot(jotAddress).MINTER(), collectionAddress);
 
@@ -155,8 +161,6 @@ contract SyntheticProtocolRouter is Ownable {
                 collectionAddress
             );
 
-            
-
             collections[collection] = SyntheticCollection({
                 collectionID: collectionID,
                 collectionManagerAddress: collectionAddress,
@@ -164,7 +168,7 @@ contract SyntheticProtocolRouter is Ownable {
                 jotPoolAddress: jotPoolAddress,
                 syntheticNFTAddress: syntheticNFTAddress
             });
-            
+
             collectionIdToAddress[collectionID] = collectionAddress;
 
             // whitelist the new collection contract on the random number consumer
@@ -251,7 +255,7 @@ contract SyntheticProtocolRouter is Ownable {
     function getCollectionID(address collection) public view returns (uint256) {
         return collections[collection].collectionID;
     }
-    
+
     /**
      * @notice get collection address from collection ID
      */

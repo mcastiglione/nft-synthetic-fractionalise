@@ -55,6 +55,9 @@ contract Jot is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
         _mint(account, amount);
     }
 
+    /**
+     * @dev allows to send funds from a managed account (infinite allowance)
+     */
     function transferFromManaged(
         address sender,
         address recipient,

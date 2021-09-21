@@ -63,7 +63,7 @@ module.exports = {
     deployer: 0,
   },
   gasReporter: {
-    enabled: false,
+    enabled: true,
   },
   solidity: {
     compilers: [

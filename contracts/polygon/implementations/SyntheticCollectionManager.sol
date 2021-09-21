@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../extensions/IERC20ManagedAccounts.sol";
+import "../auctions/AuctionsManager.sol";
 import "../chainlink/RandomNumberConsumer.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
@@ -27,6 +28,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     Counters.Counter public _tokenCounter;
 
     address private immutable _randomConsumerAddress;
+    address private _auctionsManagerAddress;
 
     /**
      * @dev mapping the request id with the flip input data
@@ -75,6 +77,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     mapping(uint256 => JotsData) public _jots;
 
+    mapping(uint256 => bool) public lockedNFTs;
+
     /**
      * @notice Synthetic NFT Address  for this collection
      */
@@ -114,6 +118,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         erc721address = _erc721address;
         _originalCollectionAddress = originalCollectionAddress_;
         _syntheticProtocolRouterAddress = msg.sender;
+        _auctionsManagerAddress = auctionManagerAddress;
         protocol = ProtocolParameters(protocol_);
         jotPool = jotPool_;
 
@@ -398,6 +403,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             if (poolAmount > 0) {
                 IERC20ManagedAccounts(jotAddress).transferFromManaged(jotPool, address(this), poolAmount);
             }
+        }
+
+        // lock the nft and make it auctionable
+        if (_jots[flip.tokenId].ownerSupply == 0) {
+            lockedNFTs[flip.tokenId] = true;
+            AuctionsManager(_auctionsManagerAddress).whitelistNFT(flip.tokenId);
         }
 
         emit FlipProcessed(requestId, flip.tokenId, flip.prediction, randomNumber);
