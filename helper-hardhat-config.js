@@ -1,7 +1,7 @@
 const { constants } = require('@openzeppelin/test-helpers');
 
 const networkConfig = {
-  11337: {
+  1337: {
     name: 'localhost',
     linkToken: '0x326C977E6efc84E512bB9C30f76E30c160eD06FB',
     keyHash: '0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4',
