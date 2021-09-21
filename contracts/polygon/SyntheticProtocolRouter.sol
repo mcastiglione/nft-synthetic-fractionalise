@@ -56,7 +56,7 @@ contract SyntheticProtocolRouter is Ownable {
         uint256 collectionManagerID,
         address collectionManagerAddress,
         address jotAddress,
-        address jotStakingAddress,
+        address jotPoolAddress,
         address syntheticNFTAddress,
         address quickSwapAddress,
         address auctionAddress
@@ -215,8 +215,8 @@ contract SyntheticProtocolRouter is Ownable {
     /**
      * @notice getter for Jot Staking Address of a collection
      */
-    function getJotStakingAddress(address collection) public view returns (address) {
-        return collections[collection].jotStakingAddress;
+    function getJotPoolAddress(address collection) public view returns (address) {
+        return collections[collection].jotPoolAddress;
     }
 
     /**
