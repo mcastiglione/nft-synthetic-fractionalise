@@ -15,18 +15,19 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
     flippingAmount: 1,
     auctionDuration: String(time.duration.weeks(1)),
     flipCoinGenerator: flipcoinGenerator.address,
+    governanceContractAddress: governance.address
   };
 
-  let owner = governance.address;
+  //let owner = governance.address;
 
-  if (network.tags.testnet) {
-    owner = deployer;
-  }
+  //if (network.tags.testnet) {
+  //  owner = deployer;
+  //}
 
   await deploy('ProtocolParameters', {
     from: deployer,
     log: true,
-    args: [...Object.values(defaultParameters), owner],
+    args: [...Object.values(defaultParameters)],
   });
 };
 

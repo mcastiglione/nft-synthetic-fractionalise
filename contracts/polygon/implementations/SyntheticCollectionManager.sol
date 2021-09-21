@@ -8,19 +8,29 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../chainlink/RandomNumberConsumer.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
-import "./Structs.sol";
 import "../governance/ProtocolParameters.sol";
+import "./Jot.sol";
+import "./Structs.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
 
     bytes32 public constant ROUTER = keccak256("ROUTER");
     bytes32 public constant AUCTION_MANAGER = keccak256("AUCTION_MANAGER");
+    bytes32 public constant RANDOM_ORACLE = keccak256("RANDOM_ORACLE");
 
     using Counters for Counters.Counter;
     Counters.Counter public _tokenCounter;
+
+    address private immutable _randomConsumerAddress;
+
+    /**
+     * @dev mapping the request id with the flip input data
+     */
+    mapping(bytes32 => Flip) private _flips;
 
     /**
      * @notice the address of the Protocol Router
@@ -73,8 +83,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     address public jotPool;
 
-    // solhint-disable-next-line
-    constructor() {}
+    event CoinFlipped(address indexed player, uint256 indexed tokenId, uint256 prediction, bytes32 requestId);
+    event FlipProcessed(uint256 indexed tokenId, uint256 prediction, bytes32 requestId);
+
+    constructor(address randomConsumerAddress) {
+        _randomConsumerAddress = randomConsumerAddress;
+    }
 
     function initialize(
         address _jotAddress,
@@ -95,8 +109,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         jotsSupply = protocol.jotsSupply();
         fundingTokenAddress = fundingTokenAddress_;
 
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ROUTER, msg.sender);
-
         _setupRole(AUCTION_MANAGER, auctionManagerAddress);
     }
 
@@ -210,7 +224,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         string memory metadata = getNFTMetadata(tokenId);
         generateSyntheticNFT(msg.sender, tokenId, metadata);
 
-        IJot(jotAddress).safeMint(address(this), jotsSupply);
+        Jot(jotAddress).mint(address(this), jotsSupply);
 
         uint256 sellingSupply = (jotsSupply - supplyToKeep) / 2;
         uint256 liquiditySupply = (jotsSupply - supplyToKeep) / 2;
@@ -221,8 +235,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
-    * @notice allows the caller to buy jots using the Funding token
-    */
+     * @notice allows the caller to buy jots using the Funding token
+     */
     function BuyJotTokens(uint256 tokenId, uint256 buyAmount) public {
         uint256 amount = buyAmount * _jots[tokenId].fractionPrices;
         require(amount > 0, "Amount can't be zero!");
@@ -253,7 +267,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         //If all jots have been sold, then add liquidity
         if (amount == amountLeft) {
             addLiquidityToPool(tokenId);
-        }   
+        }
     }
 
     /**
@@ -326,28 +340,42 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function flipJot(uint256 tokenId, uint256 prediction) public {
         require(isAllowedToFlip(tokenId), "Flip is not allowed yet");
-        _jots[tokenId].lastFlipTime = block.timestamp;
-        uint8 outcome = IFlipCoinGenerator(protocol.flipCoinGenerator()).generateRandom();
+        _jots[tokenId].lastFlipTime = block.timestamp; // solhint-disable-line
+
+        bytes32 requestId = RandomNumberConsumer(_randomConsumerAddress).getRandomNumber();
+        _flips[requestId] = Flip({tokenId: tokenId, prediction: prediction});
+
+        emit CoinFlipped(msg.sender, tokenId, prediction, requestId);
+    }
+
+    function processFlipResult(uint256 randomNumber, bytes32 requestId) external onlyRole(RANDOM_ORACLE) {
         uint256 poolAmount;
-        if (outcome == 0) {
-            _jots[tokenId].ownerSupply -= protocol.flippingAmount();
-            if (outcome != prediction) {
-                poolAmount = protocol.flippingAmount();
+        uint256 fAmount = protocol.flippingAmount();
+        uint256 fReward = protocol.flippingReward();
+
+        Flip memory flip = _flips[requestId];
+
+        if (randomNumber == 0) {
+            _jots[flip.tokenId].ownerSupply -= fAmount;
+            if (randomNumber != flip.prediction) {
+                poolAmount = fAmount;
             } else {
-                poolAmount = protocol.flippingAmount() - protocol.flippingReward();
-                IERC20(jotAddress).safeTransfer(msg.sender, protocol.flippingReward());
+                poolAmount = fAmount - fReward;
+                IERC20(jotAddress).safeTransfer(msg.sender, fReward);
             }
             IERC20(jotAddress).safeTransfer(jotPool, poolAmount);
         } else {
-            _jots[tokenId].ownerSupply += protocol.flippingAmount();
-            if (outcome != prediction) {
-                poolAmount = protocol.flippingAmount();
+            _jots[flip.tokenId].ownerSupply += fAmount;
+            if (randomNumber != flip.prediction) {
+                poolAmount = fAmount;
             } else {
-                poolAmount = protocol.flippingAmount() - protocol.flippingReward();
-                IERC20(jotAddress).safeTransfer(msg.sender, protocol.flippingReward());
+                poolAmount = fAmount - fReward;
+                IERC20(jotAddress).safeTransfer(msg.sender, fReward);
             }
             IERC20(jotAddress).safeTransferFrom(jotPool, address(this), poolAmount);
         }
+
+        emit FlipProcessed(flip.tokenId, flip.prediction, requestId);
     }
 
     /**

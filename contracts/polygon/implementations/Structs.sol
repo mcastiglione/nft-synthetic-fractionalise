@@ -10,3 +10,8 @@ struct JotsData {
     uint256 fractionPrices;
     uint256 lastFlipTime;
 }
+
+struct Flip {
+    uint256 tokenId;
+    uint256 prediction;
+}
