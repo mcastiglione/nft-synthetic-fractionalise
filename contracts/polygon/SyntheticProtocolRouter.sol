@@ -43,6 +43,11 @@ contract SyntheticProtocolRouter is Ownable {
     mapping(address => SyntheticCollection) private collections;
 
     /**
+     * @dev get collection address from ID
+     */
+    mapping(uint256 => address) private collectionIdToAddress;
+
+    /**
      * Events
      */
 
@@ -141,18 +146,23 @@ contract SyntheticProtocolRouter is Ownable {
                 collectionAddress
             );
 
+            uint256 collectionID = protocolVaults.current();
+
             collections[collection] = SyntheticCollection({
+                collectionID: collectionID,
                 collectionManagerAddress: collectionAddress,
                 jotAddress: jotAddress,
                 jotStakingAddress: jotPoolAddress,
                 syntheticNFTAddress: syntheticNFTAddress
             });
+            
+            collectionIdToAddress[collectionID] = collectionAddress;
 
             // whitelist the new collection contract on the random number consumer
             RandomNumberConsumer(_randomConsumerAddress).whitelistCollection(collectionAddress);
 
             emit collectionManagerRegistered(
-                protocolVaults.current(),
+                collectionID,
                 collectionAddress,
                 jotAddress,
                 jotPoolAddress,
@@ -210,9 +220,32 @@ contract SyntheticProtocolRouter is Ownable {
     }
 
     /**
-     * @notice getter for Collection Manager Address of a collection
+     * @notice get collection manager address from collection address
      */
     function getCollectionManagerAddress(address collection) public view returns (address) {
         return collections[collection].collectionManagerAddress;
     }
+
+    /**
+     * @notice get collection manager address from collection ID
+     */
+    function getCollectionManagerAddress(uint256 collectionID) public view returns (address) {
+        address collectionAddress = collectionIdToAddress[collectionID];
+        return collections[collectionAddress].collectionManagerAddress;
+    }
+
+    /**
+     * @notice get collection ID from collection address
+     */
+    function getCollectionID(address collection) public view returns (uint256) {
+        return collections[collection].collectionID;
+    }
+    
+    /**
+     * @notice get collection address from collection ID
+     */
+    function getOriginalCollectionAddress(uint256 collectionID) public view returns (address) {
+        return collectionIdToAddress[collectionID];
+    }
+
 }

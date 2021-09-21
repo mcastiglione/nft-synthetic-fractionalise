@@ -15,7 +15,6 @@ const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const MUMBAI_RPC_URL = process.env.MUMBAI_RPC_URL;
 const INFURA_API_KEY = process.env.INFURA_API_KEY;
-const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
 
 module.exports = {
   solidity: {
