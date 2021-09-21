@@ -80,7 +80,7 @@ contract AuctionsManager is AccessControl, Initializable {
         NFTAuction(auctionAddress).initialize(
             nftId_,
             jotToken,
-            router.getJotStakingAddress(collection_),
+            router.getJotPoolAddress(collection_),
             router.getCollectionManagerAddress(collection_),
             jotsSupply,
             openingBid_,
