@@ -52,7 +52,7 @@ contract SyntheticProtocolRouter is Ownable {
      */
 
     // a new Synthetic NFT collection manager is registered
-    event collectionManagerRegistered(
+    event CollectionManagerRegistered(
         uint256 collectionManagerID,
         address collectionManagerAddress,
         address jotAddress,
@@ -62,7 +62,7 @@ contract SyntheticProtocolRouter is Ownable {
         address auctionAddress
     );
 
-    event tokenRegistered(
+    event TokenRegistered(
         address collectionManagerAddress,
         uint256 collectionManagerID,
         uint256 syntheticTokenId
@@ -170,7 +170,7 @@ contract SyntheticProtocolRouter is Ownable {
             // whitelist the new collection contract on the random number consumer
             RandomNumberConsumer(_randomConsumerAddress).whitelistCollection(collectionAddress);
 
-            emit collectionManagerRegistered(
+            emit CollectionManagerRegistered(
                 collectionID,
                 collectionAddress,
                 jotAddress,
@@ -191,7 +191,7 @@ contract SyntheticProtocolRouter is Ownable {
 
         collectionManager.register(tokenId, supplyToKeep, priceFraction);
 
-        emit tokenRegistered(collectionAddress, collectionID, tokenId);
+        emit TokenRegistered(collectionAddress, collectionID, tokenId);
     }
 
     /**
