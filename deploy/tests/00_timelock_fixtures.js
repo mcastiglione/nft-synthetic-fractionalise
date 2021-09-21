@@ -27,19 +27,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [name, token.address, 4, 16, timelock.address, 0],
   });
 
-  let mockFCG = await deploy('MockFlipCoinGenerator', {
-    from: deployer,
-    log: true,
-    args: [],
-  });
-
   const defaultParameters = {
     jotsSupply: 100,
     flippingInterval: String(time.duration.days(1)),
-    flippingReward: 1,
-    flippingAmount: 1,
+    flippingReward: 5,
+    flippingAmount: 20,
     auctionDuration: String(time.duration.weeks(1)),
-    flipCoinGenerator: mockFCG.address,
   };
 
   await deploy('ProtocolParameters', {

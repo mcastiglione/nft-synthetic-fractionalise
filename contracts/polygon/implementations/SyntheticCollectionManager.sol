@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../extensions/IERC20ManagedAccounts.sol";
 import "../chainlink/RandomNumberConsumer.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
@@ -237,7 +238,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice allows the caller to buy jots using the Funding token
      */
-    function BuyJotTokens(uint256 tokenId, uint256 buyAmount) public {
+    function buyJotTokens(uint256 tokenId, uint256 buyAmount) public {
         uint256 amount = buyAmount * _jots[tokenId].fractionPrices;
         require(amount > 0, "Amount can't be zero!");
 
@@ -333,6 +334,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {
         return
+            // solhint-disable-next-line
             block.timestamp - _jots[tokenId].lastFlipTime >= protocol.flippingInterval() &&
             IERC20(jotAddress).balanceOf(jotPool) > 0 &&
             isSyntheticNFTFractionalised(tokenId);
@@ -372,7 +374,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                 poolAmount = fAmount - fReward;
                 IERC20(jotAddress).safeTransfer(msg.sender, fReward);
             }
-            IERC20(jotAddress).safeTransferFrom(jotPool, address(this), poolAmount);
+            IERC20ManagedAccounts(jotAddress).transferFromManaged(jotPool, address(this), poolAmount);
         }
 
         emit FlipProcessed(flip.tokenId, flip.prediction, requestId);

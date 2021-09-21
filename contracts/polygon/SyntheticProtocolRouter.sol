@@ -135,6 +135,9 @@ contract SyntheticProtocolRouter is Ownable {
             collectionContract.grantRole(collectionContract.RANDOM_ORACLE(), _randomConsumerAddress);
             Jot(jotAddress).grantRole(Jot(jotAddress).MINTER(), collectionAddress);
 
+            // set the manager to allow control over the funds
+            Jot(jotAddress).setManager(collectionAddress, jotPoolAddress);
+
             SyntheticNFT(syntheticNFTAddress).initialize(
                 string(abi.encodePacked("Privi Synthetic ", originalName)),
                 string(abi.encodePacked("pS_", originalSymbol)),

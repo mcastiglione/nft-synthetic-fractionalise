@@ -7,7 +7,7 @@ describe('SyntheticProtocolRouter', async function () {
     await deployments.fixture(['synthetic_router']);
 
     router = await ethers.getContract('SyntheticProtocolRouter');
-    NFT = "0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087";
+    NFT = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
   });
 
   it('should be deployed', async () => {
@@ -18,7 +18,7 @@ describe('SyntheticProtocolRouter', async function () {
     await router.registerNFT(NFT, '1', 10, 5, 'My Collection', 'MYC');
   });
 
-  it('Verify that UniSwap Pair was created after registerNFT', async () => {
+  it('verify that UniSwap Pair was created after registerNFT', async () => {
     await router.registerNFT(NFT, '1', 10, 5, 'My Collection', 'MYC');
     let jotAddress = await router.getJotsAddress(NFT);
     let jot = await ethers.getContractAt('Jot', jotAddress);

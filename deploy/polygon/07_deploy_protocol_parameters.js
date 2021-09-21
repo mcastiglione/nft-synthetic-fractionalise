@@ -6,16 +6,14 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
 
   // get the previously deployed governance (actually the timelock controller)
   let governance = await ethers.getContract('TimelockController');
-  let flipcoinGenerator = await ethers.getContract('FlipCoinGenerator');
 
   const defaultParameters = {
     jotsSupply: 100,
     flippingInterval: String(time.duration.days(1)),
-    flippingReward: 1,
-    flippingAmount: 1,
+    flippingReward: 5,
+    flippingAmount: 20,
     auctionDuration: String(time.duration.weeks(1)),
-    flipCoinGenerator: flipcoinGenerator.address,
-    governanceContractAddress: governance.address
+    governanceContractAddress: governance.address,
   };
 
   //let owner = governance.address;
@@ -32,4 +30,4 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
 };
 
 module.exports.tags = ['protocol_parameters'];
-module.exports.dependencies = ['governance', 'flipcoin_generator'];
+module.exports.dependencies = ['governance'];
