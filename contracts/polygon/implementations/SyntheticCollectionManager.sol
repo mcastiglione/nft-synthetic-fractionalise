@@ -85,7 +85,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     address public jotPool;
 
     event CoinFlipped(address indexed player, uint256 indexed tokenId, uint256 prediction, bytes32 requestId);
-    event FlipProcessed(uint256 indexed tokenId, uint256 prediction, bytes32 requestId);
+    event FlipProcessed(uint256 indexed tokenId, uint256 prediction, uint256 randomResult, bytes32 requestId);
 
     constructor(address randomConsumerAddress) {
         _randomConsumerAddress = randomConsumerAddress;
@@ -390,7 +390,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             }
         }
 
-        emit FlipProcessed(flip.tokenId, flip.prediction, requestId);
+        emit FlipProcessed(flip.tokenId, flip.prediction, randomNumber, requestId);
     }
 
     /**

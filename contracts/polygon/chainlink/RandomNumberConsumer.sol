@@ -47,8 +47,9 @@ contract RandomNumberConsumer is VRFConsumerBase, Ownable {
      * @dev callback function used by VRF Coordinator
      */
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
+        uint256 flipResult = randomness % 2;
         SyntheticCollectionManager(_requestIdToCollection[requestId]).processFlipResult(
-            randomness,
+            flipResult,
             requestId
         );
     }

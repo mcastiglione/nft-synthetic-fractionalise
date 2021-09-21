@@ -11,8 +11,8 @@ describe('JotPool', async function () {
 
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
-    await deployments.fixture(['mockjot_implementation', 'jot_pool_implementation']);
-    jot = await ethers.getContract('MockJot');
+    await deployments.fixture(['jot_mock_implementation', 'jot_pool_implementation']);
+    jot = await ethers.getContract('JotMock');
     pool = await ethers.getContract('JotPool');
     await pool.initialize(jot.address);
   });

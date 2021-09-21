@@ -158,7 +158,7 @@ contract SyntheticProtocolRouter is Ownable {
                 jotPoolAddress: jotPoolAddress,
                 syntheticNFTAddress: syntheticNFTAddress
             });
-            
+
             collectionIdToAddress[collectionID] = collectionAddress;
 
             // whitelist the new collection contract on the random number consumer
@@ -216,7 +216,7 @@ contract SyntheticProtocolRouter is Ownable {
     }
 
     /**
-     * @notice getter for Jot Staking Address of a collection
+     * @notice getter for Jot Pool Address of a collection
      */
     function getJotPoolAddress(address collection) public view returns (address) {
         return collections[collection].jotPoolAddress;
@@ -243,12 +243,11 @@ contract SyntheticProtocolRouter is Ownable {
     function getCollectionID(address collection) public view returns (uint256) {
         return collections[collection].collectionID;
     }
-    
+
     /**
      * @notice get collection address from collection ID
      */
     function getOriginalCollectionAddress(uint256 collectionID) public view returns (address) {
         return collectionIdToAddress[collectionID];
     }
-
 }

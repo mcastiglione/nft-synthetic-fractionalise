@@ -5,15 +5,23 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   const { deployer } = await getNamedAccounts();
   const chainId = await getChainId();
 
-  // get the previously deployed contracts
-  let jot = await ethers.getContract('Jot');
-  let funding = await ethers.getContract('Jot');
+  // get the previously deployed contracts (using jot mock for tests)
+  let jot = await ethers.getContract('JotMock');
+  let funding = await ethers.getContract('JotMock');
   let jotPool = await ethers.getContract('JotPool');
   let collectionManager = await ethers.getContract('SyntheticCollectionManager');
   let auctionsManager = await ethers.getContract('AuctionsManager');
-  let syntheticNFT = await ethers.getContract('SyntheticNFT');
   let protocol = await ethers.getContract('ProtocolParameters');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
+
+  await deploy('TestSyntheticNFT', {
+    contract: 'SyntheticNFT',
+    from: deployer,
+    log: true,
+    args: [],
+  });
+
+  let syntheticNFT = await ethers.getContract('TestSyntheticNFT');
 
   let router = await deploy('SyntheticProtocolRouter', {
     from: deployer,
@@ -34,12 +42,23 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   await syntheticNFT.initialize('TEST', 'TEST', router.address);
 
   await randomConsumer.transferOwnership(router.address);
+
+  // keccak256 combined with bytes conversion (identity function)
+  const DEPLOYER = ethers.utils.id('DEPLOYER');
+
+  router = await ethers.getContract('SyntheticProtocolRouter');
+
+  // give the proposer role to governance and renounce admin role
+  if (await auctionsManager.hasRole(DEPLOYER, deployer)) {
+    await auctionsManager.initialize(protocol.address, router.address);
+    await auctionsManager.renounceRole(DEPLOYER, deployer);
+  }
 };
 
-module.exports.tags = ['synthetic_router'];
+module.exports.tags = ['collection_fixtures'];
 module.exports.dependencies = [
   'auctions_manager',
-  'jot_implementation',
+  'jot_mock_implementation',
   'jot_pool_implementation',
   'synthetic_manager_implementation',
   'protocol_parameters',
