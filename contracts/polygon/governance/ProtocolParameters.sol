@@ -45,6 +45,8 @@ contract ProtocolParameters is Ownable {
         uint256 auctionDuration_,
         address governanceContractAddress_
     ) {
+        require(flippingReward_ > 0, "Invalid Reward");
+        require(flippingAmount_ > 0, "Invalid Amount");
         require(flippingReward_ < flippingAmount_, "Reward should be lower than Amount");
         require(jotsSupply_ > 0, "Invalid Jots Supply");
         require(flippingInterval_ > 15 minutes, "Flipping Interval should be greater than 15 minutes");
@@ -73,12 +75,14 @@ contract ProtocolParameters is Ownable {
     }
 
     function setFlippingReward(uint256 flippingReward_) external onlyOwner {
+        require(flippingReward_ > 0, "Invalid Reward");
         require(flippingReward_ < flippingAmount, "Reward should be lower than Amount");
         flippingReward = flippingReward_;
         emit FlippingRewardUpdated(flippingReward_);
     }
 
     function setFlippingAmount(uint256 flippingAmount_) external onlyOwner {
+        require(flippingAmount_ > 0, "Invalid Amount");
         require(flippingReward < flippingAmount_, "Reward should be lower than Amount");
         flippingAmount = flippingAmount_;
         emit FlippingAmountUpdated(flippingAmount_);

@@ -356,6 +356,15 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 fReward = protocol.flippingReward();
 
         Flip memory flip = _flips[requestId];
+        uint256 ownerSupply = _jots[flip.tokenId].ownerSupply;
+
+        // avoid underflow in math operations
+        if (fAmount > ownerSupply) {
+            fAmount = ownerSupply;
+        }
+        if (fReward > fAmount) {
+            fReward = fAmount;
+        }
 
         if (randomNumber == 0) {
             _jots[flip.tokenId].ownerSupply -= fAmount;
@@ -365,7 +374,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                 poolAmount = fAmount - fReward;
                 IERC20(jotAddress).safeTransfer(msg.sender, fReward);
             }
-            IERC20(jotAddress).safeTransfer(jotPool, poolAmount);
+            if (poolAmount > 0) {
+                IERC20(jotAddress).safeTransfer(jotPool, poolAmount);
+            }
         } else {
             _jots[flip.tokenId].ownerSupply += fAmount;
             if (randomNumber != flip.prediction) {
@@ -374,7 +385,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                 poolAmount = fAmount - fReward;
                 IERC20(jotAddress).safeTransfer(msg.sender, fReward);
             }
-            IERC20ManagedAccounts(jotAddress).transferFromManaged(jotPool, address(this), poolAmount);
+            if (poolAmount > 0) {
+                IERC20ManagedAccounts(jotAddress).transferFromManaged(jotPool, address(this), poolAmount);
+            }
         }
 
         emit FlipProcessed(flip.tokenId, flip.prediction, requestId);
