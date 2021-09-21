@@ -152,7 +152,7 @@ contract SyntheticProtocolRouter is Ownable {
                 collectionID: collectionID,
                 collectionManagerAddress: collectionAddress,
                 jotAddress: jotAddress,
-                jotStakingAddress: jotPoolAddress,
+                jotPoolAddress: jotPoolAddress,
                 syntheticNFTAddress: syntheticNFTAddress
             });
             

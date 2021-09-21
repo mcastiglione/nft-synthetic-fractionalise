@@ -8,6 +8,6 @@ struct SyntheticCollection {
     uint256 collectionID;
     address collectionManagerAddress;
     address jotAddress;
-    address jotStakingAddress;
+    address jotPoolAddress;
     address syntheticNFTAddress;
 }
