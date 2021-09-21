@@ -65,6 +65,12 @@ module.exports = {
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${INFURA_API_KEY}`,
       accounts: { mnemonic: MNEMONIC },
+      deploy: ['deploy/ethereum'],
+      tags: ['testnet'],
+    },
+    rinkeby_polygon: {
+      url: `https://rinkeby.infura.io/v3/${INFURA_API_KEY}`,
+      accounts: { mnemonic: MNEMONIC },
       deploy: ['deploy/polygon'],
       tags: ['testnet'],
     },
