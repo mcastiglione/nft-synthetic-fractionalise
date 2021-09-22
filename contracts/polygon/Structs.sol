@@ -10,4 +10,6 @@ struct SyntheticCollection {
     address jotAddress;
     address jotPoolAddress;
     address syntheticNFTAddress;
+    string originalName;
+    string originalSymbol;
 }

@@ -11,6 +11,7 @@ import "./implementations/JotPool.sol";
 import "./implementations/SyntheticNFT.sol";
 import "./auctions/AuctionsManager.sol";
 import "./Structs.sol";
+import "./governance/ProtocolParameters.sol";
 
 contract SyntheticProtocolRouter is Ownable {
     using Counters for Counters.Counter;
@@ -26,6 +27,18 @@ contract SyntheticProtocolRouter is Ownable {
     address private _protocol;
     address private _fundingTokenAddress;
     address private _randomConsumerAddress;
+    address private _perpetualPoolLiteAddress;
+
+    /**
+     * @dev collections map.
+     * collection address => collection data
+     */
+    mapping(address => SyntheticCollection) private _collections;
+
+    /**
+     * @dev get collection address from ID
+     */
+    mapping(uint256 => address) private _collectionIdToAddress;
 
     /**
      * @notice number of registered collections
@@ -36,17 +49,6 @@ contract SyntheticProtocolRouter is Ownable {
      * @notice QuickSwap address
      */
     address public swapAddress;
-
-    /**
-     * @dev collections map.
-     * collection address => collection data
-     */
-    mapping(address => SyntheticCollection) private collections;
-
-    /**
-     * @dev get collection address from ID
-     */
-    mapping(uint256 => address) private collectionIdToAddress;
 
     /**
      * Events
@@ -73,7 +75,7 @@ contract SyntheticProtocolRouter is Ownable {
      * Constructor
      */
     constructor(
-        address _swapAddress,
+        address swapAddress_,
         address jot_,
         address jotPool_,
         address collectionManager_,
@@ -81,9 +83,10 @@ contract SyntheticProtocolRouter is Ownable {
         address auctionManager_,
         address protocol_,
         address fundingTokenAddress_,
-        address randomConsumerAddress_
+        address randomConsumerAddress_,
+        address perpetualPoolLiteAddress_
     ) {
-        swapAddress = _swapAddress;
+        swapAddress = swapAddress_;
         _jot = jot_;
         _jotPool = jotPool_;
         _collectionManager = collectionManager_;
@@ -92,6 +95,7 @@ contract SyntheticProtocolRouter is Ownable {
         _protocol = protocol_;
         _fundingTokenAddress = fundingTokenAddress_;
         _randomConsumerAddress = randomConsumerAddress_;
+        _perpetualPoolLiteAddress = perpetualPoolLiteAddress_;
     }
 
     /**
@@ -161,15 +165,19 @@ contract SyntheticProtocolRouter is Ownable {
                 collectionAddress
             );
 
-            collections[collection] = SyntheticCollection({
+            _collections[collection] = SyntheticCollection({
                 collectionID: collectionID,
                 collectionManagerAddress: collectionAddress,
                 jotAddress: jotAddress,
                 jotPoolAddress: jotPoolAddress,
-                syntheticNFTAddress: syntheticNFTAddress
+                syntheticNFTAddress: syntheticNFTAddress,
+                originalName: originalName,
+                originalSymbol: originalSymbol
             });
 
-            collectionIdToAddress[collectionID] = collectionAddress;
+            _collectionIdToAddress[collectionID] = collectionAddress;
+
+            initPerpetualPoolLite(collectionID, originalName);
 
             // whitelist the new collection contract on the random number consumer
             RandomNumberConsumer(_randomConsumerAddress).whitelistCollection(collectionAddress);
@@ -188,7 +196,7 @@ contract SyntheticProtocolRouter is Ownable {
 
             //TODO: addSymbol with ”address” to the NFTPerpetualFutures
         } else {
-            collectionAddress = collections[collection].collectionManagerAddress;
+            collectionAddress = _collections[collection].collectionManagerAddress;
         }
 
         SyntheticCollectionManager collectionManager = SyntheticCollectionManager(collectionAddress);
@@ -199,10 +207,33 @@ contract SyntheticProtocolRouter is Ownable {
     }
 
     /**
+     * @dev init Perpetual Pool Lite for a specific collection
+     */
+    
+    function initPerpetualPoolLite(uint256 collectionID, string memory name) internal {
+        ProtocolParameters protocol = ProtocolParameters(_protocol);
+        address futuresOracleAddress = protocol.futuresOracleAddress();
+        uint256 futuresMultiplier = protocol.futuresMultiplier();
+        uint256 futuresFeeRatio = protocol.futuresFeeRatio();
+        uint256 futuresFundingRateCoefficient = protocol.futuresFundingRateCoefficient();
+
+        IPerpetualPoolLite futures = IPerpetualPoolLite(_perpetualPoolLiteAddress);
+
+        futures.addSymbol(
+            collectionID,
+            name,
+            futuresOracleAddress,
+            futuresMultiplier,
+            futuresFeeRatio,
+            futuresFundingRateCoefficient
+        );
+    }
+
+    /**
      * @notice checks whether a collection is registered or not
      */
     function isSyntheticCollectionRegistered(address collection) public view returns (bool) {
-        return collections[collection].collectionManagerAddress != address(0);
+        return _collections[collection].collectionManagerAddress != address(0);
     }
 
     /**
@@ -213,53 +244,53 @@ contract SyntheticProtocolRouter is Ownable {
         require(isSyntheticCollectionRegistered(collection), "Collection not registered");
 
         // connect to collection manager
-        address collectionAddress = collections[collection].collectionManagerAddress;
-        SyntheticCollectionManager collectionManager = SyntheticCollectionManager(collectionAddress);
+        address collectionAddress = _collections[collection].collectionManagerAddress;
+        address syntheticNFTAddress = SyntheticCollectionManager(collectionAddress).erc721address();
 
         // check whether a given id was minted or not
-        return collectionManager._tokens(tokenId);
+        return ISyntheticNFT(syntheticNFTAddress).exists(tokenId);
     }
 
     /**
      * @notice getter for Jot Address of a collection
      */
     function getJotsAddress(address collection) public view returns (address) {
-        return collections[collection].jotAddress;
+        return _collections[collection].jotAddress;
     }
 
     /**
      * @notice getter for Jot Pool Address of a collection
      */
     function getJotPoolAddress(address collection) public view returns (address) {
-        return collections[collection].jotPoolAddress;
+        return _collections[collection].jotPoolAddress;
     }
 
     /**
      * @notice get collection manager address from collection address
      */
     function getCollectionManagerAddress(address collection) public view returns (address) {
-        return collections[collection].collectionManagerAddress;
+        return _collections[collection].collectionManagerAddress;
     }
 
     /**
      * @notice get collection manager address from collection ID
      */
     function getCollectionManagerAddress(uint256 collectionID) public view returns (address) {
-        address collectionAddress = collectionIdToAddress[collectionID];
-        return collections[collectionAddress].collectionManagerAddress;
+        address collectionAddress = _collectionIdToAddress[collectionID];
+        return _collections[collectionAddress].collectionManagerAddress;
     }
 
     /**
      * @notice get collection ID from collection address
      */
     function getCollectionID(address collection) public view returns (uint256) {
-        return collections[collection].collectionID;
+        return _collections[collection].collectionID;
     }
 
     /**
      * @notice get collection address from collection ID
      */
     function getOriginalCollectionAddress(uint256 collectionID) public view returns (address) {
-        return collectionIdToAddress[collectionID];
+        return _collectionIdToAddress[collectionID];
     }
 }

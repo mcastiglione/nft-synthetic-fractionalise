@@ -14,6 +14,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let syntheticNFT = await ethers.getContract('SyntheticNFT');
   let protocol = await ethers.getContract('ProtocolParameters');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
+  let PerpetualPoolLiteMock = await deploy('PerpetualPoolLiteMock', {from: deployer})
 
   let router = await deploy('SyntheticProtocolRouter', {
     from: deployer,
@@ -28,12 +29,15 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       protocol.address,
       funding.address, //constants.ZERO_ADDRESS,
       randomConsumer.address,
+      PerpetualPoolLiteMock.address,
     ],
   });
 
   await syntheticNFT.initialize('TEST', 'TEST', router.address);
 
   await randomConsumer.transferOwnership(router.address);
+
+  await ethers.getContract('SyntheticProtocolRouter');
 };
 
 module.exports.tags = ['synthetic_router'];

@@ -11,4 +11,5 @@ describe('SyntheticProtocolRouter', async function () {
   it('should be deployed', async () => {
     assert.ok(router.address);
   });
+
 });
