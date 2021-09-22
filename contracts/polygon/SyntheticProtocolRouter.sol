@@ -9,6 +9,7 @@ import "./implementations/SyntheticCollectionManager.sol";
 import "./implementations/Jot.sol";
 import "./implementations/JotPool.sol";
 import "./implementations/SyntheticNFT.sol";
+import "./auctions/AuctionsManager.sol";
 import "./Structs.sol";
 
 contract SyntheticProtocolRouter is Ownable {
@@ -43,18 +44,29 @@ contract SyntheticProtocolRouter is Ownable {
     mapping(address => SyntheticCollection) private collections;
 
     /**
+     * @dev get collection address from ID
+     */
+    mapping(uint256 => address) private collectionIdToAddress;
+
+    /**
      * Events
      */
 
     // a new Synthetic NFT collection manager is registered
-    event collectionManagerRegistered(
+    event CollectionManagerRegistered(
         uint256 collectionManagerID,
         address collectionManagerAddress,
         address jotAddress,
-        address jotStakingAddress,
+        address jotPoolAddress,
         address syntheticNFTAddress,
         address quickSwapAddress,
         address auctionAddress
+    );
+
+    event TokenRegistered(
+        address collectionManagerAddress,
+        uint256 collectionManagerID,
+        uint256 syntheticTokenId
     );
 
     /**
@@ -100,7 +112,7 @@ contract SyntheticProtocolRouter is Ownable {
         string memory originalSymbol
     ) public {
         address collectionAddress;
-
+        uint256 collectionID = protocolVaults.current();
         // Checks whether a collection is registered or not
         // If not registered, then register it and increase the Vault counter
         if (!isSyntheticCollectionRegistered(collection)) {
@@ -132,7 +144,16 @@ contract SyntheticProtocolRouter is Ownable {
                 jotPoolAddress
             );
 
+            AuctionsManager(_auctionManager).grantRole(
+                AuctionsManager(_auctionManager).COLLECTION_MANAGER(),
+                collectionAddress
+            );
+
             collectionContract.grantRole(collectionContract.RANDOM_ORACLE(), _randomConsumerAddress);
+            Jot(jotAddress).grantRole(Jot(jotAddress).MINTER(), collectionAddress);
+
+            // set the manager to allow control over the funds
+            Jot(jotAddress).setManager(collectionAddress, jotPoolAddress);
 
             SyntheticNFT(syntheticNFTAddress).initialize(
                 string(abi.encodePacked("Privi Synthetic ", originalName)),
@@ -141,17 +162,20 @@ contract SyntheticProtocolRouter is Ownable {
             );
 
             collections[collection] = SyntheticCollection({
+                collectionID: collectionID,
                 collectionManagerAddress: collectionAddress,
                 jotAddress: jotAddress,
-                jotStakingAddress: jotPoolAddress,
+                jotPoolAddress: jotPoolAddress,
                 syntheticNFTAddress: syntheticNFTAddress
             });
+
+            collectionIdToAddress[collectionID] = collectionAddress;
 
             // whitelist the new collection contract on the random number consumer
             RandomNumberConsumer(_randomConsumerAddress).whitelistCollection(collectionAddress);
 
-            emit collectionManagerRegistered(
-                protocolVaults.current(),
+            emit CollectionManagerRegistered(
+                collectionID,
                 collectionAddress,
                 jotAddress,
                 jotPoolAddress,
@@ -170,6 +194,8 @@ contract SyntheticProtocolRouter is Ownable {
         SyntheticCollectionManager collectionManager = SyntheticCollectionManager(collectionAddress);
 
         collectionManager.register(tokenId, supplyToKeep, priceFraction);
+
+        emit TokenRegistered(collectionAddress, collectionID, tokenId);
     }
 
     /**
@@ -202,16 +228,38 @@ contract SyntheticProtocolRouter is Ownable {
     }
 
     /**
-     * @notice getter for Jot Staking Address of a collection
+     * @notice getter for Jot Pool Address of a collection
      */
-    function getJotStakingAddress(address collection) public view returns (address) {
-        return collections[collection].jotStakingAddress;
+    function getJotPoolAddress(address collection) public view returns (address) {
+        return collections[collection].jotPoolAddress;
     }
 
     /**
-     * @notice getter for Collection Manager Address of a collection
+     * @notice get collection manager address from collection address
      */
     function getCollectionManagerAddress(address collection) public view returns (address) {
         return collections[collection].collectionManagerAddress;
+    }
+
+    /**
+     * @notice get collection manager address from collection ID
+     */
+    function getCollectionManagerAddress(uint256 collectionID) public view returns (address) {
+        address collectionAddress = collectionIdToAddress[collectionID];
+        return collections[collectionAddress].collectionManagerAddress;
+    }
+
+    /**
+     * @notice get collection ID from collection address
+     */
+    function getCollectionID(address collection) public view returns (uint256) {
+        return collections[collection].collectionID;
+    }
+
+    /**
+     * @notice get collection address from collection ID
+     */
+    function getOriginalCollectionAddress(uint256 collectionID) public view returns (address) {
+        return collectionIdToAddress[collectionID];
     }
 }

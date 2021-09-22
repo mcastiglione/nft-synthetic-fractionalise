@@ -43,47 +43,54 @@ contract ProtocolParameters is Ownable {
         uint256 flippingReward_,
         uint256 flippingAmount_,
         uint256 auctionDuration_,
-        address flipCoinGenerator_,
         address governanceContractAddress_
     ) {
+        require(flippingReward_ > 0, "Invalid Reward");
+        require(flippingAmount_ > 0, "Invalid Amount");
+        require(flippingReward_ < flippingAmount_, "Reward should be lower than Amount");
+        require(jotsSupply_ > 0, "Invalid Jots Supply");
+        require(flippingInterval_ > 15 minutes, "Flipping Interval should be greater than 15 minutes");
+        require(auctionDuration_ > 1 hours, "Auction duration should be greater than 1 hour");
+
         jotsSupply = jotsSupply_;
         flippingInterval = flippingInterval_;
         flippingReward = flippingReward_;
         flippingAmount = flippingAmount_;
         auctionDuration = auctionDuration_;
-        flipCoinGenerator = flipCoinGenerator_;
 
         // transfer ownership
         transferOwnership(governanceContractAddress_);
     }
 
     function setJotsSupply(uint256 jotsSupply_) external onlyOwner {
+        require(jotsSupply_ > 0, "Invalid Jots Supply");
         jotsSupply = jotsSupply_;
         emit JotsSupplyUpdated(jotsSupply_);
     }
 
     function setFlippingInterval(uint256 flippingInterval_) external onlyOwner {
+        require(flippingInterval_ > 15 minutes, "Flipping Interval should be greater than 15 minutes");
         flippingInterval = flippingInterval_;
         emit FlippingIntervalUpdated(flippingInterval_);
     }
 
     function setFlippingReward(uint256 flippingReward_) external onlyOwner {
+        require(flippingReward_ > 0, "Invalid Reward");
+        require(flippingReward_ < flippingAmount, "Reward should be lower than Amount");
         flippingReward = flippingReward_;
         emit FlippingRewardUpdated(flippingReward_);
     }
 
     function setFlippingAmount(uint256 flippingAmount_) external onlyOwner {
+        require(flippingAmount_ > 0, "Invalid Amount");
+        require(flippingReward < flippingAmount_, "Reward should be lower than Amount");
         flippingAmount = flippingAmount_;
         emit FlippingAmountUpdated(flippingAmount_);
     }
 
     function setAuctionDuration(uint256 auctionDuration_) external onlyOwner {
+        require(auctionDuration_ > 1 hours, "Auction duration should be greater than 1 hour");
         auctionDuration = auctionDuration_;
         emit AuctionDurationUpdated(auctionDuration_);
-    }
-
-    function setFlipCoinGenerator(address flipCoinGenerator_) external onlyOwner {
-        flipCoinGenerator = flipCoinGenerator_;
-        emit FlipCoinGeneratorUpdated(flipCoinGenerator_);
     }
 }

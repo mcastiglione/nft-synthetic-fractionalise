@@ -1,0 +1,487 @@
+{
+  "address": "0x7DFDeF9cA9fD665A4135a8A342357645b48afD1A",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "jotsSupply_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "flippingInterval_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "flippingReward_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "flippingAmount_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "auctionDuration_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "flipCoinGenerator_",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "governanceContractAddress_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "AuctionDurationUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "value",
+          "type": "address"
+        }
+      ],
+      "name": "FlipCoinGeneratorUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "FlippingAmountUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "FlippingIntervalUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "FlippingRewardUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "JotsSupplyUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "auctionDuration",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "flipCoinGenerator",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "flippingAmount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "flippingInterval",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "flippingReward",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "jotsSupply",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "auctionDuration_",
+          "type": "uint256"
+        }
+      ],
+      "name": "setAuctionDuration",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "flipCoinGenerator_",
+          "type": "address"
+        }
+      ],
+      "name": "setFlipCoinGenerator",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "flippingAmount_",
+          "type": "uint256"
+        }
+      ],
+      "name": "setFlippingAmount",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "flippingInterval_",
+          "type": "uint256"
+        }
+      ],
+      "name": "setFlippingInterval",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "flippingReward_",
+          "type": "uint256"
+        }
+      ],
+      "name": "setFlippingReward",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "jotsSupply_",
+          "type": "uint256"
+        }
+      ],
+      "name": "setJotsSupply",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xe45fb61c8044436392c8277fc3acc05157335a3d24d5ef6eba7d36414bb8408b",
+  "receipt": {
+    "to": null,
+    "from": "0x3b97a646Aa4F134305B15e2B77fec22E721c2e15",
+    "contractAddress": "0x7DFDeF9cA9fD665A4135a8A342357645b48afD1A",
+    "transactionIndex": 17,
+    "gasUsed": "566445",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000800000000000000000200000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000001000000000000000000000000000008000000020000010000000000040800000000000000000000000000000000400000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000060000100000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x23d0197ac45bb0d95a75524e441b5031a1ff7d0e57a9fee5b065791f8a71a046",
+    "transactionHash": "0xe45fb61c8044436392c8277fc3acc05157335a3d24d5ef6eba7d36414bb8408b",
+    "logs": [
+      {
+        "transactionIndex": 17,
+        "blockNumber": 9328497,
+        "transactionHash": "0xe45fb61c8044436392c8277fc3acc05157335a3d24d5ef6eba7d36414bb8408b",
+        "address": "0x7DFDeF9cA9fD665A4135a8A342357645b48afD1A",
+        "topics": [
+          "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000003b97a646aa4f134305b15e2b77fec22e721c2e15"
+        ],
+        "data": "0x",
+        "logIndex": 17,
+        "blockHash": "0x23d0197ac45bb0d95a75524e441b5031a1ff7d0e57a9fee5b065791f8a71a046"
+      },
+      {
+        "transactionIndex": 17,
+        "blockNumber": 9328497,
+        "transactionHash": "0xe45fb61c8044436392c8277fc3acc05157335a3d24d5ef6eba7d36414bb8408b",
+        "address": "0x7DFDeF9cA9fD665A4135a8A342357645b48afD1A",
+        "topics": [
+          "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+          "0x0000000000000000000000003b97a646aa4f134305b15e2b77fec22e721c2e15",
+          "0x0000000000000000000000007a25e2999791cd6b28ba69ac3ded74188de7986d"
+        ],
+        "data": "0x",
+        "logIndex": 18,
+        "blockHash": "0x23d0197ac45bb0d95a75524e441b5031a1ff7d0e57a9fee5b065791f8a71a046"
+      }
+    ],
+    "blockNumber": 9328497,
+    "cumulativeGasUsed": "1603084",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    100,
+    "86400",
+    1,
+    1,
+    "604800",
+    "0xE6Fe273511D09c1a8d90e96C3BDe23aE116b8015",
+    "0x7a25e2999791cD6B28Ba69ac3DED74188De7986D"
+  ],
+  "solcInputHash": "3935de00e4c8d86a3dd4d1df52b15b95",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.4+commit.c7e474f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"jotsSupply_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"flippingInterval_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"flippingReward_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"flippingAmount_\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"auctionDuration_\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"flipCoinGenerator_\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"governanceContractAddress_\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"AuctionDurationUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"value\",\"type\":\"address\"}],\"name\":\"FlipCoinGeneratorUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"FlippingAmountUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"FlippingIntervalUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"FlippingRewardUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"JotsSupplyUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"auctionDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"flipCoinGenerator\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"flippingAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"flippingInterval\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"flippingReward\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"jotsSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"auctionDuration_\",\"type\":\"uint256\"}],\"name\":\"setAuctionDuration\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"flipCoinGenerator_\",\"type\":\"address\"}],\"name\":\"setFlipCoinGenerator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"flippingAmount_\",\"type\":\"uint256\"}],\"name\":\"setFlippingAmount\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"flippingInterval_\",\"type\":\"uint256\"}],\"name\":\"setFlippingInterval\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"flippingReward_\",\"type\":\"uint256\"}],\"name\":\"setFlippingReward\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"jotsSupply_\",\"type\":\"uint256\"}],\"name\":\"setJotsSupply\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"constructor\":{\"details\":\"sets the default (initial) values of the parameters      also transfers the ownership to the governance\"},\"owner()\":{\"details\":\"Returns the address of the current owner.\"},\"renounceOwnership()\":{\"details\":\"Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.\"},\"transferOwnership(address)\":{\"details\":\"Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.\"}},\"title\":\"parameters controlled by governance\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"notice\":\"the owner of this contract is the timelock controller of the governance feature\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/polygon/governance/ProtocolParameters.sol\":\"ProtocolParameters\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/access/Ownable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"../utils/Context.sol\\\";\\n\\n/**\\n * @dev Contract module which provides a basic access control mechanism, where\\n * there is an account (an owner) that can be granted exclusive access to\\n * specific functions.\\n *\\n * By default, the owner account will be the one that deploys the contract. This\\n * can later be changed with {transferOwnership}.\\n *\\n * This module is used through inheritance. It will make available the modifier\\n * `onlyOwner`, which can be applied to your functions to restrict their use to\\n * the owner.\\n */\\nabstract contract Ownable is Context {\\n    address private _owner;\\n\\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\\n\\n    /**\\n     * @dev Initializes the contract setting the deployer as the initial owner.\\n     */\\n    constructor() {\\n        _setOwner(_msgSender());\\n    }\\n\\n    /**\\n     * @dev Returns the address of the current owner.\\n     */\\n    function owner() public view virtual returns (address) {\\n        return _owner;\\n    }\\n\\n    /**\\n     * @dev Throws if called by any account other than the owner.\\n     */\\n    modifier onlyOwner() {\\n        require(owner() == _msgSender(), \\\"Ownable: caller is not the owner\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Leaves the contract without owner. It will not be possible to call\\n     * `onlyOwner` functions anymore. Can only be called by the current owner.\\n     *\\n     * NOTE: Renouncing ownership will leave the contract without an owner,\\n     * thereby removing any functionality that is only available to the owner.\\n     */\\n    function renounceOwnership() public virtual onlyOwner {\\n        _setOwner(address(0));\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Can only be called by the current owner.\\n     */\\n    function transferOwnership(address newOwner) public virtual onlyOwner {\\n        require(newOwner != address(0), \\\"Ownable: new owner is the zero address\\\");\\n        _setOwner(newOwner);\\n    }\\n\\n    function _setOwner(address newOwner) private {\\n        address oldOwner = _owner;\\n        _owner = newOwner;\\n        emit OwnershipTransferred(oldOwner, newOwner);\\n    }\\n}\\n\",\"keccak256\":\"0x6bb804a310218875e89d12c053e94a13a4607cdf7cc2052f3e52bd32a0dc50a1\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/Context.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Provides information about the current execution context, including the\\n * sender of the transaction and its data. While these are generally available\\n * via msg.sender and msg.data, they should not be accessed in such a direct\\n * manner, since when dealing with meta-transactions the account sending and\\n * paying for execution may not be the actual sender (as far as an application\\n * is concerned).\\n *\\n * This contract is only required for intermediate, library-like contracts.\\n */\\nabstract contract Context {\\n    function _msgSender() internal view virtual returns (address) {\\n        return msg.sender;\\n    }\\n\\n    function _msgData() internal view virtual returns (bytes calldata) {\\n        return msg.data;\\n    }\\n}\\n\",\"keccak256\":\"0x90565a39ae45c80f0468dc96c7b20d0afc3055f344c8203a0c9258239f350b9f\",\"license\":\"MIT\"},\"contracts/polygon/governance/ProtocolParameters.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.2;\\n\\nimport \\\"@openzeppelin/contracts/access/Ownable.sol\\\";\\n\\n/**\\n * @title parameters controlled by governance\\n * @notice the owner of this contract is the timelock controller of the governance feature\\n */\\ncontract ProtocolParameters is Ownable {\\n    // this is the number of Jots minted when a new single NFT is synthetic fractionalised\\n    uint256 public jotsSupply;\\n\\n    // interval in seconds between the one flip to another in one lock contract\\n    uint256 public flippingInterval;\\n\\n    // amount of reward that the flipper gets if he is right on the outcome\\n    uint256 public flippingReward;\\n\\n    // amount of jots into play in each flip\\n    uint256 public flippingAmount;\\n\\n    // the duration of an NFT auction in seconds\\n    uint256 public auctionDuration;\\n\\n    // the implementation of FlipCoinGenerator\\n    address public flipCoinGenerator;\\n\\n    event JotsSupplyUpdated(uint256 value);\\n    event FlippingIntervalUpdated(uint256 value);\\n    event FlippingRewardUpdated(uint256 value);\\n    event FlippingAmountUpdated(uint256 value);\\n    event AuctionDurationUpdated(uint256 value);\\n    event FlipCoinGeneratorUpdated(address value);\\n\\n    /**\\n     * @dev sets the default (initial) values of the parameters\\n     *      also transfers the ownership to the governance\\n     */\\n    constructor(\\n        uint256 jotsSupply_,\\n        uint256 flippingInterval_,\\n        uint256 flippingReward_,\\n        uint256 flippingAmount_,\\n        uint256 auctionDuration_,\\n        address flipCoinGenerator_,\\n        address governanceContractAddress_\\n    ) {\\n        jotsSupply = jotsSupply_;\\n        flippingInterval = flippingInterval_;\\n        flippingReward = flippingReward_;\\n        flippingAmount = flippingAmount_;\\n        auctionDuration = auctionDuration_;\\n        flipCoinGenerator = flipCoinGenerator_;\\n\\n        // transfer ownership\\n        transferOwnership(governanceContractAddress_);\\n    }\\n\\n    function setJotsSupply(uint256 jotsSupply_) external onlyOwner {\\n        jotsSupply = jotsSupply_;\\n        emit JotsSupplyUpdated(jotsSupply_);\\n    }\\n\\n    function setFlippingInterval(uint256 flippingInterval_) external onlyOwner {\\n        flippingInterval = flippingInterval_;\\n        emit FlippingIntervalUpdated(flippingInterval_);\\n    }\\n\\n    function setFlippingReward(uint256 flippingReward_) external onlyOwner {\\n        flippingReward = flippingReward_;\\n        emit FlippingRewardUpdated(flippingReward_);\\n    }\\n\\n    function setFlippingAmount(uint256 flippingAmount_) external onlyOwner {\\n        flippingAmount = flippingAmount_;\\n        emit FlippingAmountUpdated(flippingAmount_);\\n    }\\n\\n    function setAuctionDuration(uint256 auctionDuration_) external onlyOwner {\\n        auctionDuration = auctionDuration_;\\n        emit AuctionDurationUpdated(auctionDuration_);\\n    }\\n\\n    function setFlipCoinGenerator(address flipCoinGenerator_) external onlyOwner {\\n        flipCoinGenerator = flipCoinGenerator_;\\n        emit FlipCoinGeneratorUpdated(flipCoinGenerator_);\\n    }\\n}\\n\",\"keccak256\":\"0x992d002dd60273a5de13ef9d6cd7e0337c6a76b5c5cead940cbc6e6832e86c0e\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b5060405161086838038061086883398101604081905261002f916101bd565b61003833610081565b60018790556002869055600385905560048490556005839055600680546001600160a01b0319166001600160a01b038416179055610075816100d1565b5050505050505061021f565b600080546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b6000546001600160a01b031633146101305760405162461bcd60e51b815260206004820181905260248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657260448201526064015b60405180910390fd5b6001600160a01b0381166101955760405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b6064820152608401610127565b61019e81610081565b50565b80516001600160a01b03811681146101b857600080fd5b919050565b600080600080600080600060e0888a0312156101d7578283fd5b875196506020880151955060408801519450606088015193506080880151925061020360a089016101a1565b915061021160c089016101a1565b905092959891949750929550565b61063a8061022e6000396000f3fe608060405234801561001057600080fd5b50600436106100f55760003560e01c80637668733211610097578063a497e67411610066578063a497e674146101c3578063b94d25ce146101d6578063ed41f4b6146101df578063f2fde38b146101f257600080fd5b806376687332146101835780638148cab31461018c5780638da5cb5b1461019f5780639fdcefa0146101b057600080fd5b806341e559e6116100d357806341e559e614610134578063625fb06e1461013d578063686ed55414610168578063715018a61461017b57600080fd5b80630361ce06146100fa5780630cbf54c81461010f5780631861779d1461012b575b600080fd5b61010d6101083660046105b7565b610205565b005b61011860055481565b6040519081526020015b60405180910390f35b61011860035481565b61011860015481565b600654610150906001600160a01b031681565b6040516001600160a01b039091168152602001610122565b61010d6101763660046105b7565b610274565b61010d6102d3565b61011860025481565b61010d61019a3660046105b7565b610309565b6000546001600160a01b0316610150565b61010d6101be366004610589565b610368565b61010d6101d13660046105b7565b6103e0565b61011860045481565b61010d6101ed3660046105b7565b61043f565b61010d610200366004610589565b61049e565b6000546001600160a01b031633146102385760405162461bcd60e51b815260040161022f906105cf565b60405180910390fd5b60038190556040518181527f0fa8f8d6f616abcaff165b36274c1d25db91432a484037fee0c3df292bcfd3c7906020015b60405180910390a150565b6000546001600160a01b0316331461029e5760405162461bcd60e51b815260040161022f906105cf565b60048190556040518181527fe8d9aeb1d5f778e619e639e40f0b7d2ea511290857c537675c3bd85f7e83548f90602001610269565b6000546001600160a01b031633146102fd5760405162461bcd60e51b815260040161022f906105cf565b6103076000610539565b565b6000546001600160a01b031633146103335760405162461bcd60e51b815260040161022f906105cf565b60018190556040518181527f93b9276845376c0543076e97219c38dc7844ccc68b13486454d1fb928cf2736a90602001610269565b6000546001600160a01b031633146103925760405162461bcd60e51b815260040161022f906105cf565b600680546001600160a01b0319166001600160a01b0383169081179091556040519081527f10558ee303e65ff6474f3c0e608895d18886b13f2e0aeebd0dc032e469d27fda90602001610269565b6000546001600160a01b0316331461040a5760405162461bcd60e51b815260040161022f906105cf565b60058190556040518181527faab6389d8f1c16ba1deb6e9831f5c5442cf4fcf99bf5bfa867460be408a9111890602001610269565b6000546001600160a01b031633146104695760405162461bcd60e51b815260040161022f906105cf565b60028190556040518181527fc28ccb88074a7798b56fa365639855d8ffa5991bca1492991c7ed26df2c699ef90602001610269565b6000546001600160a01b031633146104c85760405162461bcd60e51b815260040161022f906105cf565b6001600160a01b03811661052d5760405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b606482015260840161022f565b61053681610539565b50565b600080546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b60006020828403121561059a578081fd5b81356001600160a01b03811681146105b0578182fd5b9392505050565b6000602082840312156105c8578081fd5b5035919050565b6020808252818101527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657260408201526060019056fea26469706673582212208eb49f575fa46ed4ad0804424280f80ac80b1ae0525c15efef9c3dda65ad475e64736f6c63430008040033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100f55760003560e01c80637668733211610097578063a497e67411610066578063a497e674146101c3578063b94d25ce146101d6578063ed41f4b6146101df578063f2fde38b146101f257600080fd5b806376687332146101835780638148cab31461018c5780638da5cb5b1461019f5780639fdcefa0146101b057600080fd5b806341e559e6116100d357806341e559e614610134578063625fb06e1461013d578063686ed55414610168578063715018a61461017b57600080fd5b80630361ce06146100fa5780630cbf54c81461010f5780631861779d1461012b575b600080fd5b61010d6101083660046105b7565b610205565b005b61011860055481565b6040519081526020015b60405180910390f35b61011860035481565b61011860015481565b600654610150906001600160a01b031681565b6040516001600160a01b039091168152602001610122565b61010d6101763660046105b7565b610274565b61010d6102d3565b61011860025481565b61010d61019a3660046105b7565b610309565b6000546001600160a01b0316610150565b61010d6101be366004610589565b610368565b61010d6101d13660046105b7565b6103e0565b61011860045481565b61010d6101ed3660046105b7565b61043f565b61010d610200366004610589565b61049e565b6000546001600160a01b031633146102385760405162461bcd60e51b815260040161022f906105cf565b60405180910390fd5b60038190556040518181527f0fa8f8d6f616abcaff165b36274c1d25db91432a484037fee0c3df292bcfd3c7906020015b60405180910390a150565b6000546001600160a01b0316331461029e5760405162461bcd60e51b815260040161022f906105cf565b60048190556040518181527fe8d9aeb1d5f778e619e639e40f0b7d2ea511290857c537675c3bd85f7e83548f90602001610269565b6000546001600160a01b031633146102fd5760405162461bcd60e51b815260040161022f906105cf565b6103076000610539565b565b6000546001600160a01b031633146103335760405162461bcd60e51b815260040161022f906105cf565b60018190556040518181527f93b9276845376c0543076e97219c38dc7844ccc68b13486454d1fb928cf2736a90602001610269565b6000546001600160a01b031633146103925760405162461bcd60e51b815260040161022f906105cf565b600680546001600160a01b0319166001600160a01b0383169081179091556040519081527f10558ee303e65ff6474f3c0e608895d18886b13f2e0aeebd0dc032e469d27fda90602001610269565b6000546001600160a01b0316331461040a5760405162461bcd60e51b815260040161022f906105cf565b60058190556040518181527faab6389d8f1c16ba1deb6e9831f5c5442cf4fcf99bf5bfa867460be408a9111890602001610269565b6000546001600160a01b031633146104695760405162461bcd60e51b815260040161022f906105cf565b60028190556040518181527fc28ccb88074a7798b56fa365639855d8ffa5991bca1492991c7ed26df2c699ef90602001610269565b6000546001600160a01b031633146104c85760405162461bcd60e51b815260040161022f906105cf565b6001600160a01b03811661052d5760405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b606482015260840161022f565b61053681610539565b50565b600080546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b60006020828403121561059a578081fd5b81356001600160a01b03811681146105b0578182fd5b9392505050565b6000602082840312156105c8578081fd5b5035919050565b6020808252818101527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657260408201526060019056fea26469706673582212208eb49f575fa46ed4ad0804424280f80ac80b1ae0525c15efef9c3dda65ad475e64736f6c63430008040033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "constructor": {
+        "details": "sets the default (initial) values of the parameters      also transfers the ownership to the governance"
+      },
+      "owner()": {
+        "details": "Returns the address of the current owner."
+      },
+      "renounceOwnership()": {
+        "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+      },
+      "transferOwnership(address)": {
+        "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+      }
+    },
+    "title": "parameters controlled by governance",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "notice": "the owner of this contract is the timelock controller of the governance feature",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 653,
+        "contract": "contracts/polygon/governance/ProtocolParameters.sol:ProtocolParameters",
+        "label": "_owner",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_address"
+      },
+      {
+        "astId": 10434,
+        "contract": "contracts/polygon/governance/ProtocolParameters.sol:ProtocolParameters",
+        "label": "jotsSupply",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 10436,
+        "contract": "contracts/polygon/governance/ProtocolParameters.sol:ProtocolParameters",
+        "label": "flippingInterval",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 10438,
+        "contract": "contracts/polygon/governance/ProtocolParameters.sol:ProtocolParameters",
+        "label": "flippingReward",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 10440,
+        "contract": "contracts/polygon/governance/ProtocolParameters.sol:ProtocolParameters",
+        "label": "flippingAmount",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 10442,
+        "contract": "contracts/polygon/governance/ProtocolParameters.sol:ProtocolParameters",
+        "label": "auctionDuration",
+        "offset": 0,
+        "slot": "5",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 10444,
+        "contract": "contracts/polygon/governance/ProtocolParameters.sol:ProtocolParameters",
+        "label": "flipCoinGenerator",
+        "offset": 0,
+        "slot": "6",
+        "type": "t_address"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}

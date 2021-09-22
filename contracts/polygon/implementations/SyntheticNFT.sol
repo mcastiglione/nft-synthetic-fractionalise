@@ -5,10 +5,10 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../Interfaces.sol";
+import "./SyntheticCollectionManager.sol";
 import "./Structs.sol";
 
 contract SyntheticNFT is ERC721, Initializable, AccessControl {
-
     bytes32 public constant MANAGER = keccak256("MANAGER");
 
     // token metadata
@@ -18,18 +18,21 @@ contract SyntheticNFT is ERC721, Initializable, AccessControl {
     string private _proxiedName;
     string private _proxiedSymbol;
 
+    address private _collectionManager;
+
     // solhint-disable-next-line
     constructor() ERC721("Privi Collection Token", "PCT") {}
 
     function initialize(
         string memory name_,
         string memory symbol_,
-        address collectionManager
+        address collectionManager_
     ) external initializer {
         _proxiedName = name_;
         _proxiedSymbol = symbol_;
+        _collectionManager = collectionManager_;
 
-        _setupRole(MANAGER, collectionManager);
+        _setupRole(MANAGER, collectionManager_);
     }
 
     /**
@@ -58,7 +61,11 @@ contract SyntheticNFT is ERC721, Initializable, AccessControl {
         return _exists(tokenId);
     }
 
-    function safeMint(address to, uint256 tokenId, string memory metadata) public onlyRole(MANAGER) {
+    function safeMint(
+        address to,
+        uint256 tokenId,
+        string memory metadata
+    ) public onlyRole(MANAGER) {
         _mint(to, tokenId);
         _tokenMetadata[tokenId] = metadata;
     }
@@ -71,9 +78,23 @@ contract SyntheticNFT is ERC721, Initializable, AccessControl {
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override (AccessControl, ERC721)
+        override(AccessControl, ERC721)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+
+    /**
+     * @dev override the before transfer hook to allow locking the nft
+     */
+    function _beforeTokenTransfer(
+        address,
+        address,
+        uint256 tokenId
+    ) internal view override {
+        require(
+            !SyntheticCollectionManager(_collectionManager).lockedNFTs(tokenId),
+            "Token is locked and auctionable"
+        );
     }
 }

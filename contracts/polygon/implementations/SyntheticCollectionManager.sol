@@ -8,11 +8,14 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../extensions/IERC20ManagedAccounts.sol";
+import "../auctions/AuctionsManager.sol";
 import "../chainlink/RandomNumberConsumer.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
-import "./Structs.sol";
 import "../governance/ProtocolParameters.sol";
+import "./Jot.sol";
+import "./Structs.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
@@ -25,6 +28,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     Counters.Counter public _tokenCounter;
 
     address private immutable _randomConsumerAddress;
+    address private _auctionsManagerAddress;
 
     /**
      * @dev mapping the request id with the flip input data
@@ -73,6 +77,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     mapping(uint256 => JotsData) public _jots;
 
+    mapping(uint256 => bool) public lockedNFTs;
+
     /**
      * @notice Synthetic NFT Address  for this collection
      */
@@ -82,8 +88,18 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     address public jotPool;
 
-    event CoinFlipped(address indexed player, uint256 indexed tokenId, uint256 prediction, bytes32 requestId);
-    event FlipProcessed(uint256 indexed tokenId, uint256 prediction, bytes32 requestId);
+    event CoinFlipped(
+        bytes32 indexed requestId,
+        address indexed player,
+        uint256 indexed tokenId,
+        uint256 prediction
+    );
+    event FlipProcessed(
+        bytes32 indexed requestId,
+        uint256 indexed tokenId,
+        uint256 prediction,
+        uint256 randomResult
+    );
 
     constructor(address randomConsumerAddress) {
         _randomConsumerAddress = randomConsumerAddress;
@@ -102,6 +118,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         erc721address = _erc721address;
         _originalCollectionAddress = originalCollectionAddress_;
         _syntheticProtocolRouterAddress = msg.sender;
+        _auctionsManagerAddress = auctionManagerAddress;
         protocol = ProtocolParameters(protocol_);
         jotPool = jotPool_;
 
@@ -223,7 +240,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         string memory metadata = getNFTMetadata(tokenId);
         generateSyntheticNFT(msg.sender, tokenId, metadata);
 
-        IJot(jotAddress).safeMint(address(this), jotsSupply);
+        Jot(jotAddress).mint(address(this), jotsSupply);
 
         uint256 sellingSupply = (jotsSupply - supplyToKeep) / 2;
         uint256 liquiditySupply = (jotsSupply - supplyToKeep) / 2;
@@ -236,7 +253,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice allows the caller to buy jots using the Funding token
      */
-    function BuyJotTokens(uint256 tokenId, uint256 buyAmount) public {
+    function buyJotTokens(uint256 tokenId, uint256 buyAmount) public {
         uint256 amount = buyAmount * _jots[tokenId].fractionPrices;
         require(amount > 0, "Amount can't be zero!");
 
@@ -332,6 +349,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {
         return
+            // solhint-disable-next-line
             block.timestamp - _jots[tokenId].lastFlipTime >= protocol.flippingInterval() &&
             IERC20(jotAddress).balanceOf(jotPool) > 0 &&
             isSyntheticNFTFractionalised(tokenId);
@@ -344,7 +362,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         bytes32 requestId = RandomNumberConsumer(_randomConsumerAddress).getRandomNumber();
         _flips[requestId] = Flip({tokenId: tokenId, prediction: prediction});
 
-        emit CoinFlipped(msg.sender, tokenId, prediction, requestId);
+        emit CoinFlipped(requestId, msg.sender, tokenId, prediction);
     }
 
     function processFlipResult(uint256 randomNumber, bytes32 requestId) external onlyRole(RANDOM_ORACLE) {
@@ -353,6 +371,15 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 fReward = protocol.flippingReward();
 
         Flip memory flip = _flips[requestId];
+        uint256 ownerSupply = _jots[flip.tokenId].ownerSupply;
+
+        // avoid underflow in math operations
+        if (fAmount > ownerSupply) {
+            fAmount = ownerSupply;
+        }
+        if (fReward > fAmount) {
+            fReward = fAmount;
+        }
 
         if (randomNumber == 0) {
             _jots[flip.tokenId].ownerSupply -= fAmount;
@@ -362,7 +389,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                 poolAmount = fAmount - fReward;
                 IERC20(jotAddress).safeTransfer(msg.sender, fReward);
             }
-            IERC20(jotAddress).safeTransfer(jotPool, poolAmount);
+            if (poolAmount > 0) {
+                IERC20(jotAddress).safeTransfer(jotPool, poolAmount);
+            }
         } else {
             _jots[flip.tokenId].ownerSupply += fAmount;
             if (randomNumber != flip.prediction) {
@@ -371,10 +400,18 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                 poolAmount = fAmount - fReward;
                 IERC20(jotAddress).safeTransfer(msg.sender, fReward);
             }
-            IERC20(jotAddress).safeTransferFrom(jotPool, address(this), poolAmount);
+            if (poolAmount > 0) {
+                IERC20ManagedAccounts(jotAddress).transferFromManaged(jotPool, address(this), poolAmount);
+            }
         }
 
-        emit FlipProcessed(flip.tokenId, flip.prediction, requestId);
+        // lock the nft and make it auctionable
+        if (_jots[flip.tokenId].ownerSupply == 0) {
+            lockedNFTs[flip.tokenId] = true;
+            AuctionsManager(_auctionsManagerAddress).whitelistNFT(flip.tokenId);
+        }
+
+        emit FlipProcessed(requestId, flip.tokenId, flip.prediction, randomNumber);
     }
 
     /**

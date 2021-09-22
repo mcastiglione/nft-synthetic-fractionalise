@@ -2,10 +2,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  await deploy('MockJot', {
+  await deploy('JotMock', {
     from: deployer,
     log: true,
     args: [],
   });
 };
-module.exports.tags = ['mockjot_implementation'];
+module.exports.tags = ['jot_mock_implementation'];

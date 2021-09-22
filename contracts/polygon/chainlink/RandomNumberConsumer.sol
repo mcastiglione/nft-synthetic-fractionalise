@@ -15,8 +15,6 @@ contract RandomNumberConsumer is VRFConsumerBase, Ownable {
     mapping(bytes32 => address) private _requestIdToCollection;
     mapping(address => bool) private _whitelistedCollections;
 
-    event RequestedRandomness(bytes32 requestId, address fromCollection);
-
     /**
      * @dev constructor inherits VRFConsumerBase
      */
@@ -39,16 +37,14 @@ contract RandomNumberConsumer is VRFConsumerBase, Ownable {
 
         requestId = requestRandomness(keyHash, fee);
         _requestIdToCollection[requestId] = msg.sender;
-
-        emit RequestedRandomness(requestId, msg.sender);
     }
 
     /**
-     * @dev callback function used by VRF Coordinator
+     * @dev callback function used by VRF Coordinator (only 200k gas allowed and should not revert)
      */
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
         SyntheticCollectionManager(_requestIdToCollection[requestId]).processFlipResult(
-            randomness,
+            randomness % 2,
             requestId
         );
     }

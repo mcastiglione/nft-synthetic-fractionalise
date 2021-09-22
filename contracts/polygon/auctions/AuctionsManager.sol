@@ -11,9 +11,9 @@ import "../SyntheticProtocolRouter.sol";
 import "./NFTAuction.sol";
 
 contract AuctionsManager is AccessControl, Initializable {
-    bytes32 private constant COLLECTION_MANAGER = keccak256("COLLECTION_MANAGER");
-    bytes32 private constant DEPLOYER = keccak256("DEPLOYER");
-    bytes32 private constant AUCTION = keccak256("AUCTION");
+    bytes32 public constant COLLECTION_MANAGER = keccak256("COLLECTION_MANAGER");
+    bytes32 public constant DEPLOYER = keccak256("DEPLOYER");
+    bytes32 public constant AUCTION = keccak256("AUCTION");
 
     /**
      * @dev the implementation to deploy through minimal proxies
@@ -41,10 +41,12 @@ contract AuctionsManager is AccessControl, Initializable {
     function initialize(address protocol_, address router_) external initializer onlyRole(DEPLOYER) {
         protocol = ProtocolParameters(protocol_);
         router = SyntheticProtocolRouter(router_);
+
+        _setupRole(DEFAULT_ADMIN_ROLE, router_);
     }
 
-    function whitelistNFT(address collection_, uint256 nftId_) external onlyRole(COLLECTION_MANAGER) {
-        _whitelistedTokens[collection_][nftId_] = true;
+    function whitelistNFT(uint256 nftId_) external onlyRole(COLLECTION_MANAGER) {
+        _whitelistedTokens[msg.sender][nftId_] = true;
     }
 
     /**
@@ -80,7 +82,7 @@ contract AuctionsManager is AccessControl, Initializable {
         NFTAuction(auctionAddress).initialize(
             nftId_,
             jotToken,
-            router.getJotStakingAddress(collection_),
+            router.getJotPoolAddress(collection_),
             router.getCollectionManagerAddress(collection_),
             jotsSupply,
             openingBid_,

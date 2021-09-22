@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../extensions/IERC20ManagedAccounts.sol";
 import "../Interfaces.sol";
 
-contract Jot is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
+contract JotMock is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
     bytes32 public constant ROUTER = keccak256("ROUTER");
     bytes32 public constant MINTER = keccak256("MINTER");
 
@@ -28,7 +28,9 @@ contract Jot is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
     mapping(address => address) private _managers;
 
     // solhint-disable-next-line
-    constructor() ERC20("Privi Jot Token Implementation", "pJOTI") {}
+    constructor() ERC20("Privi Mock Jot", "mJOT") {
+        _mint(msg.sender, 10000000000 * 10**decimals());
+    }
 
     function initialize(
         string calldata _name,
@@ -44,11 +46,6 @@ contract Jot is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
 
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(swapAddress);
         uniswapV2Router = _uniswapV2Router;
-
-        uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
-            address(this),
-            fundingTokenAddress
-        );
     }
 
     function mint(address account, uint256 amount) public onlyRole(MINTER) {
