@@ -111,6 +111,8 @@ contract SyntheticProtocolRouter is Ownable {
         string memory originalName,
         string memory originalSymbol
     ) public {
+        require(collection != address(0), "Invalid collection");
+
         address collectionAddress;
         uint256 collectionID = protocolVaults.current();
         // Checks whether a collection is registered or not

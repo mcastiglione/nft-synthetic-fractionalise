@@ -8,4 +8,5 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
   });
 };
+
 module.exports.tags = ['jot_mock_implementation'];
