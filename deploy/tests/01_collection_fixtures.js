@@ -13,6 +13,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let auctionsManager = await ethers.getContract('AuctionsManager');
   let protocol = await ethers.getContract('ProtocolParameters');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
+  let PerpetualPoolLiteMock = await deploy('PerpetualPoolLiteMock', {from: deployer})
 
   await deploy('TestSyntheticNFT', {
     contract: 'SyntheticNFT',
@@ -36,6 +37,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       protocol.address,
       funding.address, //constants.ZERO_ADDRESS,
       randomConsumer.address,
+      PerpetualPoolLiteMock.address,
     ],
   });
 

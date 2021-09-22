@@ -227,7 +227,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 supplyToKeep,
         uint256 priceFraction
     ) public onlyRole(ROUTER) {
-        requiere(priceFraction > 0, "priceFraction can't be zero");
+        require(priceFraction > 0, "priceFraction can't be zero");
         tokenCounter.increment();
         string memory metadata = getNFTMetadata(tokenId);
         generateSyntheticNFT(msg.sender, tokenId, metadata);
@@ -312,6 +312,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * caller must be the owner
      */
     function updatePriceFraction(uint256 tokenId, uint256 newFractionPrice) public {
+        require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
         jots[tokenId].fractionPrices = newFractionPrice;
     }
