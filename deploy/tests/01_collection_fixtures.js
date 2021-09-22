@@ -41,7 +41,10 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
   await syntheticNFT.initialize('TEST', 'TEST', router.address);
 
-  await randomConsumer.transferOwnership(router.address);
+  let owner = await randomConsumer.owner();
+  if (owner == deployer) {
+    await randomConsumer.transferOwnership(router.address);
+  }
 
   // keccak256 combined with bytes conversion (identity function)
   const DEPLOYER = ethers.utils.id('DEPLOYER');
