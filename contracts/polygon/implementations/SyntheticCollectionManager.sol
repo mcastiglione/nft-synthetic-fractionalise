@@ -227,6 +227,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 supplyToKeep,
         uint256 priceFraction
     ) public onlyRole(ROUTER) {
+        requiere(priceFraction > 0, "priceFraction can't be zero");
         tokenCounter.increment();
         string memory metadata = getNFTMetadata(tokenId);
         generateSyntheticNFT(msg.sender, tokenId, metadata);
@@ -245,6 +246,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice allows the caller to buy jots using the Funding token
      */
     function buyJotTokens(uint256 tokenId, uint256 buyAmount) public {
+        require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
+        require(jots[tokenId].fractionPrices > 0, "Token price not set");
         uint256 amount = buyAmount * jots[tokenId].fractionPrices;
         require(amount > 0, "Amount can't be zero!");
 
