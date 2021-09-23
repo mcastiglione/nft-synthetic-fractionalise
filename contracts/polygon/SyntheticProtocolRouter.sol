@@ -32,7 +32,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     address private _fundingTokenAddress;
     address private _randomConsumerAddress;    
     address private _perpetualPoolLiteAddress;
-    
+
     address public oracleAddress;
     /**
      * @dev collections map.

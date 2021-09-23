@@ -22,27 +22,27 @@ describe('SyntheticProtocolRouter', async function () {
   it('verify that UniSwap Pair was created after registerNFT', async () => {
   
     await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
-    let jotAddress = await router.getJotsAddress(NFT);
-    let jot = await ethers.getContractAt('Jot', jotAddress);
-    let uniswapV2Pair = await jot.uniswapV2Pair();
+    const jotAddress = await router.getJotsAddress(NFT);
+    const jot = await ethers.getContractAt('Jot', jotAddress);
+    const uniswapV2Pair = await jot.uniswapV2Pair();
     assert.ok(uniswapV2Pair);
   });
 
   it('after register NFT should be non-verified', async () => {
     await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
-    let verified = await router.isNFTVerified(NFT, nftID);
+    const verified = await router.isNFTVerified(NFT, nftID);
     assert.equal(verified, false);
 
   });
 
   it('Try to verify with non-verifier address', async () => {
     await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
-    await expect(router.verifyNFT(NFT, nftID)).to.be.reverted;;    
+    await expect(router.verifyNFT(NFT, nftID)).to.be.reverted;
   });
 
   it('Verify with correct address', async () => {
     await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
-    let response = await oracle.verifyNFT(NFT, nftID);
+    const response = await oracle.verifyNFT(NFT, nftID);
     assert.ok(response);
   });
 
