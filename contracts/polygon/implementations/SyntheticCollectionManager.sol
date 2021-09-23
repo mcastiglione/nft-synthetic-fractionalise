@@ -162,7 +162,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         string memory metadata
     ) public onlyRole(ROUTER) {
         require(ISyntheticNFT(erc721address).exists(tokenId), "token not registered!");
-        require(!ISyntheticNFT(erc721address).exists(tokenId), "New token already registered!");
+        require(!ISyntheticNFT(erc721address).exists(newTokenId), "New token already registered!");
         address tokenOwner = IERC721(erc721address).ownerOf(tokenId);
         require(tokenOwner == caller, "You are not the owner of the NFT!");
         ISyntheticNFT(erc721address).safeMint(msg.sender, newTokenId, metadata);
@@ -450,6 +450,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * gets the metadata of the NFT
      */
     function verify(uint256 tokenId) external {
+        require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         require(!tokens[tokenId].verified, "Token already verified");
         PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(originalCollectionAddress, tokenId);
     }
