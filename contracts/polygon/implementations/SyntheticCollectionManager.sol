@@ -343,6 +343,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {
+        require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         return
             // solhint-disable-next-line
             block.timestamp - jots[tokenId].lastFlipTime >= protocol.flippingInterval() &&
