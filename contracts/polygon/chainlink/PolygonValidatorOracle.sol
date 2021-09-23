@@ -28,7 +28,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         bool verified
     );
 
-    constructor(OracleInfo memory _oracleInfo) {
+    constructor(APIOracleInfo memory _oracleInfo) {
         linkToken = _oracleInfo.linkToken;
         chainlinkNode = _oracleInfo.chainlinkNode;
         jobId = stringToBytes32(_oracleInfo.jobId);

@@ -18,13 +18,13 @@ module.exports = async ({ getNamedAccounts, deployments, network, getChainId }) 
       vrfCoordinator: networkConfig[chainId].vrfCoordinator,
       linkToken: networkConfig[chainId].linkToken,
       keyHash: networkConfig[chainId].keyHash,
-      fee: networkConfig[chainId].fee,
+      fee: networkConfig[chainId].vrfFee,
     };
 
     await deploy('RandomNumberConsumer', {
       from: deployer,
       log: true,
-      args: [...Object.values(oracleDefinition)],
+      args: [oracleDefinition],
     });
   }
 };

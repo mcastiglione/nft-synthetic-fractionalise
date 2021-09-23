@@ -19,15 +19,6 @@ contract RandomNumberConsumerMock is Ownable {
     constructor() {} // solhint-disable-line
 
     /**
-     * @dev requests randomness
-     */
-    function getRandomNumber() external returns (bytes32 requestId) {
-        requestId = keccak256("MOCK");
-
-        emit RequestedRandomness(requestId, msg.sender);
-    }
-
-    /**
      * @dev callback function used by VRF Coordinator
      */
     function fulfillRandomness(bytes32 requestId, uint256 randomness) external {
