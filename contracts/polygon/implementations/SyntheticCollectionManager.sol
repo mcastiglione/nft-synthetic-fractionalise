@@ -282,7 +282,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function buyJotTokens(uint256 tokenId, uint256 buyAmount) public {
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         require(tokens[tokenId].fractionPrices > 0, "Token price not set");
-        uint256 amount = buyAmount * tokens[tokenId].fractionPrices;
+        uint256 amount = buyAmount * tokens[tokenId].fractionPrices / 10**18;
         require(amount > 0, "Amount can't be zero!");
 
         // Calculate amount left
