@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./chainlink/RandomNumberConsumer.sol";
 import "./implementations/SyntheticCollectionManager.sol";
@@ -13,8 +14,10 @@ import "./auctions/AuctionsManager.sol";
 import "./Structs.sol";
 import "./governance/ProtocolParameters.sol";
 
-contract SyntheticProtocolRouter is Ownable {
+contract SyntheticProtocolRouter is AccessControl, Ownable {
     using Counters for Counters.Counter;
+
+    bytes32 public constant ORACLE = keccak256("ORACLE");
 
     /**
      * @dev implementation addresses for proxies
@@ -24,11 +27,13 @@ contract SyntheticProtocolRouter is Ownable {
     address private _collectionManager;
     address private _syntheticNFT;
     address private _auctionManager;
+
     address private _protocol;
     address private _fundingTokenAddress;
-    address private _randomConsumerAddress;
+    address private _randomConsumerAddress;    
     address private _perpetualPoolLiteAddress;
-
+    
+    address public oracleAddress;
     /**
      * @dev collections map.
      * collection address => collection data
@@ -84,7 +89,8 @@ contract SyntheticProtocolRouter is Ownable {
         address protocol_,
         address fundingTokenAddress_,
         address randomConsumerAddress_,
-        address perpetualPoolLiteAddress_
+        address perpetualPoolLiteAddress_,
+        address oracleAddress_
     ) {
         swapAddress = swapAddress_;
         _jot = jot_;
@@ -96,7 +102,11 @@ contract SyntheticProtocolRouter is Ownable {
         _fundingTokenAddress = fundingTokenAddress_;
         _randomConsumerAddress = randomConsumerAddress_;
         _perpetualPoolLiteAddress = perpetualPoolLiteAddress_;
+        oracleAddress = oracleAddress_;
+        _setupRole(ORACLE, oracleAddress_);
     }
+
+    
 
     /**
      *  @notice register an NFT collection
@@ -254,6 +264,24 @@ contract SyntheticProtocolRouter is Ownable {
     }
 
     /**
+    * @notice checks whether a Synthetic has been verified or not
+     */
+    function isNFTVerified(address collection, uint256 tokenId) public view returns (bool) {
+        require(isSyntheticNFTCreated(collection, tokenId), "NFT not registered");
+        address collectionManager = getCollectionManagerAddress(collection);
+        return SyntheticCollectionManager(collectionManager).isVerified(tokenId);
+    }
+
+    /**
+    * @notice verify a synthetic NFT
+     */
+    function verifyNFT(address collection, uint256 tokenId) public onlyRole(ORACLE) {
+        require(isSyntheticNFTCreated(collection, tokenId), "NFT not registered");
+        address collectionManager = getCollectionManagerAddress(collection);
+        SyntheticCollectionManager(collectionManager).verify(tokenId);
+    }
+
+    /**
      * @notice getter for Jot Address of a collection
      */
     function getJotsAddress(address collection) public view returns (address) {
@@ -295,4 +323,5 @@ contract SyntheticProtocolRouter is Ownable {
     function getOriginalCollectionAddress(uint256 collectionID) public view returns (address) {
         return _collectionIdToAddress[collectionID];
     }
+
 }

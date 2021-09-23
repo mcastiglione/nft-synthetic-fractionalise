@@ -8,6 +8,9 @@ interface IFlipCoinGenerator {
 }
 
 interface ISyntheticNFT is IERC721Metadata {
+
+    function isVerified(uint256 tokenId) external view returns (bool);
+
     function exists(uint256 tokenId) external view returns (bool);
 
     function safeMint(

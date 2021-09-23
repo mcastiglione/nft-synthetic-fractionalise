@@ -434,4 +434,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId);
     }
+
+    function isVerified(uint256 tokenId) public view returns (bool) {
+        require(isSyntheticNFTCreated(tokenId), "NFT not registered!");
+        return tokens[tokenId].verified;
+    }
+
+    function verify(uint256 tokenId) public onlyRole(ROUTER) {
+        require(isSyntheticNFTCreated(tokenId), "NFT not registered!");
+        tokens[tokenId].verified = true;
+    }
 }
