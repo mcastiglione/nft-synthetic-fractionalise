@@ -237,7 +237,16 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 sellingSupply = (_jotsSupply - supplyToKeep) / 2;
         uint256 liquiditySupply = (_jotsSupply - supplyToKeep) / 2;
 
-        TokenData memory data = TokenData(supplyToKeep, sellingSupply, 0, liquiditySupply, 0, priceFraction, 0);
+        TokenData memory data = TokenData(
+            supplyToKeep, 
+            sellingSupply, 
+            0, 
+            liquiditySupply, 
+            0, 
+            priceFraction, 
+            0, 
+            false
+        );
 
         tokens[tokenId] = data;
     }
