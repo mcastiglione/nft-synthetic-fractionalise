@@ -66,7 +66,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice Data for each token
      */
-    mapping(uint256 => TokenData) public jots;
+    mapping(uint256 => TokenData) public tokens;
 
     mapping(uint256 => bool) public lockedNFTs;
 
