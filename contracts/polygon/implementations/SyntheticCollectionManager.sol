@@ -64,9 +64,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     address public fundingTokenAddress;
 
     /**
-     * @notice Jot data for each token
+     * @notice Data for each token
      */
-    mapping(uint256 => JotsData) public jots;
+    mapping(uint256 => TokenData) public jots;
 
     mapping(uint256 => bool) public lockedNFTs;
 
@@ -130,7 +130,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address newOwner_,
         uint256 jotsSupply_
     ) external onlyRole(AUCTION_MANAGER) {
-        JotsData storage data = jots[nftId_];
+        TokenData storage data = tokens[nftId_];
 
         // the auction could only be started if ownerSupply is 0
         assert(data.ownerSupply == 0);
@@ -193,7 +193,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * been already fractionalised.
      */
     function isSyntheticNFTFractionalised(uint256 tokenId) public view returns (bool) {
-        return jots[tokenId].ownerSupply != 0;
+        return tokens[tokenId].ownerSupply != 0;
     }
 
     /**
@@ -237,9 +237,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 sellingSupply = (_jotsSupply - supplyToKeep) / 2;
         uint256 liquiditySupply = (_jotsSupply - supplyToKeep) / 2;
 
-        JotsData memory data = JotsData(supplyToKeep, sellingSupply, 0, liquiditySupply, 0, priceFraction, 0);
+        TokenData memory data = TokenData(supplyToKeep, sellingSupply, 0, liquiditySupply, 0, priceFraction, 0);
 
-        jots[tokenId] = data;
+        tokens[tokenId] = data;
     }
 
     /**
@@ -247,12 +247,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     function buyJotTokens(uint256 tokenId, uint256 buyAmount) public {
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
-        require(jots[tokenId].fractionPrices > 0, "Token price not set");
-        uint256 amount = buyAmount * jots[tokenId].fractionPrices;
+        require(tokens[tokenId].fractionPrices > 0, "Token price not set");
+        uint256 amount = buyAmount * tokens[tokenId].fractionPrices;
         require(amount > 0, "Amount can't be zero!");
 
         // Calculate amount left
-        uint256 amountLeft = jots[tokenId].sellingSupply - jots[tokenId].soldSupply;
+        uint256 amountLeft = tokens[tokenId].sellingSupply - tokens[tokenId].soldSupply;
 
         // If amount left is lesser than buying amount
         // then buying amount = amount left
@@ -271,8 +271,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         IJot(jotAddress).transferFrom(address(this), msg.sender, buyAmount);
 
         //Increase sold supply (amount in token) and liquidity sold (amount in ether)
-        jots[tokenId].soldSupply += buyAmount;
-        jots[tokenId].liquiditySold += amount;
+        tokens[tokenId].soldSupply += buyAmount;
+        tokens[tokenId].liquiditySold += amount;
 
         //If all jots have been sold, then add liquidity
         if (amount == amountLeft) {
@@ -287,10 +287,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function increaseSellingSupply(uint256 tokenId, uint256 amount) public {
         require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
-        require(jots[tokenId].ownerSupply >= amount, "You do not have enough tokens left");
-        jots[tokenId].ownerSupply -= amount;
-        jots[tokenId].sellingSupply += amount / 2;
-        jots[tokenId].liquiditySupply += amount / 2;
+        require(tokens[tokenId].ownerSupply >= amount, "You do not have enough tokens left");
+        tokens[tokenId].ownerSupply -= amount;
+        tokens[tokenId].sellingSupply += amount / 2;
+        tokens[tokenId].liquiditySupply += amount / 2;
     }
 
     /**
@@ -299,12 +299,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     function decreaseSellingSupply(uint256 tokenId, uint256 amount) public {
         require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
-        require(jots[tokenId].liquiditySupply >= amount / 2, "You do not have enough liquidity left");
-        require(jots[tokenId].sellingSupply >= amount / 2, "You do not have enough selling supply left");
+        require(tokens[tokenId].liquiditySupply >= amount / 2, "You do not have enough liquidity left");
+        require(tokens[tokenId].sellingSupply >= amount / 2, "You do not have enough selling supply left");
 
-        jots[tokenId].ownerSupply += amount;
-        jots[tokenId].sellingSupply -= amount / 2;
-        jots[tokenId].liquiditySupply -= amount / 2;
+        tokens[tokenId].ownerSupply += amount;
+        tokens[tokenId].sellingSupply -= amount / 2;
+        tokens[tokenId].liquiditySupply -= amount / 2;
     }
 
     /**
@@ -314,15 +314,15 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function updatePriceFraction(uint256 tokenId, uint256 newFractionPrice) public {
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
-        jots[tokenId].fractionPrices = newFractionPrice;
+        tokens[tokenId].fractionPrices = newFractionPrice;
     }
 
     /**
      * @notice add available liquidity for a given token to UniSwap pool
      */
     function addLiquidityToPool(uint256 tokenId) public {
-        uint256 liquiditySupply = jots[tokenId].liquiditySupply;
-        uint256 liquiditySold = jots[tokenId].liquiditySold;
+        uint256 liquiditySupply = tokens[tokenId].liquiditySupply;
+        uint256 liquiditySold = tokens[tokenId].liquiditySold;
 
         // approve token transfer to cover all possible scenarios
         IJot(jotAddress).approve(address(uniswapV2Router), liquiditySupply);
@@ -346,14 +346,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         return
             // solhint-disable-next-line
-            block.timestamp - jots[tokenId].lastFlipTime >= protocol.flippingInterval() &&
+            block.timestamp - tokens[tokenId].lastFlipTime >= protocol.flippingInterval() &&
             IERC20(jotAddress).balanceOf(jotPool) > 0 &&
             isSyntheticNFTFractionalised(tokenId);
     }
 
     function flipJot(uint256 tokenId, uint256 prediction) public {
         require(isAllowedToFlip(tokenId), "Flip is not allowed yet");
-        jots[tokenId].lastFlipTime = block.timestamp; // solhint-disable-line
+        tokens[tokenId].lastFlipTime = block.timestamp; // solhint-disable-line
 
         bytes32 requestId = RandomNumberConsumer(_randomConsumerAddress).getRandomNumber();
         _flips[requestId] = Flip({tokenId: tokenId, prediction: prediction});
@@ -367,7 +367,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 fReward = protocol.flippingReward();
 
         Flip memory flip = _flips[requestId];
-        uint256 ownerSupply = jots[flip.tokenId].ownerSupply;
+        uint256 ownerSupply = tokens[flip.tokenId].ownerSupply;
 
         // avoid underflow in math operations
         if (fAmount > ownerSupply) {
@@ -378,7 +378,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         }
 
         if (randomNumber == 0) {
-            jots[flip.tokenId].ownerSupply -= fAmount;
+            tokens[flip.tokenId].ownerSupply -= fAmount;
             if (randomNumber != flip.prediction) {
                 poolAmount = fAmount;
             } else {
@@ -389,7 +389,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                 IERC20(jotAddress).safeTransfer(jotPool, poolAmount);
             }
         } else {
-            jots[flip.tokenId].ownerSupply += fAmount;
+            tokens[flip.tokenId].ownerSupply += fAmount;
             if (randomNumber != flip.prediction) {
                 poolAmount = fAmount;
             } else {
@@ -402,7 +402,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         }
 
         // lock the nft and make it auctionable
-        if (jots[flip.tokenId].ownerSupply == 0) {
+        if (tokens[flip.tokenId].ownerSupply == 0) {
             lockedNFTs[flip.tokenId] = true;
             AuctionsManager(_auctionsManagerAddress).whitelistNFT(flip.tokenId);
         }
@@ -419,7 +419,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function getRemainingSupply(uint256 tokenId) public view returns (uint256) {
-        return jots[tokenId].ownerSupply;
+        return tokens[tokenId].ownerSupply;
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {

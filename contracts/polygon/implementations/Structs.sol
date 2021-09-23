@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-struct JotsData {
+struct TokenData {
     uint256 ownerSupply;
     uint256 sellingSupply;
     uint256 soldSupply;

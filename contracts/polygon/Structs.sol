@@ -12,4 +12,5 @@ struct SyntheticCollection {
     address syntheticNFTAddress;
     string originalName;
     string originalSymbol;
+    bool verified;
 }
