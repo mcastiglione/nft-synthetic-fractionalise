@@ -10,6 +10,9 @@ import "./OracleStructs.sol";
  * @dev the ownership will be transferred after deployment to the router contract
  */
 contract PolygonValidatorOracle is ChainlinkClient, Ownable {
+    /**
+     * @dev oracle configuration parameters
+     */
     string public token;
     string public apiURL;
     address public chainlinkNode;
@@ -38,6 +41,13 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         setChainlinkToken(linkToken);
     }
 
+    /**
+     * @dev call to verify if a token is locked in ethereum vault,
+     * this method can be called only from the collection manager contract
+     * @param ethereumCollection the collection address in ethereum
+     * @param tokenId the id of the nft in the collection
+     * @return requestId the id of the request to the Chainlink oracle
+     */
     function verifyTokenInCollection(address ethereumCollection, uint256 tokenId)
         external
         returns (bytes32 requestId)
@@ -70,9 +80,15 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         });
     }
 
+    /**
+     * @dev function to process the oracle response (only callable from oracle)
+     * @param requestId the id of the request to the Chainlink oracle
+     * @param verified wether the nft is locked or not on ethereum
+     */
     function processResponse(bytes32 requestId, bool verified) public recordChainlinkFulfillment(requestId) {
         VerifyRequest memory requestData = _verifyRequests[requestId];
 
+        // only call the synthetic collection contract if is locked
         if (verified) {
             SyntheticCollectionManager(requestData.syntheticCollection).processSuccessfulVerify(
                 requestData.tokenId
@@ -89,7 +105,9 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
     }
 
     /**
-     * @dev whitelist collections to call this contract
+     * @dev whitelist collections in order to allow calling this contract
+     * (only router can whitelist after deploying the proxy, the router contract owns this one)
+     * @param collectionId the collection manager (sythetic collection from polygon)
      */
     function whitelistCollection(address collectionId) external onlyOwner {
         _whitelistedCollections[collectionId] = true;

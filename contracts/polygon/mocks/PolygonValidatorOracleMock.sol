@@ -10,13 +10,6 @@ import "../chainlink/OracleStructs.sol";
  * @dev the ownership will be transferred after deployment to the router contract
  */
 contract PolygonValidatorOracleMock is ChainlinkClient, Ownable {
-    string public token;
-    string public apiURL;
-    address public chainlinkNode;
-    bytes32 public jobId;
-    uint256 public nodeFee;
-    address public linkToken;
-
     mapping(bytes32 => VerifyRequest) private _verifyRequests;
     mapping(address => bool) private _whitelistedCollections;
 
@@ -28,24 +21,24 @@ contract PolygonValidatorOracleMock is ChainlinkClient, Ownable {
         bool verified
     );
 
+    // solhint-disable-next-line
     constructor() {}
 
-    function processResponse(bytes32 requestId, bool verified) external {
-        VerifyRequest memory requestData = _verifyRequests[requestId];
-
+    /**
+     * @dev this is a mock just for testing purposes
+     */
+    function processResponseMock(
+        bytes32 requestId,
+        bool verified,
+        address originalCollection,
+        address syntheticCollection,
+        uint256 tokenId
+    ) external {
         if (verified) {
-            SyntheticCollectionManager(requestData.syntheticCollection).processSuccessfulVerify(
-                requestData.tokenId
-            );
+            SyntheticCollectionManager(syntheticCollection).processSuccessfulVerify(tokenId);
         }
 
-        emit ResponseReceived(
-            requestId,
-            requestData.originalCollection,
-            requestData.syntheticCollection,
-            requestData.tokenId,
-            verified
-        );
+        emit ResponseReceived(requestId, originalCollection, syntheticCollection, tokenId, verified);
     }
 
     /**
