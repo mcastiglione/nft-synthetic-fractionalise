@@ -55,7 +55,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
             request,
             "get",
             string(
-                abi.encodePacked(apiURL, "collection=", ethereumCollection, "&tokenId=", uint2str(tokenId))
+                abi.encodePacked(apiURL, "?collection=", ethereumCollection, "&tokenId=", uint2str(tokenId))
             )
         );
         Chainlink.add(request, "path", "locked");
