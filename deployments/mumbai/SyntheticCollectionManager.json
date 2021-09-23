@@ -205,107 +205,13 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "tokenId",
           "type": "uint256"
         }
       ],
-      "name": "_jots",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "ownerSupply",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "sellingSupply",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "soldSupply",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "liquiditySupply",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "liquiditySold",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "fractionPrices",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "lastFlipTime",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "_originalCollectionAddress",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "_syntheticProtocolRouterAddress",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "_tokenCounter",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "_value",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "_tokens",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
+      "name": "addLiquidityToPool",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -314,9 +220,42 @@
           "internalType": "uint256",
           "name": "tokenId",
           "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "buyAmount",
+          "type": "uint256"
         }
       ],
-      "name": "addLiquidityToPool",
+      "name": "buyJotTokens",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "newTokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "caller",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "metadata",
+          "type": "string"
+        }
+      ],
+      "name": "change",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -600,6 +539,25 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "isVerified",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "jotAddress",
       "outputs": [
@@ -804,6 +762,86 @@
     },
     {
       "inputs": [],
+      "name": "syntheticProtocolRouterAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "tokenCounter",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "tokens",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "ownerSupply",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "sellingSupply",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "soldSupply",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "liquiditySupply",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "liquiditySold",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "fractionPrices",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "lastFlipTime",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "verified",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "uniswapV2Router",
       "outputs": [
         {
@@ -829,6 +867,19 @@
         }
       ],
       "name": "updatePriceFraction",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "verify",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -924,7 +975,7 @@
       "_flips": {
         "details": "mapping the request id with the flip input data"
       },
-      "jotsSupply": {
+      "_jotsSupply": {
         "details": "ERC20 totalSupply (governance) parameter TODO: get from governance"
       }
     },
@@ -969,11 +1020,20 @@
       "jotAddress()": {
         "notice": "jot Address for this collection"
       },
+      "originalCollectionAddress()": {
+        "notice": "address of the original collection"
+      },
       "poolAddress()": {
         "notice": "returns the Quickswap pool address"
       },
       "register(uint256,uint256,uint256)": {
         "notice": "First it updates counter syntheticID++. Then: • generateSyntheticNFT(address, id) • Interacts with JOT contract for that address and: (a) Mints JotSupply (governance parameter) (b) Register ownerSupply (DO NOT SEND HIM/HER) (c) Register sellingSupply = (JotSupply-supplyToKeep)/2 (d) Register soldSupply = 0 (e) Register liquiditySupply = (JotSupply-supplyToKeep)/2. (f) Register liquiditySold = 0"
+      },
+      "syntheticProtocolRouterAddress()": {
+        "notice": "the address of the Protocol Router"
+      },
+      "tokens(uint256)": {
+        "notice": "Data for each token"
       },
       "updatePriceFraction(uint256,uint256)": {
         "notice": "update the price of a fraction for a given NFT caller must be the owner"
@@ -1013,10 +1073,18 @@
       {
         "astId": 11407,
         "contract": "contracts/polygon/implementations/SyntheticCollectionManager.sol:SyntheticCollectionManager",
-        "label": "_tokenCounter",
+        "label": "_auctionsManagerAddress",
+        "offset": 2,
+        "slot": "1",
+        "type": "t_address"
+      },
+      {
+        "astId": 11946,
+        "contract": "contracts/polygon/implementations/SyntheticCollectionManager.sol:SyntheticCollectionManager",
+        "label": "_jotsSupply",
         "offset": 0,
         "slot": "2",
-        "type": "t_struct(Counter)6528_storage"
+        "type": "t_uint256"
       },
       {
         "astId": 11411,
@@ -1045,7 +1113,7 @@
       {
         "astId": 11423,
         "contract": "contracts/polygon/implementations/SyntheticCollectionManager.sol:SyntheticCollectionManager",
-        "label": "protocol",
+        "label": "syntheticProtocolRouterAddress",
         "offset": 0,
         "slot": "6",
         "type": "t_contract(ProtocolParameters)10931"
@@ -1053,7 +1121,7 @@
       {
         "astId": 11427,
         "contract": "contracts/polygon/implementations/SyntheticCollectionManager.sol:SyntheticCollectionManager",
-        "label": "_tokens",
+        "label": "protocol",
         "offset": 0,
         "slot": "7",
         "type": "t_mapping(t_uint256,t_bool)"
@@ -1061,7 +1129,7 @@
       {
         "astId": 11431,
         "contract": "contracts/polygon/implementations/SyntheticCollectionManager.sol:SyntheticCollectionManager",
-        "label": "_tokenMetadata",
+        "label": "originalCollectionAddress",
         "offset": 0,
         "slot": "8",
         "type": "t_mapping(t_uint256,t_string_storage)"
@@ -1069,7 +1137,7 @@
       {
         "astId": 11434,
         "contract": "contracts/polygon/implementations/SyntheticCollectionManager.sol:SyntheticCollectionManager",
-        "label": "_originalCollectionAddress",
+        "label": "jotAddress",
         "offset": 0,
         "slot": "9",
         "type": "t_address"
@@ -1077,7 +1145,7 @@
       {
         "astId": 11437,
         "contract": "contracts/polygon/implementations/SyntheticCollectionManager.sol:SyntheticCollectionManager",
-        "label": "jotsSupply",
+        "label": "fundingTokenAddress",
         "offset": 0,
         "slot": "10",
         "type": "t_uint256"
@@ -1085,7 +1153,7 @@
       {
         "astId": 11440,
         "contract": "contracts/polygon/implementations/SyntheticCollectionManager.sol:SyntheticCollectionManager",
-        "label": "jotAddress",
+        "label": "tokens",
         "offset": 0,
         "slot": "11",
         "type": "t_address"
@@ -1093,7 +1161,7 @@
       {
         "astId": 11443,
         "contract": "contracts/polygon/implementations/SyntheticCollectionManager.sol:SyntheticCollectionManager",
-        "label": "fundingTokenAddress",
+        "label": "lockedNFTs",
         "offset": 0,
         "slot": "12",
         "type": "t_address"
@@ -1193,10 +1261,10 @@
         "numberOfBytes": "32",
         "value": "t_bool"
       },
-      "t_mapping(t_uint256,t_string_storage)": {
+      "t_mapping(t_uint256,t_struct(TokenData)11890_storage)": {
         "encoding": "mapping",
         "key": "t_uint256",
-        "label": "mapping(uint256 => string)",
+        "label": "mapping(uint256 => struct TokenData)",
         "numberOfBytes": "32",
         "value": "t_string_storage"
       },
@@ -1252,7 +1320,7 @@
       },
       "t_struct(JotsData)11355_storage": {
         "encoding": "inplace",
-        "label": "struct JotsData",
+        "label": "struct TokenData",
         "members": [
           {
             "astId": 11342,
@@ -1309,32 +1377,17 @@
             "offset": 0,
             "slot": "6",
             "type": "t_uint256"
-          }
-        ],
-        "numberOfBytes": "224"
-      },
-      "t_struct(RoleData)285_storage": {
-        "encoding": "inplace",
-        "label": "struct AccessControl.RoleData",
-        "members": [
-          {
-            "astId": 282,
-            "contract": "contracts/polygon/implementations/SyntheticCollectionManager.sol:SyntheticCollectionManager",
-            "label": "members",
-            "offset": 0,
-            "slot": "0",
-            "type": "t_mapping(t_address,t_bool)"
           },
           {
-            "astId": 284,
+            "astId": 11889,
             "contract": "contracts/polygon/implementations/SyntheticCollectionManager.sol:SyntheticCollectionManager",
-            "label": "adminRole",
+            "label": "verified",
             "offset": 0,
-            "slot": "1",
-            "type": "t_bytes32"
+            "slot": "7",
+            "type": "t_bool"
           }
         ],
-        "numberOfBytes": "64"
+        "numberOfBytes": "256"
       },
       "t_uint256": {
         "encoding": "inplace",

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-struct JotsData {
+struct TokenData {
     uint256 ownerSupply;
     uint256 sellingSupply;
     uint256 soldSupply;
@@ -9,6 +9,7 @@ struct JotsData {
     uint256 liquiditySold;
     uint256 fractionPrices;
     uint256 lastFlipTime;
+    bool verified;
 }
 
 struct Flip {

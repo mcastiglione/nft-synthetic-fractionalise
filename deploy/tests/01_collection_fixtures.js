@@ -13,6 +13,8 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let auctionsManager = await ethers.getContract('AuctionsManager');
   let protocol = await ethers.getContract('ProtocolParameters');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
+  let PerpetualPoolLiteMock = await deploy('PerpetualPoolLiteMock', {from: deployer})
+  let MockOracle = await deploy('MockOracle', {from: deployer});
 
   await deploy('TestSyntheticNFT', {
     contract: 'SyntheticNFT',
@@ -21,13 +23,26 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     args: [],
   });
 
+  let swapAddress;
+
+  if (chainId == 1337 || chainId == 31337) {
+    let UniSwapFactoryMock = await deploy('UniSwapFactoryMock', {from: deployer});
+    let UniSwapRouterMock = await deploy('UniSwapRouterMock', {
+      from: deployer, 
+      args: [UniSwapFactoryMock.address]
+    });
+    swapAddress = UniSwapRouterMock.address;
+  } else {
+    swapAddress = networkConfig[chainId].uniswapAddress;
+  }
+
   let syntheticNFT = await ethers.getContract('TestSyntheticNFT');
 
   let router = await deploy('SyntheticProtocolRouter', {
     from: deployer,
     log: true,
-    args: [
-      networkConfig[chainId].uniswapAddress,
+    args: [ 
+      swapAddress,
       jot.address,
       jotPool.address,
       collectionManager.address,
@@ -36,12 +51,17 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       protocol.address,
       funding.address, //constants.ZERO_ADDRESS,
       randomConsumer.address,
+      PerpetualPoolLiteMock.address,
+      MockOracle.address
     ],
   });
 
   await syntheticNFT.initialize('TEST', 'TEST', router.address);
 
-  await randomConsumer.transferOwnership(router.address);
+  let owner = await randomConsumer.owner();
+  if (owner == deployer) {
+    await randomConsumer.transferOwnership(router.address);
+  }
 
   // keccak256 combined with bytes conversion (identity function)
   const DEPLOYER = ethers.utils.id('DEPLOYER');

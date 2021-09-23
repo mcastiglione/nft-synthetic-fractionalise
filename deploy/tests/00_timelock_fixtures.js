@@ -9,6 +9,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const tokenSymbol = 'MTKN';
   const tokenSupply = web3.utils.toWei('100');
 
+  let dummyMock = await deploy('EmptyMock', {from: deployer})
+
   let token = await deploy('ERC20VotesMock', {
     from: deployer,
     log: true,
@@ -33,12 +35,17 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     flippingReward: 5,
     flippingAmount: 20,
     auctionDuration: String(time.duration.weeks(1)),
+    governanceContractAddress_: timelock.address,
+    futuresOracleAddress: dummyMock.address,
+    futuresMultiplier: 1,
+    futuresFeeRatio: 1,
+    futuresFundingRateCoefficient: 1 
   };
 
   await deploy('ProtocolParameters', {
     from: deployer,
     log: true,
-    args: [...Object.values(defaultParameters), timelock.address],
+    args: [...Object.values(defaultParameters)],
   });
 
   timelock = await ethers.getContractAt('TimelockController', timelock.address);
