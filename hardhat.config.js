@@ -57,6 +57,7 @@ module.exports = {
       accounts: [PRIVATE_KEY],
       deploy: ['deploy/polygon'],
       tags: ['testnet'],
+      gas: 5500000,
     },
   },
   namedAccounts: {

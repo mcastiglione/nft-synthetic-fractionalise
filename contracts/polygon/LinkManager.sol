@@ -3,12 +3,17 @@ pragma solidity ^0.8.4;
 
 import "./Interfaces.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract LinkManager {
+    using SafeERC20 for IERC20;
+
     IUniswapV2Router01 immutable router;
     address private immutable matic;
     address private immutable link;
     address private immutable receiver;
+
+    IUniswapV2Pair private immutable maticLinkPair;
 
     constructor(
         address quickswapRouter,
@@ -24,24 +29,26 @@ contract LinkManager {
         matic = _matic;
         link = _link;
         receiver = _receiver;
+
+        IUniswapV2Factory factory = IUniswapV2Factory(IUniswapV2Router01(quickswapRouter).factory());
+        maticLinkPair = IUniswapV2Pair(factory.getPair(_link, _matic));
     }
 
     function swapToLink() external {
-        IUniswapV2Factory factory = IUniswapV2Factory(router.factory());
-        IUniswapV2Pair pair = IUniswapV2Pair(factory.getPair(link, matic));
-        uint256 linkBalance = IERC20(link).balanceOf(address(this));
-        uint256 maticBalance = IERC20(matic).balanceOf(address(this));
-
-        (uint256 reserve0, uint256 reserve1, ) = pair.getReserves();
-        (uint256 reserveIn, uint256 reserveOut) = pair.token0() == link
+        (uint256 reserve0, uint256 reserve1, ) = maticLinkPair.getReserves();
+        (uint256 reserveIn, uint256 reserveOut) = maticLinkPair.token0() == link
             ? (reserve1, reserve0)
             : (reserve0, reserve1);
-        uint256 amountOut = router.getAmountOut(maticBalance, reserveIn, reserveOut);
-        (uint256 amount0Out, uint256 amount1Out) = pair.token0() == link
-            ? (uint256(0), amountOut)
-            : (amountOut, uint256(0));
 
-        IERC20(link).transfer(address(pair), linkBalance);
-        pair.swap(amount0Out, amount1Out, receiver, new bytes(0));
+        uint256 amountOut = router.getAmountOut(address(this).balance, reserveIn, reserveOut);
+
+        address[] memory path = new address[](1);
+        path[0] = link;
+        router.swapExactETHForTokens{value: address(this).balance}(
+            amountOut,
+            path,
+            receiver,
+            block.timestamp
+        );
     }
 }
