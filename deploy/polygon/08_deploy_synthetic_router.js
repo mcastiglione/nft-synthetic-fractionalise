@@ -18,10 +18,10 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let swapAddress;
 
   if (chainId == 1337 || chainId == 31337) {
-    let UniSwapFactoryMock = await deploy('UniSwapFactoryMock', {from: deployer});
+    let UniSwapFactoryMock = await deploy('UniSwapFactoryMock', { from: deployer });
     let UniSwapRouterMock = await deploy('UniSwapRouterMock', {
-      from: deployer, 
-      args: [UniSwapFactoryMock.address]
+      from: deployer,
+      args: [UniSwapFactoryMock.address],
     });
     swapAddress = UniSwapRouterMock.address;
   } else {
@@ -35,8 +35,8 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     perpetualPoolLiteAddress = networkConfig[chainId].perpetualPoolLiteAddress;
     oracleAddress = networkConfig[chainId].oracleAddress;
   } else {
-    let PerpetualPoolLiteMock = await deploy('PerpetualPoolLiteMock', {from: deployer})
-    let MockOracle = await deploy('MockOracle', {from: deployer});
+    let PerpetualPoolLiteMock = await deploy('PerpetualPoolLiteMock', { from: deployer });
+    let MockOracle = await deploy('MockOracle', { from: deployer });
     perpetualPoolLiteAddress = PerpetualPoolLiteMock.address;
     oracleAddress = MockOracle.address;
   }
@@ -55,16 +55,14 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       funding.address, //constants.ZERO_ADDRESS,
       randomConsumer.address,
       perpetualPoolLiteAddress,
-      oracleAddress
+      oracleAddress,
     ],
   });
 
-  await syntheticNFT.initialize('TEST', 'TEST', router.address);
-  await auctionsManager.initialize(protocol.address, router.address);
-
-  await randomConsumer.transferOwnership(router.address);
-
-  await ethers.getContract('SyntheticProtocolRouter');
+  if (router.newlyDeployed) {
+    await syntheticNFT.initialize('TEST', 'TEST', router.address);
+    await randomConsumer.transferOwnership(router.address);
+  }
 };
 
 module.exports.tags = ['synthetic_router'];
