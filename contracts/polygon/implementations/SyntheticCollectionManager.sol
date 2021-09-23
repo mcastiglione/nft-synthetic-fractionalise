@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../extensions/IERC20ManagedAccounts.sol";
 import "../auctions/AuctionsManager.sol";
 import "../chainlink/RandomNumberConsumer.sol";
+import "../chainlink/PolygonValidatorOracle.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
 import "../governance/ProtocolParameters.sol";
@@ -24,8 +25,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     bytes32 public constant ROUTER = keccak256("ROUTER");
     bytes32 public constant AUCTION_MANAGER = keccak256("AUCTION_MANAGER");
     bytes32 public constant RANDOM_ORACLE = keccak256("RANDOM_ORACLE");
+    bytes32 public constant VALIDATOR_ORACLE = keccak256("VALIDATOR_ORACLE");
 
     address private immutable _randomConsumerAddress;
+    address private immutable _validatorAddress;
     address private _auctionsManagerAddress;
 
     /**
@@ -64,10 +67,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     address public fundingTokenAddress;
 
     /**
-     * @notice Data for each token
+     * @notice data for each token
      */
     mapping(uint256 => TokenData) public tokens;
 
+    /**
+     * @notice the nft should be auctioned to unlock it
+     */
     mapping(uint256 => bool) public lockedNFTs;
 
     /**
@@ -92,8 +98,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 randomResult
     );
 
-    constructor(address randomConsumerAddress) {
+    constructor(address randomConsumerAddress, address validatorAddress) {
         _randomConsumerAddress = randomConsumerAddress;
+        _validatorAddress = validatorAddress;
     }
 
     function initialize(
@@ -144,13 +151,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // data.liquiditySold = 0;
         // data.fractionPrices = 0;
     }
+
     /**
      * @notice change an NFT for another one of the same collection
      */
     function change(
-        uint256 tokenId, 
-        uint256 newTokenId, 
-        address caller, 
+        uint256 tokenId,
+        uint256 newTokenId,
+        address caller,
         string memory metadata
     ) public onlyRole(ROUTER) {
         require(ISyntheticNFT(erc721address).exists(tokenId), "token not registered!");
@@ -170,16 +178,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             oldData.lastFlipTime,
             false
         );
-    }
-
-    /**
-     * @notice This method calls chainlink oracle and
-     * verifies if the NFT has been locked on NFTVaultManager. In addition
-     * gets the metadata of the NFT
-     */
-    function verifyNFT(uint256 tokenId) public view returns (bool) {
-        // TODO: call chainlink Oracle
-        return true;
     }
 
     /**
@@ -265,13 +263,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 liquiditySupply = (_jotsSupply - supplyToKeep) / 2;
 
         TokenData memory data = TokenData(
-            supplyToKeep, 
-            sellingSupply, 
-            0, 
-            liquiditySupply, 
-            0, 
-            priceFraction, 
-            0, 
+            supplyToKeep,
+            sellingSupply,
+            0,
+            liquiditySupply,
+            0,
+            priceFraction,
+            0,
             false
         );
 
@@ -387,7 +385,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             isSyntheticNFTFractionalised(tokenId);
     }
 
-    function flipJot(uint256 tokenId, uint256 prediction) public {
+    function flipJot(uint256 tokenId, uint256 prediction) external {
         require(isAllowedToFlip(tokenId), "Flip is not allowed yet");
         tokens[tokenId].lastFlipTime = block.timestamp; // solhint-disable-line
 
@@ -447,6 +445,20 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
+     * @notice This method calls chainlink oracle and
+     * verifies if the NFT has been locked on NFTVaultManager. In addition
+     * gets the metadata of the NFT
+     */
+    function verify(uint256 tokenId) external {
+        require(!tokens[tokenId].verified, "Token already verified");
+        PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(originalCollectionAddress, tokenId);
+    }
+
+    function processSuccessfulVerify(uint256 tokenId) external onlyRole(VALIDATOR_ORACLE) {
+        tokens[tokenId].verified = true;
+    }
+
+    /**
      * @dev burn a token
      */
     function safeBurn(uint256 tokenId) public onlyRole(ROUTER) {
@@ -465,10 +477,5 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function isVerified(uint256 tokenId) public view returns (bool) {
         require(isSyntheticNFTCreated(tokenId), "NFT not registered!");
         return tokens[tokenId].verified;
-    }
-
-    function verify(uint256 tokenId) public onlyRole(ROUTER) {
-        require(isSyntheticNFTCreated(tokenId), "NFT not registered!");
-        tokens[tokenId].verified = true;
     }
 }

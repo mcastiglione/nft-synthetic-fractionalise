@@ -8,3 +8,9 @@ struct OracleInfo {
     string jobId;
     uint256 nodeFee;
 }
+
+struct VerifyRequest {
+    address originalCollection;
+    address syntheticCollection;
+    uint256 tokenId;
+}

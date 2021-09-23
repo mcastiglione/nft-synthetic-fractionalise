@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../implementations/SyntheticCollectionManager.sol";
 
 /**
- * @dev the ownership will be transferred after deploy to the router contract
+ * @dev the ownership will be transferred after deployment to the router contract
  */
 contract RandomNumberConsumer is VRFConsumerBase, Ownable {
     bytes32 internal immutable keyHash;

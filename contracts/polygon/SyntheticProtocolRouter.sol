@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./chainlink/RandomNumberConsumer.sol";
+import "./chainlink/PolygonValidatorOracle.sol";
 import "./implementations/SyntheticCollectionManager.sol";
 import "./implementations/Jot.sol";
 import "./implementations/JotPool.sol";
@@ -30,7 +31,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
     address private _protocol;
     address private _fundingTokenAddress;
-    address private _randomConsumerAddress;    
+    address private _randomConsumerAddress;
+    address private _validatorAddress;
     address private _perpetualPoolLiteAddress;
 
     address public oracleAddress;
@@ -89,6 +91,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address protocol_,
         address fundingTokenAddress_,
         address randomConsumerAddress_,
+        address validatorAddress_,
         address perpetualPoolLiteAddress_,
         address oracleAddress_
     ) {
@@ -101,12 +104,11 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         _protocol = protocol_;
         _fundingTokenAddress = fundingTokenAddress_;
         _randomConsumerAddress = randomConsumerAddress_;
+        _validatorAddress = validatorAddress_;
         _perpetualPoolLiteAddress = perpetualPoolLiteAddress_;
         oracleAddress = oracleAddress_;
         _setupRole(ORACLE, oracleAddress_);
     }
-
-    
 
     /**
      *  @notice register an NFT collection
@@ -166,6 +168,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             );
 
             collectionContract.grantRole(collectionContract.RANDOM_ORACLE(), _randomConsumerAddress);
+            collectionContract.grantRole(collectionContract.VALIDATOR_ORACLE(), _validatorAddress);
             Jot(jotAddress).grantRole(Jot(jotAddress).MINTER(), collectionAddress);
 
             // set the manager to allow control over the funds
@@ -191,8 +194,9 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
             initPerpetualPoolLite(collectionID, originalName);
 
-            // whitelist the new collection contract on the random number consumer
+            // whitelist the new collection contract on the random number consumer and the validator
             RandomNumberConsumer(_randomConsumerAddress).whitelistCollection(collectionAddress);
+            PolygonValidatorOracle(_validatorAddress).whitelistCollection(collectionAddress);
 
             emit CollectionManagerRegistered(
                 collectionID,
@@ -218,29 +222,23 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         emit TokenRegistered(collectionAddress, collectionID, tokenId);
     }
 
-
     /**
-    * @notice change an NFT for another one
+     * @notice change an NFT for another one
      */
     function changeNFT(
-        address collection, 
-        uint256 tokenId, 
-        uint256 newTokenId, 
+        address collection,
+        uint256 tokenId,
+        uint256 newTokenId,
         string memory metadata
     ) public {
         address collectionManager = getCollectionManagerAddress(collection);
-        SyntheticCollectionManager(collectionManager).change(
-            tokenId, 
-            newTokenId, 
-            msg.sender, 
-            metadata
-        );
+        SyntheticCollectionManager(collectionManager).change(tokenId, newTokenId, msg.sender, metadata);
     }
 
     /**
      * @dev init Perpetual Pool Lite for a specific collection
      */
-    
+
     function initPerpetualPoolLite(uint256 collectionID, string memory name) internal {
         ProtocolParameters protocol = ProtocolParameters(_protocol);
         address futuresOracleAddress = protocol.futuresOracleAddress();
@@ -283,7 +281,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     }
 
     /**
-    * @notice checks whether a Synthetic has been verified or not
+     * @notice checks whether a Synthetic has been verified or not
      */
     function isNFTVerified(address collection, uint256 tokenId) public view returns (bool) {
         require(isSyntheticNFTCreated(collection, tokenId), "NFT not registered");
@@ -292,7 +290,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     }
 
     /**
-    * @notice verify a synthetic NFT
+     * @notice verify a synthetic NFT
      */
     function verifyNFT(address collection, uint256 tokenId) public onlyRole(ORACLE) {
         require(isSyntheticNFTCreated(collection, tokenId), "NFT not registered");
@@ -342,5 +340,4 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     function getOriginalCollectionAddress(uint256 collectionID) public view returns (address) {
         return _collectionIdToAddress[collectionID];
     }
-
 }

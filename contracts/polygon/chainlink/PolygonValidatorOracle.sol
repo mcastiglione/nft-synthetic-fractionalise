@@ -2,37 +2,38 @@
 pragma solidity ^0.8.4;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "../implementations/SyntheticCollectionManager.sol";
 import "./OracleStructs.sol";
 
 /**
- * @title oracle to get the assets price in USD
- * @author Eric Nordelo
+ * @dev the ownership will be transferred after deployment to the router contract
  */
-contract PolygonValidatorOracle is ChainlinkClient {
-    // the token to get the price for
+contract PolygonValidatorOracle is ChainlinkClient, Ownable {
     string public token;
-
-    // the url to get the prices
     string public apiURL;
-
-    // the chainlink node
     address public chainlinkNode;
-
-    // the node job id
     bytes32 public jobId;
-
-    // the fee in LINK
     uint256 public nodeFee;
-
-    // the address of the LINK token
     address public linkToken;
+
+    mapping(bytes32 => VerifyRequest) private _verifyRequests;
+    mapping(address => bool) private _whitelistedCollections;
+
+    event ResponseReceived(
+        bytes32 indexed requestId,
+        address originalCollection,
+        address syntheticCollection,
+        uint256 tokenId,
+        bool verified
+    );
 
     constructor(OracleInfo memory _oracleInfo) {
         linkToken = _oracleInfo.linkToken;
         chainlinkNode = _oracleInfo.chainlinkNode;
         jobId = stringToBytes32(_oracleInfo.jobId);
         nodeFee = (_oracleInfo.nodeFee * LINK_DIVISIBILITY) / 1000;
-        apiURL = "https://backend-exchange-oracle-prod.privi.store/past?";
+        apiURL = "SHOULD BE DEPLOYED YET";
 
         setChainlinkToken(linkToken);
     }
@@ -41,7 +42,7 @@ contract PolygonValidatorOracle is ChainlinkClient {
         external
         returns (bytes32 requestId)
     {
-        // solhint-disable-next-line
+        require(_whitelistedCollections[msg.sender], "Invalid requester");
 
         Chainlink.Request memory request = buildChainlinkRequest(
             jobId,
@@ -60,13 +61,39 @@ contract PolygonValidatorOracle is ChainlinkClient {
         Chainlink.add(request, "path", "locked");
 
         // Send the request
-        return sendChainlinkRequestTo(chainlinkNode, request, nodeFee);
+        requestId = sendChainlinkRequestTo(chainlinkNode, request, nodeFee);
+
+        _verifyRequests[requestId] = VerifyRequest({
+            tokenId: tokenId,
+            originalCollection: ethereumCollection,
+            syntheticCollection: msg.sender
+        });
     }
 
-    function processResponse(bytes32 _requestId, bool verified)
-        public
-        recordChainlinkFulfillment(_requestId)
-    {}
+    function processResponse(bytes32 requestId, bool verified) public recordChainlinkFulfillment(requestId) {
+        VerifyRequest memory requestData = _verifyRequests[requestId];
+
+        if (verified) {
+            SyntheticCollectionManager(requestData.syntheticCollection).processSuccessfulVerify(
+                requestData.tokenId
+            );
+        }
+
+        emit ResponseReceived(
+            requestId,
+            requestData.originalCollection,
+            requestData.syntheticCollection,
+            requestData.tokenId,
+            verified
+        );
+    }
+
+    /**
+     * @dev whitelist collections to call this contract
+     */
+    function whitelistCollection(address collectionId) external onlyOwner {
+        _whitelistedCollections[collectionId] = true;
+    }
 
     function stringToBytes32(string memory source) private pure returns (bytes32 result) {
         bytes memory tempEmptyStringTest = bytes(source);
