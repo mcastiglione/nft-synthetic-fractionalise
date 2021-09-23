@@ -20,7 +20,6 @@ describe('SyntheticProtocolRouter', async function () {
   });
 
   it('verify that UniSwap Pair was created after registerNFT', async () => {
-  
     await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
     const jotAddress = await router.getJotsAddress(NFT);
     const jot = await ethers.getContractAt('Jot', jotAddress);
@@ -32,7 +31,6 @@ describe('SyntheticProtocolRouter', async function () {
     await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
     const verified = await router.isNFTVerified(NFT, nftID);
     assert.equal(verified, false);
-
   });
 
   it('Try to verify with non-verifier address', async () => {

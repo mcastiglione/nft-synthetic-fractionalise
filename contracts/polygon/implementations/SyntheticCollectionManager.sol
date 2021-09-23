@@ -144,6 +144,33 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // data.liquiditySold = 0;
         // data.fractionPrices = 0;
     }
+    /**
+     * @notice change an NFT for another one of the same collection
+     */
+    function change(
+        uint256 tokenId, 
+        uint256 newTokenId, 
+        address caller, 
+        string memory metadata
+    ) public onlyRole(ROUTER) {
+        require(ISyntheticNFT(erc721address).exists(tokenId), "token not registered!");
+        require(!ISyntheticNFT(erc721address).exists(tokenId), "New token already registered!");
+        address tokenOwner = IERC721(erc721address).ownerOf(tokenId);
+        require(tokenOwner == caller, "You are not the owner of the NFT!");
+        ISyntheticNFT(erc721address).safeMint(msg.sender, newTokenId, metadata);
+        ISyntheticNFT(erc721address).safeBurn(tokenId);
+        TokenData memory oldData = tokens[tokenId];
+        tokens[newTokenId] = TokenData(
+            oldData.ownerSupply,
+            oldData.sellingSupply,
+            oldData.soldSupply,
+            oldData.liquiditySupply,
+            oldData.liquiditySold,
+            oldData.fractionPrices,
+            oldData.lastFlipTime,
+            false
+        );
+    }
 
     /**
      * @notice This method calls chainlink oracle and

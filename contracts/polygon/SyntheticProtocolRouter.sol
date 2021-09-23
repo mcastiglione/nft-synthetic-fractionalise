@@ -218,6 +218,25 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         emit TokenRegistered(collectionAddress, collectionID, tokenId);
     }
 
+
+    /**
+    * @notice change an NFT for another one
+     */
+    function changeNFT(
+        address collection, 
+        uint256 tokenId, 
+        uint256 newTokenId, 
+        string memory metadata
+    ) public {
+        address collectionManager = getCollectionManagerAddress(collection);
+        SyntheticCollectionManager(collectionManager).change(
+            tokenId, 
+            newTokenId, 
+            msg.sender, 
+            metadata
+        );
+    }
+
     /**
      * @dev init Perpetual Pool Lite for a specific collection
      */
