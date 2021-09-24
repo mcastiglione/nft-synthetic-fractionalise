@@ -239,16 +239,17 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function register(
         uint256 tokenId,
         uint256 supplyToKeep,
-        uint256 priceFraction
+        uint256 priceFraction,
+        address nftOwner
     ) public onlyRole(ROUTER) returns (uint256) {
         require(priceFraction > 0, "priceFraction can't be zero");
         require(isSyntheticNFTCreated(tokenId) == false, "Synthetic NFT already generated!");
         
         uint256 syntheticID = tokenCounter.current();
 
-        generateSyntheticNFT(msg.sender, syntheticID);
+        generateSyntheticNFT(nftOwner, syntheticID); 
  
-        Jot(jotAddress).mint(address(this), _jotsSupply);
+        Jot(jotAddress).mint(address(this), _jotsSupply); 
 
         uint256 sellingSupply = (_jotsSupply - supplyToKeep) / 2;
         uint256 liquiditySupply = (_jotsSupply - supplyToKeep) / 2;
