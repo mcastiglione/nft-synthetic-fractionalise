@@ -57,11 +57,11 @@ module.exports = {
       accounts: [PRIVATE_KEY],
       deploy: ['deploy/polygon'],
       tags: ['testnet'],
-      gas: 5500000,
     },
   },
   namedAccounts: {
     deployer: 0,
+    player: 1,
   },
   gasReporter: {
     enabled: false,

@@ -249,18 +249,18 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 sellingSupply = (_jotsSupply - supplyToKeep) / 2;
         uint256 liquiditySupply = (_jotsSupply - supplyToKeep) / 2;
 
-        TokenData memory data = TokenData(
-            tokenId,
-            supplyToKeep,
-            sellingSupply,
-            0,
-            liquiditySupply,
-            0,
-            priceFraction,
-            0,
-            false,
-            0
-        );
+        TokenData memory data = TokenData({
+            originalTokenID: tokenId,
+            ownerSupply: supplyToKeep,
+            sellingSupply: sellingSupply,
+            soldSupply: 0,
+            liquiditySupply: liquiditySupply,
+            liquiditySold: 0,
+            fractionPrices: priceFraction,
+            lastFlipTime: 0,
+            verified: false,
+            originalID: 0
+        });
 
         tokens[syntheticID] = data;
 
@@ -444,7 +444,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function verify(uint256 tokenId) external {
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         require(!tokens[tokenId].verified, "Token already verified");
-        PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(originalCollectionAddress, tokenId);
+        PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(
+            originalCollectionAddress,
+            tokens[tokenId].originalTokenID
+        );
     }
 
     function processSuccessfulVerify(uint256 tokenId) external onlyRole(VALIDATOR_ORACLE) {
