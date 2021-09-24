@@ -4,6 +4,10 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+<<<<<<< HEAD
+=======
+import "./StakingERC721.sol";
+>>>>>>> WIP
 import "../governance/ProtocolParameters.sol";
 
 contract JotPool is Initializable {
@@ -63,20 +67,26 @@ contract JotPool is Initializable {
     }
 
     uint256 lastReward;
-    uint256 cumulativeRewards;
+    uint256 cumulativeRevenue;
+    uint256 totalShares;
+    uint256 totalStaked;
+
+    uint256 stakerShare;
+    uint256 stakerShareDenominator;
+
+    address nftAddress;
 
     function stakeShares(uint256 amount) external {
         require(IERC20(jot).balanceOf(msg.sender) >= amount, "Insufficient copyright fraction balance");
         uint256 balance = IERC20(jot).balanceOf(address(this));
         uint256 x = balance - lastReward;
-        if (totalCFStaked != 0) {
-            totalShares += ((x * stakerShare) * 10**18) / (totalCFStaked * stakerShareDenominator);
+        if (totalStaked != 0) {
+            totalShares += ((x * stakerShare) * 10**18) / (totalStaked * stakerShareDenominator);
         }
-        cumulativeRewards += x;
+        cumulativeRevenue += x;
         lastReward = balance;
-        totalCFStaked += amount;
-        StakingERC721(copyrightFractionStakingNFT).createPosition(msg.sender, amount, totalShares);
-        emit CopyrightStaked();
-        IERC20(jotToken).safeTransferFrom(msg.sender, address(this), amount);
+        totalStaked += amount;
+        StakingERC721(nftAddress).createPosition(msg.sender, amount, totalShares);
+        IERC20(jot).safeTransferFrom(msg.sender, address(this), amount);
     }
 }
