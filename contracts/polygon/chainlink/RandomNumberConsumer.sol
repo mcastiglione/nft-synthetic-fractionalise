@@ -22,7 +22,7 @@ contract RandomNumberConsumer is VRFConsumerBase, Ownable {
         VRFConsumerBase(_oracleInfo.vrfCoordinator, _oracleInfo.linkToken)
     {
         keyHash = _oracleInfo.keyHash;
-        fee = _oracleInfo.nodeFee;
+        fee = _oracleInfo.vrfFee;
     }
 
     /**

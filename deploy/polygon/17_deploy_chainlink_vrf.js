@@ -18,7 +18,7 @@ module.exports = async ({ getNamedAccounts, deployments, network, getChainId }) 
       vrfCoordinator: networkConfig[chainId].vrfCoordinator,
       linkToken: networkConfig[chainId].linkToken,
       keyHash: networkConfig[chainId].keyHash,
-      fee: networkConfig[chainId].vrfFee,
+      vrfFee: networkConfig[chainId].vrfFee,
     };
 
     await deploy('RandomNumberConsumer', {

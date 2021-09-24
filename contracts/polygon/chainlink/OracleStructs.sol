@@ -12,7 +12,7 @@ struct VRFOracleInfo {
     address vrfCoordinator;
     address linkToken;
     bytes32 keyHash;
-    uint256 nodeFee;
+    uint256 vrfFee;
 }
 
 struct VerifyRequest {
