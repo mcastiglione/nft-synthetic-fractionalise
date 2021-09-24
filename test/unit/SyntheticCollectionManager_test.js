@@ -25,5 +25,14 @@ describe('SyntheticCollectionManager', async function () {
       it('should send funds to caller ');
       it('should emit te FlipProcessed event');
     });
+    
+    describe('buyJotTokens', async function () {
+      it('should fail if NFT is not registered ');
+      it('should fail if token price is zero');
+      it('should fail if amount is zero');
+      it('should fail if amount is not approved in funding token');
+      it('if all previous conditions are met, should be ok');
+      it('if all tokens are sold, should add liquidity to pool');
+    });
   });
 });
