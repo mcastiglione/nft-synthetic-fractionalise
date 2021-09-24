@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "../governance/ProtocolParameters.sol";
 
 contract JotPool is Initializable {
     using SafeERC20 for IERC20;
@@ -14,8 +15,15 @@ contract JotPool is Initializable {
 
     address public jot;
 
+    ProtocolParameters private immutable protocol;
+
     event LiquidityAdded(address provider, uint256 amount, uint256 mintedLiquidity);
     event LiquidityRemoved(address provider, uint256 amount, uint256 liquidityBurnt);
+
+    constructor(address _protocol) {
+        require(_protocol != address(0), "Invalid protocol address");
+        protocol = ProtocolParameters(_protocol);
+    }
 
     function initialize(address _jot) external initializer {
         require(_jot != address(0), "Invalid Jot token");
@@ -40,8 +48,9 @@ contract JotPool is Initializable {
             liquidity[msg.sender] -= amount;
             totalLiquidity -= amount;
         } else {
-            liquidity[msg.sender] = 100;
-            totalLiquidity = 100;
+            uint256 jots = protocol.jotsSupply();
+            liquidity[msg.sender] = jots;
+            totalLiquidity = jots;
         }
 
         emit LiquidityRemoved(msg.sender, amount, liquidityBurnt);
