@@ -59,7 +59,7 @@ describe('NFTVaultManager', async function () {
 
     // check if the token is in vault
     let tokenInVault = await this.vaultManager.isTokenInVault(this.collection.address, tokenId);
-    assert.isFalse(tokenInVault, 'Token should be in vault');
+    assert.isTrue(tokenInVault, 'Token should be in vault');
   });
 
   it('return false for non aproved collection', async () => {
