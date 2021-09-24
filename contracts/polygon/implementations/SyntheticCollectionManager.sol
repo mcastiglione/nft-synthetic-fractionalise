@@ -270,6 +270,26 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         return syntheticID;
     }
 
+    function getOwnerSupply(uint256 tokenId) public view returns (uint256) {
+        return tokens[tokenId].ownerSupply;
+    }
+
+    function getSellingSupply(uint256 tokenId) public view returns (uint256) {
+        return tokens[tokenId].sellingSupply;
+    }
+
+    function getSoldSupply(uint256 tokenId) public view returns (uint256) {
+        return tokens[tokenId].soldSupply;
+    }
+
+    function getJotFractionPrice(uint256 tokenId) public view returns(uint256) {
+        return tokens[tokenId].fractionPrices;
+    }
+
+    function getJotAmountLeft(uint256 tokenId) public view returns(uint256) {
+        return tokens[tokenId].sellingSupply - tokens[tokenId].soldSupply;
+    }
+
     /**
      * @notice allows the caller to buy jots using the Funding token
      */
@@ -461,10 +481,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function safeBurn(uint256 tokenId) public onlyRole(ROUTER) {
         ISyntheticNFT(erc721address).safeBurn(tokenId);
         tokenCounter.decrement();
-    }
-
-    function getRemainingSupply(uint256 tokenId) public view returns (uint256) {
-        return tokens[tokenId].ownerSupply;
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
