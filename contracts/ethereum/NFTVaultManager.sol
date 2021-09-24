@@ -35,10 +35,8 @@ contract NFTVaultManager is Ownable {
      * @notice check if the vault holds a token
      */
     function isTokenInVault(address collection_, uint256 tokenId_) external view returns (bool) {
-        require(approvedCollections[collection_], "Not approved collection");
-
         address previousOwner = _holdings[collection_][tokenId_];
-        return previousOwner != address(0);
+        return approvedCollections[collection_] && previousOwner != address(0);
     }
 
     /**
