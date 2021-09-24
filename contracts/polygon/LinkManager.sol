@@ -8,12 +8,14 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract LinkManager {
     using SafeERC20 for IERC20;
 
-    IUniswapV2Router01 immutable router;
-    address private immutable matic;
-    address private immutable link;
-    address private immutable receiver;
+    IUniswapV2Router02 public immutable router;
+    address public immutable matic;
+    address public immutable link;
+    address public immutable receiver;
 
-    IUniswapV2Pair private immutable maticLinkPair;
+    IUniswapV2Pair public immutable maticLinkPair;
+
+    event Swapped(uint256[] amounts, address receiver);
 
     constructor(
         address quickswapRouter,
@@ -25,30 +27,34 @@ contract LinkManager {
         require(_matic != address(0), "Invalid Matic token address");
         require(_link != address(0), "Invalid LINK token address");
         require(_receiver != address(0), "Invalid receiver address");
-        router = IUniswapV2Router01(quickswapRouter);
+        router = IUniswapV2Router02(quickswapRouter);
         matic = _matic;
         link = _link;
         receiver = _receiver;
 
-        IUniswapV2Factory factory = IUniswapV2Factory(IUniswapV2Router01(quickswapRouter).factory());
+        IUniswapV2Factory factory = IUniswapV2Factory(IUniswapV2Router02(quickswapRouter).factory());
         maticLinkPair = IUniswapV2Pair(factory.getPair(_link, _matic));
     }
 
     function swapToLink() external {
-        (uint256 reserve0, uint256 reserve1, ) = maticLinkPair.getReserves();
-        (uint256 reserveIn, uint256 reserveOut) = maticLinkPair.token0() == link
-            ? (reserve1, reserve0)
-            : (reserve0, reserve1);
-
-        uint256 amountOut = router.getAmountOut(address(this).balance, reserveIn, reserveOut);
-
-        address[] memory path = new address[](1);
-        path[0] = link;
-        router.swapExactETHForTokens{value: address(this).balance}(
-            amountOut,
+        address[] memory path = new address[](2);
+        path[0] = matic;
+        path[1] = link;
+        uint256[] memory amounts = router.swapExactETHForTokens{value: address(this).balance}(
+            0,
             path,
             receiver,
+            // solhint-disable-next-line
             block.timestamp
         );
+
+        emit Swapped(amounts, receiver);
     }
+
+    function getBalance() external view returns (uint256) {
+        return address(this).balance;
+    }
+
+    // solhint-disable-next-line
+    receive() external payable {}
 }

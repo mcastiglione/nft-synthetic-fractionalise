@@ -8,3 +8,5 @@ artifacts
 
 coverage/
 coverage.json
+
+deployments
