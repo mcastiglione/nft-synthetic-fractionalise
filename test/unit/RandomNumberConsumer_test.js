@@ -23,6 +23,7 @@ describe('RandomNumberConsumer', async function () {
 
     // use the helper to get event args
     let args = await getEventArgs(tx, 'CollectionManagerRegistered', this.router);
+    let TokenRegistered = await getEventArgs(tx, 'TokenRegistered', this.router);
 
     let collection = await ethers.getContractAt('SyntheticCollectionManager', args.collectionManagerAddress);
     let jot = await ethers.getContractAt('Jot', args.jotAddress);
@@ -31,6 +32,6 @@ describe('RandomNumberConsumer', async function () {
     await jot.mint(args.jotPoolAddress, 10000);
 
     // the random oracle mock always return 1 (so this predict fails)
-    await collection.flipJot('1', 0);
+    await collection.flipJot(TokenRegistered.syntheticTokenId, 0);
   });
 });

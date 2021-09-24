@@ -74,6 +74,13 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         uint256 syntheticTokenId
     );
 
+    event TokenChanged(
+        address collectionAddress,
+        uint256 syntheticID,
+        uint256 previousID,
+        uint256 newID
+    );
+
     constructor(
         address swapAddress_,
         address jot_,
@@ -210,9 +217,9 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
         SyntheticCollectionManager collectionManager = SyntheticCollectionManager(collectionAddress);
 
-        collectionManager.register(tokenId, supplyToKeep, priceFraction);
+        uint256 syntheticID = collectionManager.register(tokenId, supplyToKeep, priceFraction);
 
-        emit TokenRegistered(collectionAddress, collectionID, tokenId);
+        emit TokenRegistered(collectionAddress, collectionID, syntheticID);
     }
 
     /**
@@ -220,12 +227,20 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
      */
     function changeNFT(
         address collection,
-        uint256 tokenId,
-        uint256 newTokenId,
-        string memory metadata
+        uint256 syntheticID,
+        uint256 newOriginalTokenID
     ) public {
         address collectionManager = getCollectionManagerAddress(collection);
-        SyntheticCollectionManager(collectionManager).change(tokenId, newTokenId, msg.sender, metadata);
+        SyntheticCollectionManager manager = SyntheticCollectionManager(collectionManager);
+        uint256 originalTokenID = manager.getOriginalID(syntheticID);
+        manager.change(syntheticID, newOriginalTokenID, msg.sender);
+
+        emit TokenChanged(
+            collection,
+            syntheticID,
+            originalTokenID,
+            newOriginalTokenID
+        );
     }
 
     /**

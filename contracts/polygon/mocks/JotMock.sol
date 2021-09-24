@@ -46,6 +46,7 @@ contract JotMock is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
 
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(swapAddress);
         uniswapV2Router = _uniswapV2Router;
+
     }
 
     function mint(address account, uint256 amount) public {

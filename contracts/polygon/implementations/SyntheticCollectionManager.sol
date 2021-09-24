@@ -42,6 +42,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     mapping(bytes32 => Flip) private _flips;
 
+    mapping(uint256 => uint256) private _originalToSynthetic;
+
     Counters.Counter public tokenCounter;
 
     /**
@@ -156,37 +158,26 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice change an NFT for another one of the same collection
      */
     function change(
-        uint256 tokenId,
-        uint256 newTokenId,
-        address caller,
-        string memory metadata
+        uint256 syntheticID,
+        uint256 newOriginalTokenID,
+        address caller
     ) public onlyRole(ROUTER) {
-        require(ISyntheticNFT(erc721address).exists(tokenId), "token not registered!");
-        require(!ISyntheticNFT(erc721address).exists(newTokenId), "New token already registered!");
-        address tokenOwner = IERC721(erc721address).ownerOf(tokenId);
-        require(tokenOwner == caller, "You are not the owner of the NFT!");
-        ISyntheticNFT(erc721address).safeMint(msg.sender, newTokenId, metadata);
-        ISyntheticNFT(erc721address).safeBurn(tokenId);
-        TokenData memory oldData = tokens[tokenId];
-        tokens[newTokenId] = TokenData(
-            oldData.ownerSupply,
-            oldData.sellingSupply,
-            oldData.soldSupply,
-            oldData.liquiditySupply,
-            oldData.liquiditySold,
-            oldData.fractionPrices,
-            oldData.lastFlipTime,
-            false
-        );
-    }
+        // Token must be registered
+        require(ISyntheticNFT(erc721address).exists(syntheticID), "token not registered!");
 
-    /**
-     * @notice Gets the metadata
-     * of the NFT. This should have been registered first by verify.
-     */
-    function getNFTMetadata(uint256 tokenId) private view returns (string memory) {
-        //TODO: get metadata from Oracle
-        return "";
+        // Caller must be token owner
+        address tokenOwner = IERC721(erc721address).ownerOf(syntheticID);
+        require(tokenOwner == caller, "You are not the owner of the NFT!");
+        
+        // Change original token ID and set verified = false
+        uint256 originalID = tokens[syntheticID].originalID;
+
+        _originalToSynthetic[originalID] = 0;
+        _originalToSynthetic[newOriginalTokenID] = syntheticID;
+        
+        tokens[syntheticID].originalID = newOriginalTokenID;
+        tokens[syntheticID].verified = false;
+        
     }
 
     /**
@@ -207,10 +198,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     /**
      * @notice public function. Checks if an NFT has
-     * been already minted.
+     * been already fractionalized
      */
     function isSyntheticNFTCreated(uint256 tokenId) public view returns (bool) {
-        return ISyntheticNFT(erc721address).exists(tokenId);
+        return _originalToSynthetic[tokenId] != 0;
     }
 
     /**
@@ -226,12 +217,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * Then it mints a new NFT with: ”to”, ”id” and ”metadata”
      */
     function generateSyntheticNFT(
-        address to,
-        uint256 tokenId,
-        string memory metadata
+        address to, 
+        uint256 tokenId
     ) private {
-        require(isSyntheticNFTCreated(tokenId) == false, "Synthetic NFT already generated!");
-        ISyntheticNFT(erc721address).safeMint(to, tokenId, metadata);
+        ISyntheticNFT(erc721address).safeMint(to, tokenId);
     }
 
     /**
@@ -251,18 +240,21 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 tokenId,
         uint256 supplyToKeep,
         uint256 priceFraction
-    ) public onlyRole(ROUTER) {
+    ) public onlyRole(ROUTER) returns (uint256) {
         require(priceFraction > 0, "priceFraction can't be zero");
-        tokenCounter.increment();
-        string memory metadata = getNFTMetadata(tokenId);
-        generateSyntheticNFT(msg.sender, tokenId, metadata);
+        require(isSyntheticNFTCreated(tokenId) == false, "Synthetic NFT already generated!");
+        
+        uint256 syntheticID = tokenCounter.current();
 
+        generateSyntheticNFT(msg.sender, syntheticID);
+ 
         Jot(jotAddress).mint(address(this), _jotsSupply);
 
         uint256 sellingSupply = (_jotsSupply - supplyToKeep) / 2;
         uint256 liquiditySupply = (_jotsSupply - supplyToKeep) / 2;
 
         TokenData memory data = TokenData(
+            tokenId,
             supplyToKeep,
             sellingSupply,
             0,
@@ -273,7 +265,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             false
         );
 
-        tokens[tokenId] = data;
+        tokens[syntheticID] = data;
+
+        tokenCounter.increment(); 
+
+        return syntheticID;
     }
 
     /**
@@ -476,7 +472,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function isVerified(uint256 tokenId) public view returns (bool) {
-        require(isSyntheticNFTCreated(tokenId), "NFT not registered!");
+        require(ISyntheticNFT(erc721address).exists(tokenId), "NFT not minted");
         return tokens[tokenId].verified;
+    }
+
+    function getOriginalID(uint256 tokenId) public view returns (uint256) {
+        require(ISyntheticNFT(erc721address).exists(tokenId));
+        return tokens[tokenId].originalID;
     }
 }

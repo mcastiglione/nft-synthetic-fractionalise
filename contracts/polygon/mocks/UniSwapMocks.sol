@@ -9,7 +9,7 @@ contract UniSwapFactoryMock {
     function createPair() public returns (address) {
         return address(0);
     }
-   
+
 }
 
 contract UniSwapRouterMock {
