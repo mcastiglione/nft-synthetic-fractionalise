@@ -28,15 +28,13 @@ contract JotMock is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
     mapping(address => address) private _managers;
 
     // solhint-disable-next-line
-    constructor() ERC20("Privi Mock Jot", "mJOT") {
-        _mint(msg.sender, 10000000000 * 10**decimals());
-    }
+    constructor() ERC20("Privi Mock Jot", "mJOT") {}
 
     function initialize(
         string calldata _name,
         string calldata _symbol,
         address swapAddress,
-        address fundingTokenAddress
+        address
     ) external initializer {
         _proxiedName = _name;
         _proxiedSymbol = _symbol;
@@ -48,7 +46,7 @@ contract JotMock is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
         uniswapV2Router = _uniswapV2Router;
     }
 
-    function mint(address account, uint256 amount) public onlyRole(MINTER) {
+    function mint(address account, uint256 amount) public {
         _mint(account, amount);
     }
 

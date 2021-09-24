@@ -8,7 +8,6 @@ import "../implementations/SyntheticCollectionManager.sol";
  * @dev the ownership will be transferred after deploy to the router contract
  */
 contract RandomNumberConsumerMock is Ownable {
-    mapping(bytes32 => address) private _requestIdToCollection;
     mapping(address => bool) private _whitelistedCollections;
 
     event RequestedRandomness(bytes32 requestId, address fromCollection);
@@ -19,13 +18,25 @@ contract RandomNumberConsumerMock is Ownable {
     constructor() {} // solhint-disable-line
 
     /**
-     * @dev callback function used by VRF Coordinator
+     * @dev mock just for testing purposes
      */
-    function fulfillRandomness(bytes32 requestId, uint256 randomness) external {
-        SyntheticCollectionManager(_requestIdToCollection[requestId]).processFlipResult(
-            randomness,
-            requestId
-        );
+    function getRandomNumber() external returns (bytes32 requestId) {
+        require(_whitelistedCollections[msg.sender], "Invalid requester");
+
+        requestId = keccak256(abi.encodePacked("requestId"));
+
+        fulfillRandomnessMock(requestId, 131, msg.sender);
+    }
+
+    /**
+     * @dev mock just for testing purposes
+     */
+    function fulfillRandomnessMock(
+        bytes32 requestId,
+        uint256 randomness,
+        address collection
+    ) public {
+        SyntheticCollectionManager(collection).processFlipResult(randomness % 2, requestId);
     }
 
     /**
