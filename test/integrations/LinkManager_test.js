@@ -1,13 +1,12 @@
 const { expect } = require('chai');
 const { ethers, network } = require('hardhat');
-const LinkManager = require('../../deployments/mumbai/LinkManager.json');
 const { networkConfig } = require('../../helper-hardhat-config');
 
 skip.if(network.tags.local).describe('LinkManager', async () => {
   describe('swap', async () => {
     it('should swap full balance of matic to link', async () => {
       const chainId = await getChainId();
-      const linkManager = await ethers.getContractAt('LinkManager', LinkManager.address);
+      const linkManager = await ethers.getContract('LinkManager');
       const router = await ethers.getContractAt('IUniswapV2Router02', networkConfig[chainId].uniswapAddress);
       const linkTokenAddress = await linkManager.link();
       const maticTokenAddres = await linkManager.matic();
