@@ -46,7 +46,6 @@ const networkConfig = {
     vrfFee: '100000000000000',
     uniswapAddress: '0x4CeBfcDA07A08B1C7169E5eb77AC117FF87EEae9',
     maticToken: '0x101f4779090843bb394902a973D9bf1e37F00635',
-
     oracleAddress: '0xC5324aE5b70712F24602b5b2b13618356c44B965',
     perpetualPoolLiteAddress: '0xE409e138362Ea53125e46732f17d4E758c06dDEe',
   },
