@@ -296,7 +296,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         IERC20(fundingTokenAddress).transferFrom(msg.sender, address(this), amount);
 
         // Transfer Jots
-        IJot(jotAddress).transferFrom(address(this), msg.sender, buyAmount);
+        IJot(jotAddress).transfer(msg.sender, buyAmount);
 
         //Increase sold supply (amount in token) and liquidity sold (amount in ether)
         tokens[tokenId].soldSupply += buyAmount;
