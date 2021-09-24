@@ -2,7 +2,6 @@
 pragma solidity ^0.8.4;
 
 contract EmptyMock {
-
-    constructor(){
-    }
+    // solhint-disable-next-line
+    constructor() {}
 }

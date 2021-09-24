@@ -13,6 +13,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let auctionsManager = await ethers.getContract('AuctionsManager');
   let syntheticNFT = await ethers.getContract('SyntheticNFT');
   let protocol = await ethers.getContract('ProtocolParameters');
+  let futuresProtocol = await ethers.getContract('FuturesProtocolParameters');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
   let validator = await ethers.getContract('PolygonValidatorOracle');
 
@@ -52,12 +53,12 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       collectionManager.address,
       syntheticNFT.address,
       auctionsManager.address,
-      protocol.address,
-      funding.address, //constants.ZERO_ADDRESS,
+      funding.address,
       randomConsumer.address,
       validator.address,
       perpetualPoolLiteAddress,
       oracleAddress,
+      { fractionalizeProtocol: protocol.address, futuresProtocol: futuresProtocol.address },
     ],
   });
 
@@ -75,4 +76,5 @@ module.exports.dependencies = [
   'jot_pool_implementation',
   'synthetic_manager_implementation',
   'protocol_parameters',
+  'futures_protocol_parameters',
 ];

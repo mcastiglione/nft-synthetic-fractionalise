@@ -7,31 +7,24 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
   // get the previously deployed governance (actually the timelock controller)
   let governance = await ethers.getContract('TimelockController');
 
-  let dummyMock = await deploy('EmptyMock', {from: deployer})
-
   const defaultParameters = {
     jotsSupply: 100,
     flippingInterval: String(time.duration.days(1)),
     flippingReward: 5,
     flippingAmount: 20,
     auctionDuration: String(time.duration.weeks(1)),
-    governanceContractAddress: governance.address,
-    futuresOracleAddress: dummyMock.address,
-    futuresMultiplier: 1,
-    futuresFeeRatio: 1,
-    futuresFundingRateCoefficient: 1 
   };
 
-  //let owner = governance.address;
+  let owner = governance.address;
 
-  //if (network.tags.testnet) {
-  //  owner = deployer;
-  //}
+  if (network.tags.testnet) {
+    owner = deployer;
+  }
 
   await deploy('ProtocolParameters', {
     from: deployer,
     log: true,
-    args: [...Object.values(defaultParameters)],
+    args: [...Object.values(defaultParameters), owner],
   });
 };
 

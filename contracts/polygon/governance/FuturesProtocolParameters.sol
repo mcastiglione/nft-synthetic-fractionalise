@@ -2,6 +2,7 @@
 pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./Structs.sol";
 
 // ! TODO: EMIT THE EVENTS AND ADD VALIDATIONS
 
@@ -40,36 +41,34 @@ contract FuturesProtocolParameters is Ownable {
      * @dev set initial state of the data
      */
     constructor(
-        int256 _minPoolMarginRatio,
-        int256 _minInitialMarginRatio,
-        int256 _minMaintenanceMarginRatio,
-        int256 _minLiquidationReward,
-        int256 _maxLiquidationReward,
-        int256 _liquidationCutRatio,
-        int256 _protocolFeeCollectRatio,
+        MainParams memory mainParams,
         address _futuresOracleAddress,
         int256 _futuresMultiplier,
         int256 _futuresFeeRatio,
         int256 _futuresFundingRateCoefficient,
-        uint256 _oracleDelay
+        uint256 _oracleDelay,
+        address _governanceContractAddress
     ) {
         require(_futuresOracleAddress != address(0), "Oracle address can't be zero");
         require(_futuresMultiplier > 0, "Invalid futures multiplier");
         require(_futuresFeeRatio > 0, "Invalid futures fee ratio");
         require(_futuresFundingRateCoefficient > 0, "Invalid futures funding rate coefficient");
 
-        minPoolMarginRatio = _minPoolMarginRatio;
-        minInitialMarginRatio = _minInitialMarginRatio;
-        minMaintenanceMarginRatio = _minMaintenanceMarginRatio;
-        minLiquidationReward = _minLiquidationReward;
-        maxLiquidationReward = _maxLiquidationReward;
-        liquidationCutRatio = _liquidationCutRatio;
-        protocolFeeCollectRatio = _protocolFeeCollectRatio;
+        minPoolMarginRatio = mainParams.minPoolMarginRatio;
+        minInitialMarginRatio = mainParams.minInitialMarginRatio;
+        minMaintenanceMarginRatio = mainParams.minMaintenanceMarginRatio;
+        minLiquidationReward = mainParams.minLiquidationReward;
+        maxLiquidationReward = mainParams.maxLiquidationReward;
+        liquidationCutRatio = mainParams.liquidationCutRatio;
+        protocolFeeCollectRatio = mainParams.protocolFeeCollectRatio;
         futuresOracleAddress = _futuresOracleAddress;
         futuresMultiplier = _futuresMultiplier;
         futuresFeeRatio = _futuresFeeRatio;
         futuresFundingRateCoefficient = _futuresFundingRateCoefficient;
         oracleDelay = _oracleDelay;
+
+        // transfer ownership
+        transferOwnership(_governanceContractAddress);
     }
 
     function setMinPoolMarginRatio(int256 _minPoolMarginRatio) external onlyOwner {
