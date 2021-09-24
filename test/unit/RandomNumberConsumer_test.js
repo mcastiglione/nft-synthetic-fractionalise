@@ -38,7 +38,7 @@ describe('RandomNumberConsumer', async function () {
 
     let requestId = ethers.utils.id('requestId');
 
-    // check the events
+    // check the events (in production this events will be emitted by different transactions)
     await expect(flipTx)
       .to.emit(collection, 'CoinFlipped')
       .withArgs(requestId, player.address, tokenRegistered.syntheticTokenId, 0);
