@@ -14,6 +14,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let syntheticNFT = await ethers.getContract('SyntheticNFT');
   let protocol = await ethers.getContract('ProtocolParameters');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
+  let validator = await ethers.getContract('PolygonValidatorOracle');
 
   let swapAddress;
 
@@ -54,6 +55,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       protocol.address,
       funding.address, //constants.ZERO_ADDRESS,
       randomConsumer.address,
+      validator.address,
       perpetualPoolLiteAddress,
       oracleAddress,
     ],
@@ -62,6 +64,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   if (router.newlyDeployed) {
     await syntheticNFT.initialize('TEST', 'TEST', router.address);
     await randomConsumer.transferOwnership(router.address);
+    await validator.transferOwnership(router.address);
   }
 };
 

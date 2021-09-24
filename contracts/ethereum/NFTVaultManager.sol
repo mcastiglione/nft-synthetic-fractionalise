@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract NFTVaultManager is IERC721Receiver, Ownable {
+contract NFTVaultManager is Ownable {
     /**
      * @notice the whitelist for the NFT collection addresses accpeted
      */
@@ -19,24 +18,17 @@ contract NFTVaultManager is IERC721Receiver, Ownable {
      */
     mapping(address => mapping(uint256 => address)) private _holdings;
 
-    /**
-     * @dev See {IERC721Receiver-onERC721Received}.
-     */
-    function onERC721Received(
-        address operator_,
-        address,
-        uint256 tokenId_,
-        bytes memory
-    ) external virtual override returns (bytes4) {
-        require(approvedCollections[msg.sender], "Not approved collection");
+    function lockNFT(address collection_, uint256 tokenId_) external {
+        require(approvedCollections[collection_], "Not approved collection");
 
         // this should be an invariant (can't receive a token that the contract is already holding)
-        assert(_holdings[msg.sender][tokenId_] == address(0));
+        assert(_holdings[collection_][tokenId_] == address(0));
+
+        // get the token
+        IERC721(collection_).transferFrom(msg.sender, address(this), tokenId_);
 
         // the sender must be the collection contract
-        _holdings[msg.sender][tokenId_] == operator_;
-
-        return this.onERC721Received.selector;
+        _holdings[collection_][tokenId_] == msg.sender;
     }
 
     /**

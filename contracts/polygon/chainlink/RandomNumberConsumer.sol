@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../implementations/SyntheticCollectionManager.sol";
 
 /**
- * @dev the ownership will be transferred after deploy to the router contract
+ * @dev the ownership will be transferred after deployment to the router contract
  */
 contract RandomNumberConsumer is VRFConsumerBase, Ownable {
     bytes32 internal immutable keyHash;
@@ -18,14 +18,11 @@ contract RandomNumberConsumer is VRFConsumerBase, Ownable {
     /**
      * @dev constructor inherits VRFConsumerBase
      */
-    constructor(
-        address _vrfCoordinator,
-        address _link,
-        bytes32 _keyHash,
-        uint256 _fee
-    ) VRFConsumerBase(_vrfCoordinator, _link) {
-        keyHash = _keyHash;
-        fee = _fee;
+    constructor(VRFOracleInfo memory _oracleInfo)
+        VRFConsumerBase(_oracleInfo.vrfCoordinator, _oracleInfo.linkToken)
+    {
+        keyHash = _oracleInfo.keyHash;
+        fee = _oracleInfo.nodeFee;
     }
 
     /**

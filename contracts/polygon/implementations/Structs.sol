@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 struct TokenData {
+    uint256 originalTokenID;
     uint256 ownerSupply;
     uint256 sellingSupply;
     uint256 soldSupply;

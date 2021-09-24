@@ -1,5 +1,5 @@
 const { assert } = require('chai');
-const { expectRevert } = require('@openzeppelin/test-helpers');
+const { expectRevert, constants } = require('@openzeppelin/test-helpers');
 
 describe('NFTVaultManager', async function () {
   beforeEach(async () => {
@@ -14,13 +14,9 @@ describe('NFTVaultManager', async function () {
   });
 
   it('should fail on receive ERC721 check with non approved collection', async () => {
-    let { deployer } = await getNamedAccounts();
     let tokenId = 1;
 
-    await expectRevert(
-      vaultManager.onERC721Received(deployer, deployer, tokenId, web3.utils.asciiToHex('', 4)),
-      'Not approved collection'
-    );
+    await expectRevert(vaultManager.lockNFT(constants.ZERO_ADDRESS, tokenId), 'Not approved collection');
   });
 
   it('permit to approve collections', async () => {
@@ -39,18 +35,6 @@ describe('NFTVaultManager', async function () {
       vaultManager.safeApproveCollection(collection),
       "Transaction reverted: function selector was not recognized and there's no fallback function"
     );
-  });
-
-  it('should have on receive ERC721 check', async () => {
-    let { deployer } = await getNamedAccounts();
-    let collection = deployer;
-    let tokenId = 1;
-
-    await vaultManager.approveCollection(collection);
-
-    await vaultManager.onERC721Received(deployer, deployer, tokenId, web3.utils.asciiToHex('', 4), {
-      from: collection,
-    });
   });
 
   it('checks if token is in vault', async () => {

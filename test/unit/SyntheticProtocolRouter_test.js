@@ -1,9 +1,11 @@
 const { assert, expect } = require('chai');
+const { ethers } = require('hardhat');
+const { getEventArgs } = require('./helpers/events');
 
 describe('SyntheticProtocolRouter', async function () {
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
-    await deployments.fixture(['synthetic_router']);
+    await deployments.fixture(['auctions_manager_initialization']);
     deployer = await getNamedAccounts();
     router = await ethers.getContract('SyntheticProtocolRouter');
     let oracleAddress = await router.oracleAddress();
@@ -28,20 +30,31 @@ describe('SyntheticProtocolRouter', async function () {
   });
 
   it('after register NFT should be non-verified', async () => {
-    await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
-    const verified = await router.isNFTVerified(NFT, nftID);
+    let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
+    
+    await expect(tx).to.emit(router, 'TokenRegistered');
+    let args = await getEventArgs(tx, 'TokenRegistered', router);
+    
+    const verified = await router.isNFTVerified(NFT, args.syntheticTokenId);
     assert.equal(verified, false);
   });
 
-  it('Try to verify with non-verifier address', async () => {
-    await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
-    await expect(router.verifyNFT(NFT, nftID)).to.be.reverted;
+  it('try to verify with non-verifier address', async () => {
+    let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
+    
+    await expect(tx).to.emit(router, 'TokenRegistered');
+    let args = await getEventArgs(tx, 'TokenRegistered', router);
+    
+    await expect(router.verifyNFT(NFT, args.syntheticTokenId)).to.be.reverted;
   });
 
-  it('Verify with correct address', async () => {
-    await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
-    const response = await oracle.verifyNFT(NFT, nftID);
+  it('verify with correct address', async () => {
+    let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
+    
+    await expect(tx).to.emit(router, 'TokenRegistered');
+    let args = await getEventArgs(tx, 'TokenRegistered', router);
+    
+    const response = await oracle.verifyNFT(NFT, args.syntheticTokenId);
     assert.ok(response);
   });
-
 });

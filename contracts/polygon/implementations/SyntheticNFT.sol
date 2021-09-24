@@ -9,7 +9,7 @@ import "./SyntheticCollectionManager.sol";
 import "./Structs.sol";
 
 contract SyntheticNFT is ERC721, Initializable, AccessControl {
-    bytes32 public constant MANAGER = keccak256("MANAGER");
+    bytes32 public constant MANAGER = keccak256("MANAGER");    
 
     // token metadata
     mapping(uint256 => string) private _tokenMetadata;
@@ -63,10 +63,15 @@ contract SyntheticNFT is ERC721, Initializable, AccessControl {
 
     function safeMint(
         address to,
+        uint256 tokenId
+    ) public onlyRole(MANAGER) {
+        _mint(to, tokenId);
+    }
+
+    function setMetadata(
         uint256 tokenId,
         string memory metadata
     ) public onlyRole(MANAGER) {
-        _mint(to, tokenId);
         _tokenMetadata[tokenId] = metadata;
     }
 
