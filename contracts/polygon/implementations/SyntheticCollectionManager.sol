@@ -290,6 +290,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         return tokens[tokenId].sellingSupply - tokens[tokenId].soldSupply;
     }
 
+    function getSalePrice(uint256 tokenId,  uint256 buyAmount) public view returns(uint256) {
+        uint256 amount = (buyAmount * tokens[tokenId].fractionPrices) / 10**18;
+        return amount;
+    }
+
     function getFundingTokenAllowance() public view returns(uint256) {
         return IERC20(fundingTokenAddress).allowance(msg.sender, address(this));
     }
@@ -314,7 +319,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // then buying amount = amount left
 
         if (amountLeft < amount) {
-            amount = amountLeft;
+            buyAmount = amountLeft;
         }
 
         // Can't sell zero tokens
