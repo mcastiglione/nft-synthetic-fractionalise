@@ -217,7 +217,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
         SyntheticCollectionManager collectionManager = SyntheticCollectionManager(collectionAddress);
 
-        uint256 syntheticID = collectionManager.register(tokenId, supplyToKeep, priceFraction);
+        uint256 syntheticID = collectionManager.register(tokenId, supplyToKeep, priceFraction, msg.sender);
 
         emit TokenRegistered(collectionAddress, collectionID, syntheticID);
     }
