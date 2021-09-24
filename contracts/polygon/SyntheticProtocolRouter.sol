@@ -85,13 +85,12 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address collectionManager_,
         address syntheticNFT_,
         address auctionManager_,
-        address protocol_,
-        address futuresProtocol_,
         address fundingTokenAddress_,
         address randomConsumerAddress_,
         address validatorAddress_,
         address perpetualPoolLiteAddress_,
-        address oracleAddress_
+        address oracleAddress_,
+        ProtocolParametersContracts memory parameters
     ) {
         swapAddress = swapAddress_;
         _jot = jot_;
@@ -99,8 +98,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         _collectionManager = collectionManager_;
         _syntheticNFT = syntheticNFT_;
         _auctionManager = auctionManager_;
-        _protocol = protocol_;
-        _futuresProtocol = futuresProtocol_;
+        _protocol = parameters.fractionalizeProtocol;
+        _futuresProtocol = parameters.futuresProtocol;
         _fundingTokenAddress = fundingTokenAddress_;
         _randomConsumerAddress = randomConsumerAddress_;
         _validatorAddress = validatorAddress_;

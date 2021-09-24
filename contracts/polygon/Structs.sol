@@ -13,3 +13,8 @@ struct SyntheticCollection {
     string originalName;
     string originalSymbol;
 }
+
+struct ProtocolParametersContracts {
+    address fractionalizeProtocol;
+    address futuresProtocol;
+}
