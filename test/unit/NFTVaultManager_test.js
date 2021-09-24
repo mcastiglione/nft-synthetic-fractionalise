@@ -51,6 +51,6 @@ describe('NFTVaultManager', async function () {
     let collection = vaultManager.address;
     let tokenId = 1;
 
-    await expectRevert(vaultManager.isTokenInVault(collection, tokenId), 'Not approved collection');
+    assert.isFalse(await vaultManager.isTokenInVault(collection, tokenId));
   });
 });
