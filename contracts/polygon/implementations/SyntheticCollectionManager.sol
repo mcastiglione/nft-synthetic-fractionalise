@@ -168,16 +168,15 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // Caller must be token owner
         address tokenOwner = IERC721(erc721address).ownerOf(syntheticID);
         require(tokenOwner == caller, "You are not the owner of the NFT!");
-        
+
         // Change original token ID and set verified = false
         uint256 originalID = tokens[syntheticID].originalID;
 
         _originalToSynthetic[originalID] = 0;
         _originalToSynthetic[newOriginalTokenID] = syntheticID;
-        
+
         tokens[syntheticID].originalID = newOriginalTokenID;
         tokens[syntheticID].verified = false;
-        
     }
 
     /**
@@ -216,10 +215,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice Checks isSyntheticNFTCreated(address, id) is False.
      * Then it mints a new NFT with: ”to”, ”id” and ”metadata”
      */
-    function generateSyntheticNFT(
-        address to, 
-        uint256 tokenId
-    ) private {
+    function generateSyntheticNFT(address to, uint256 tokenId) private {
         ISyntheticNFT(erc721address).safeMint(to, tokenId);
     }
 
@@ -243,11 +239,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     ) public onlyRole(ROUTER) returns (uint256) {
         require(priceFraction > 0, "priceFraction can't be zero");
         require(isSyntheticNFTCreated(tokenId) == false, "Synthetic NFT already generated!");
-        
+
         uint256 syntheticID = tokenCounter.current();
 
         generateSyntheticNFT(msg.sender, syntheticID);
- 
+
         Jot(jotAddress).mint(address(this), _jotsSupply);
 
         uint256 sellingSupply = (_jotsSupply - supplyToKeep) / 2;
@@ -268,7 +264,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         tokens[syntheticID] = data;
 
-        tokenCounter.increment(); 
+        tokenCounter.increment();
 
         return syntheticID;
     }
@@ -375,8 +371,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {
         return
-            // solhint-disable-next-line
-            block.timestamp - tokens[tokenId].lastFlipTime >= protocol.flippingInterval() &&
+            ISyntheticNFT(erc721address).exists(tokenId) &&
+            block.timestamp - tokens[tokenId].lastFlipTime >= protocol.flippingInterval() && // solhint-disable-line
             IERC20(jotAddress).balanceOf(jotPool) > 0 &&
             isSyntheticNFTFractionalised(tokenId);
     }
