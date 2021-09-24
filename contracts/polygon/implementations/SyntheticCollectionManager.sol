@@ -262,7 +262,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             0,
             priceFraction,
             0,
-            false
+            false,
+            0
         );
 
         tokens[syntheticID] = data;
