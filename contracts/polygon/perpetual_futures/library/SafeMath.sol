@@ -3,8 +3,8 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 library SafeMath {
-    uint256 constant UMAX = 2**255 - 1;
-    int256 constant IMIN = -2**255;
+    uint256 internal constant UMAX = 2**255 - 1;
+    int256 internal constant IMIN = -2**255;
 
     /// convert uint256 to int256
     function utoi(uint256 a) internal pure returns (int256) {

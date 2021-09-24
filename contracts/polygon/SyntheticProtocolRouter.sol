@@ -14,6 +14,7 @@ import "./implementations/SyntheticNFT.sol";
 import "./auctions/AuctionsManager.sol";
 import "./Structs.sol";
 import "./governance/ProtocolParameters.sol";
+import "./governance/FuturesProtocolParameters.sol";
 
 contract SyntheticProtocolRouter is AccessControl, Ownable {
     using Counters for Counters.Counter;
@@ -30,6 +31,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     address private _auctionManager;
 
     address private _protocol;
+    address private _futuresProtocol;
     address private _fundingTokenAddress;
     address private _randomConsumerAddress;
     address private _validatorAddress;
@@ -74,12 +76,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         uint256 syntheticTokenId
     );
 
-    event TokenChanged(
-        address collectionAddress,
-        uint256 syntheticID,
-        uint256 previousID,
-        uint256 newID
-    );
+    event TokenChanged(address collectionAddress, uint256 syntheticID, uint256 previousID, uint256 newID);
 
     constructor(
         address swapAddress_,
@@ -89,6 +86,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address syntheticNFT_,
         address auctionManager_,
         address protocol_,
+        address futuresProtocol_,
         address fundingTokenAddress_,
         address randomConsumerAddress_,
         address validatorAddress_,
@@ -102,6 +100,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         _syntheticNFT = syntheticNFT_;
         _auctionManager = auctionManager_;
         _protocol = protocol_;
+        _futuresProtocol = futuresProtocol_;
         _fundingTokenAddress = fundingTokenAddress_;
         _randomConsumerAddress = randomConsumerAddress_;
         _validatorAddress = validatorAddress_;
@@ -235,35 +234,16 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         uint256 originalTokenID = manager.getOriginalID(syntheticID);
         manager.change(syntheticID, newOriginalTokenID, msg.sender);
 
-        emit TokenChanged(
-            collection,
-            syntheticID,
-            originalTokenID,
-            newOriginalTokenID
-        );
+        emit TokenChanged(collection, syntheticID, originalTokenID, newOriginalTokenID);
     }
 
     /**
      * @dev init Perpetual Pool Lite for a specific collection
      */
 
-    function initPerpetualPoolLite(uint256 collectionID, string memory name) internal {
-        ProtocolParameters protocol = ProtocolParameters(_protocol);
-        address futuresOracleAddress = protocol.futuresOracleAddress();
-        uint256 futuresMultiplier = protocol.futuresMultiplier();
-        uint256 futuresFeeRatio = protocol.futuresFeeRatio();
-        uint256 futuresFundingRateCoefficient = protocol.futuresFundingRateCoefficient();
-
-        IPerpetualPoolLite futures = IPerpetualPoolLite(_perpetualPoolLiteAddress);
-
-        futures.addSymbol(
-            collectionID,
-            name,
-            futuresOracleAddress,
-            futuresMultiplier,
-            futuresFeeRatio,
-            futuresFundingRateCoefficient
-        );
+    function initPerpetualPoolLite(uint256 collectionID, string memory name) internal view {
+        FuturesProtocolParameters futuresProtocol = FuturesProtocolParameters(_futuresProtocol);
+        address futuresOracleAddress = futuresProtocol.futuresOracleAddress();
     }
 
     /**

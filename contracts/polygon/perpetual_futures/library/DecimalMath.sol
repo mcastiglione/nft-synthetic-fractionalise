@@ -13,7 +13,7 @@ import {SafeMath} from "./SafeMath.sol";
 library DecimalMath {
     using SafeMath for uint256;
 
-    uint256 constant ONE = 10**18;
+    uint256 internal constant ONE = 10**18;
 
     function mul(uint256 target, uint256 d) internal pure returns (uint256) {
         return (target * d) / ONE;

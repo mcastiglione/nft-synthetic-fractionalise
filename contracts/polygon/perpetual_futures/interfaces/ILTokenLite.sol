@@ -2,7 +2,9 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
-interface ILTokenLite {
+import "./IERC20.sol";
+
+interface ILTokenLite is IERC20 {
     function pool() external view returns (address);
 
     function setPool(address newPool) external;

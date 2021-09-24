@@ -419,7 +419,7 @@ contract PerpetualPoolLite is IPerpetualPoolLite {
     //================================================================================
 
     function _updateSymbolOracles(SignedPrice memory price) internal {
-        IOracleWithUpdate(_protocolParameters.symbolOracleAddress()).updatePrice(
+        IOracleWithUpdate(_protocolParameters.futuresOracleAddress()).updatePrice(
             _underlyingAddress,
             price.timestamp,
             price.price,
@@ -438,7 +438,7 @@ contract PerpetualPoolLite is IPerpetualPoolLite {
         totalDynamicEquity = _liquidity;
 
         if (curBlockNumber > preBlockNumber) {
-            _symbol.price = IOracle(_protocolParameters.symbolOracleAddress()).getPrice().utoi();
+            _symbol.price = IOracle(_protocolParameters.futuresOracleAddress()).getPrice().utoi();
         }
         if (_symbol.tradersNetVolume != 0) {
             int256 cost = (((_symbol.tradersNetVolume * _symbol.price) / ONE) *
