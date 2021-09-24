@@ -182,7 +182,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     /**
      * @notice Gets the metadata
-     * of the NFT. This should have been registered first by verifyNFT.
+     * of the NFT. This should have been registered first by verify.
      */
     function getNFTMetadata(uint256 tokenId) private view returns (string memory) {
         //TODO: get metadata from Oracle
@@ -282,7 +282,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function buyJotTokens(uint256 tokenId, uint256 buyAmount) public {
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         require(tokens[tokenId].fractionPrices > 0, "Token price not set");
-        uint256 amount = buyAmount * tokens[tokenId].fractionPrices / 10**18;
+        uint256 amount = (buyAmount * tokens[tokenId].fractionPrices) / 10**18;
         require(amount > 0, "Amount can't be zero!");
 
         // Calculate amount left
@@ -372,7 +372,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             0, // slippage is unavoidable
             0, // slippage is unavoidable
             address(0),
-            block.timestamp
+            block.timestamp // solhint-disable-line
         );
     }
 

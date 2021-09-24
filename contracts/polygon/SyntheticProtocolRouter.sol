@@ -57,10 +57,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
      */
     address public swapAddress;
 
-    /**
-     * Events
-     */
-
     // a new Synthetic NFT collection manager is registered
     event CollectionManagerRegistered(
         uint256 collectionManagerID,
@@ -78,9 +74,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         uint256 syntheticTokenId
     );
 
-    /**
-     * Constructor
-     */
     constructor(
         address swapAddress_,
         address jot_,

@@ -3,7 +3,7 @@ const { assert, expect } = require('chai');
 describe('SyntheticProtocolRouter', async function () {
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
-    await deployments.fixture(['synthetic_router']);
+    await deployments.fixture(['auctions_manager_initialization']);
     deployer = await getNamedAccounts();
     router = await ethers.getContract('SyntheticProtocolRouter');
     let oracleAddress = await router.oracleAddress();
@@ -33,15 +33,14 @@ describe('SyntheticProtocolRouter', async function () {
     assert.equal(verified, false);
   });
 
-  it('Try to verify with non-verifier address', async () => {
+  it('try to verify with non-verifier address', async () => {
     await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
     await expect(router.verifyNFT(NFT, nftID)).to.be.reverted;
   });
 
-  it('Verify with correct address', async () => {
+  it('verify with correct address', async () => {
     await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
     const response = await oracle.verifyNFT(NFT, nftID);
     assert.ok(response);
   });
-
 });
