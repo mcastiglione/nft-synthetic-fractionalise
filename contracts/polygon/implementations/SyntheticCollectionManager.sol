@@ -290,6 +290,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         return tokens[tokenId].sellingSupply - tokens[tokenId].soldSupply;
     }
 
+    function getFundingTokenAllowance() public view returns(uint256) {
+        return IERC20(fundingTokenAddress).allowance(msg.sender, address(this));
+    }
+
+    function getContractJotsBalance() public view returns(uint256) {
+        return IJot(jotAddress).balanceOf(address(this));
+    }
+
     /**
      * @notice allows the caller to buy jots using the Funding token
      */
