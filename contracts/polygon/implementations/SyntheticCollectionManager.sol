@@ -373,16 +373,16 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         return
             ISyntheticNFT(erc721address).exists(tokenId) &&
             block.timestamp - tokens[tokenId].lastFlipTime >= protocol.flippingInterval() && // solhint-disable-line
-            IERC20(jotAddress).balanceOf(jotPool) > 0 &&
+            IERC20(jotAddress).balanceOf(jotPool) > protocol.flippingAmount() &&
             isSyntheticNFTFractionalised(tokenId);
     }
 
-    function flipJot(uint256 tokenId, uint256 prediction) external {
+    function flipJot(uint256 tokenId, uint64 prediction) external {
         require(isAllowedToFlip(tokenId), "Flip is not allowed yet");
         tokens[tokenId].lastFlipTime = block.timestamp; // solhint-disable-line
 
         bytes32 requestId = RandomNumberConsumer(_randomConsumerAddress).getRandomNumber();
-        _flips[requestId] = Flip({tokenId: tokenId, prediction: prediction});
+        _flips[requestId] = Flip({tokenId: tokenId, prediction: prediction, player: msg.sender});
 
         emit CoinFlipped(requestId, msg.sender, tokenId, prediction);
     }
@@ -409,7 +409,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                 poolAmount = fAmount;
             } else {
                 poolAmount = fAmount - fReward;
-                IERC20(jotAddress).safeTransfer(msg.sender, fReward);
+                IERC20(jotAddress).safeTransfer(_flips[requestId].player, fReward);
             }
             if (poolAmount > 0) {
                 IERC20(jotAddress).safeTransfer(jotPool, poolAmount);
@@ -420,7 +420,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                 poolAmount = fAmount;
             } else {
                 poolAmount = fAmount - fReward;
-                IERC20(jotAddress).safeTransfer(msg.sender, fReward);
+                IERC20(jotAddress).safeTransfer(_flips[requestId].player, fReward);
             }
             if (poolAmount > 0) {
                 IERC20ManagedAccounts(jotAddress).transferFromManaged(jotPool, address(this), poolAmount);

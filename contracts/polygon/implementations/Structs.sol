@@ -16,5 +16,6 @@ struct TokenData {
 
 struct Flip {
     uint256 tokenId;
-    uint256 prediction;
+    uint64 prediction;
+    address player;
 }
