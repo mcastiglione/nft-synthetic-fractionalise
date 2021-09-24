@@ -61,4 +61,22 @@ contract JotPool is Initializable {
     function balance() external view returns (uint256) {
         return liquidity[msg.sender];
     }
+
+    uint256 lastReward;
+    uint256 cumulativeRewards;
+
+    function stakeShares(uint256 amount) external {
+        require(IERC20(jot).balanceOf(msg.sender) >= amount, "Insufficient copyright fraction balance");
+        uint256 balance = IERC20(jot).balanceOf(address(this));
+        uint256 x = balance - lastReward;
+        if (totalCFStaked != 0) {
+            totalShares += ((x * stakerShare) * 10**18) / (totalCFStaked * stakerShareDenominator);
+        }
+        cumulativeRewards += x;
+        lastReward = balance;
+        totalCFStaked += amount;
+        StakingERC721(copyrightFractionStakingNFT).createPosition(msg.sender, amount, totalShares);
+        emit CopyrightStaked();
+        IERC20(jotToken).safeTransferFrom(msg.sender, address(this), amount);
+    }
 }
