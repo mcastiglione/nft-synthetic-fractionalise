@@ -5,7 +5,7 @@ import "./PerpetualPoolLite.sol";
 import "./library/SafeMath.sol";
 import "./interfaces/IPTokenLite.sol";
 
-contract PoolInfo {
+contract PoolInfo is Initializable {
     using SafeMath for int256;
 
     int256 private constant ONE = 10**18;

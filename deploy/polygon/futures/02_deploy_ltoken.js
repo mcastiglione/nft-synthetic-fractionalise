@@ -5,7 +5,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await deploy('LTokenLite', {
     from: deployer,
     log: true,
-    args: ['Privi Exchange Liquidity Token', 'pLT'],
+    args: [],
   });
 };
 

@@ -12,23 +12,24 @@ import "./interfaces/ILiquidatorQualifier.sol";
 import "./library/SafeMath.sol";
 import "./library/SafeERC20.sol";
 import "../governance/FuturesProtocolParameters.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-contract PerpetualPoolLite is IPerpetualPoolLite {
+contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
     using SafeMath for uint256;
     using SafeMath for int256;
     using SafeERC20 for IERC20;
 
     int256 private constant ONE = 10**18;
 
-    uint256 private immutable _decimals;
+    uint256 private  _decimals;
 
-    address private immutable _bTokenAddress;
-    address private immutable _lTokenAddress;
-    address private immutable _pTokenAddress;
-    address private immutable _liquidatorQualifierAddress;
-    address private immutable _protocolFeeCollector;
-    address private immutable _underlyingAddress;
-    address private immutable _protocolAddress;
+    address private  _bTokenAddress;
+    address private  _lTokenAddress;
+    address private  _pTokenAddress;
+    address private  _liquidatorQualifierAddress;
+    address private  _protocolFeeCollector;
+    address private  _underlyingAddress;
+    address private  _protocolAddress;
     FuturesProtocolParameters private _protocolParameters;
 
     int256 private _liquidity;
@@ -47,17 +48,19 @@ contract PerpetualPoolLite is IPerpetualPoolLite {
         _mutex = false;
     }
 
-    constructor(address[7] memory addresses) {
+    constructor(address[2] memory addresses) {
+        _protocolAddress = addresses[0];
+        _protocolParameters = FuturesProtocolParameters(addresses[0]);
+        _decimals = IERC20(addresses[1]).decimals();
+    }
+
+    function intialise(address[6] memory addresses) external initializer {
         _bTokenAddress = addresses[0];
         _lTokenAddress = addresses[1];
         _pTokenAddress = addresses[2];
         _liquidatorQualifierAddress = addresses[3];
         _protocolFeeCollector = addresses[4];
         _underlyingAddress = addresses[5];
-        _protocolAddress = addresses[6];
-
-        _protocolParameters = FuturesProtocolParameters(addresses[6]);
-        _decimals = IERC20(addresses[0]).decimals();
     }
 
     function getSymbolPriceAndMultiplier() external view returns (int256 price, int256 multiplier) {

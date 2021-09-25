@@ -10,25 +10,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const futuresParameters = await ethers.getContract('FuturesProtocolParameters');
 
   // TODO: change this deployment to the real contract
-  const bToken = await deploy('BTokenMock', {
-    from: deployer,
-    logs: true,
-  });
+  const bTokenAddress = "0x2cA48b8c2d574b282FDAB69545646983A94a3286"
 
   const pool = await deploy('PerpetualPoolLite', {
     from: deployer,
     log: true,
-    args: [
-      [
-        bToken.address, // bTokenAddress
-        lToken.address, // lTokenAddress
-        pToken.address, // pTokenAddress
-        constants.ZERO_ADDRESS, // liquidatorQualifierAddress
-        deployer, // protocolFeeCollector
-        '0x580d6ebC53BB4239f52C5E28a9c2bD037faB0089',
-        futuresParameters.address,
-      ],
-    ],
+    args: [[futuresParameters.address, bTokenAddress]],
   });
 
   if (pool.newlyDeployed) {
@@ -40,4 +27,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 };
 
 module.exports.tags = ['pool'];
-module.exports.dependencies = ['ltoken', 'ptoken', 'futures_protocol_parameters'];
+module.exports.dependencies = ['ltoken', 'ptoken', 'oracle', 'futures_protocol_parameters'];
