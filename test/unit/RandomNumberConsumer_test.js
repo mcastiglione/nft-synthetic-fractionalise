@@ -29,7 +29,7 @@ describe('RandomNumberConsumer', async function () {
     let jot = await ethers.getContractAt('Jot', args.jotAddress);
 
     // jot pool should have balance in jots for the flipping game to work
-    await jot.mint(args.jotPoolAddress, 10000);
+    await jot.mint(args.jotPoolAddress, '100000000000000000000');
 
     [deployer, player] = await ethers.getSigners();
 
