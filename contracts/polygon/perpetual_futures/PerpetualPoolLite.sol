@@ -5,12 +5,14 @@ pragma solidity >=0.8.0 <0.9.0;
 import "./interfaces/IPerpetualPoolLite.sol";
 import "./interfaces/ILTokenLite.sol";
 import "./interfaces/IPTokenLite.sol";
-import "./interfaces/IERC20.sol";
+//import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "./interfaces/IOracle.sol";
 import "./interfaces/IOracleWithUpdate.sol";
 import "./interfaces/ILiquidatorQualifier.sol";
 import "./library/SafeMath.sol";
-import "./library/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "../governance/FuturesProtocolParameters.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
@@ -51,10 +53,10 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
     constructor(address[2] memory addresses) {
         _protocolAddress = addresses[0];
         _protocolParameters = FuturesProtocolParameters(addresses[0]);
-        _decimals = IERC20(addresses[1]).decimals();
+        _decimals = IERC20Metadata(addresses[1]).decimals();
     }
 
-    function intialise(address[6] memory addresses) external initializer {
+    function initialize(address[6] memory addresses) external initializer {
         _bTokenAddress = addresses[0];
         _lTokenAddress = addresses[1];
         _pTokenAddress = addresses[2];

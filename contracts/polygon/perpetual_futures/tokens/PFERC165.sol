@@ -2,7 +2,8 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
-import "../interfaces/IERC165.sol";
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 
 /**
  * @dev Implementation of the {IERC165} interface.
@@ -10,7 +11,7 @@ import "../interfaces/IERC165.sol";
  * Contracts may inherit from this and call {_registerInterface} to declare
  * their support of an interface.
  */
-abstract contract ERC165 is IERC165 {
+abstract contract PFERC165 is IERC165 {
     /*
      * bytes4(keccak256('supportsInterface(bytes4)')) == 0x01ffc9a7
      */

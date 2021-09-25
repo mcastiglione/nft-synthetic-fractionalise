@@ -42,6 +42,9 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     address private _validatorAddress;
     address private _perpetualPoolLiteAddress;
 
+    address private _lTokenLite;
+    address private _pTokenLite;
+
     address public oracleAddress;
     /**
      * @dev collections map.

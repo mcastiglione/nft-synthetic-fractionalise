@@ -4,11 +4,9 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../interfaces/IPTokenLite.sol";
-import "./ERC721.sol";
+import "./PFERC721.sol";
 
-
-
-contract PTokenLite is IPTokenLite, ERC721, Initializable {
+contract PTokenLite is IPTokenLite, PFERC721, Initializable {
 
     // PToken name
     string internal _name;
