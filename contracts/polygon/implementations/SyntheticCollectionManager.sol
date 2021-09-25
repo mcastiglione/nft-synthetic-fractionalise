@@ -131,10 +131,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _setupRole(AUCTION_MANAGER, auctionManagerAddress);
     }
 
-    function reassignNFT(
-        uint256 nftId_,
-        address newOwner_
-    ) external onlyRole(AUCTION_MANAGER) {
+    /**
+     * @dev we need to pass the jobSupply here to work well even when the governance
+     *      changes this protocol parameter in the middle of the auction
+     */
+    function reassignNFT(uint256 nftId_, address newOwner_) external onlyRole(AUCTION_MANAGER) {
         require(ISyntheticNFT(erc721address).exists(nftId_), "Non existent synthetic NFT");
 
         TokenData storage data = tokens[nftId_];
@@ -148,19 +149,18 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // Burn synthetic NFT
         ISyntheticNFT(erc721address).safeBurn(nftId_);
 
-        // Get new synthetic ID 
+        // Get new synthetic ID
         uint256 newSyntheticID = tokenCounter.current();
 
         // Update original to synthetic mapping
         _originalToSynthetic[originalID] = newSyntheticID;
-        
+
         // Empty previous id
-        tokens[nftId_] = TokenData(0,0,0,0,0,0,0,0,false);
+        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, false);
 
         // Fill new ID
         uint256 tokenSupply = ProtocolConstants.JOT_SUPPLY;
         tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, false);
-
     }
 
     /**
@@ -252,9 +252,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         uint256 syntheticID = tokenCounter.current();
 
-        generateSyntheticNFT(nftOwner, syntheticID); 
- 
-        Jot(jotAddress).mint(address(this), _jotsSupply); 
+        generateSyntheticNFT(nftOwner, syntheticID);
+
+        Jot(jotAddress).mint(address(this), _jotsSupply);
 
         uint256 sellingSupply = (_jotsSupply - supplyToKeep) / 2;
         uint256 liquiditySupply = (_jotsSupply - supplyToKeep) / 2;
@@ -290,24 +290,24 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         return tokens[tokenId].soldSupply;
     }
 
-    function getJotFractionPrice(uint256 tokenId) public view returns(uint256) {
+    function getJotFractionPrice(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].fractionPrices;
     }
 
-    function getJotAmountLeft(uint256 tokenId) public view returns(uint256) {
+    function getJotAmountLeft(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].sellingSupply - tokens[tokenId].soldSupply;
     }
 
-    function getSalePrice(uint256 tokenId,  uint256 buyAmount) public view returns(uint256) {
+    function getSalePrice(uint256 tokenId, uint256 buyAmount) public view returns (uint256) {
         uint256 amount = (buyAmount * tokens[tokenId].fractionPrices) / 10**18;
         return amount;
     }
 
-    function getFundingTokenAllowance() public view returns(uint256) {
+    function getFundingTokenAllowance() public view returns (uint256) {
         return IERC20(fundingTokenAddress).allowance(msg.sender, address(this));
     }
 
-    function getContractJotsBalance() public view returns(uint256) {
+    function getContractJotsBalance() public view returns (uint256) {
         return IJot(jotAddress).balanceOf(address(this));
     }
 
@@ -317,7 +317,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function buyJotTokens(uint256 tokenId, uint256 buyAmount) public {
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         require(tokens[tokenId].fractionPrices > 0, "Token price not set");
-       
+
         // Calculate amount left
         uint256 amountLeft = tokens[tokenId].sellingSupply - tokens[tokenId].soldSupply;
 

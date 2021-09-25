@@ -1,4 +1,3 @@
-/*const { constants, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const Enums = require('./helpers/enums');
 
@@ -39,7 +38,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
+          [this.receiver.interface.encodeFunctionData('setFlippingAmount', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],
@@ -62,7 +61,7 @@ describe('GovernorTimelockControl', function () {
       await expect(this.receipts.queue).to.emit(this.timelock, 'CallScheduled');
       await expect(this.receipts.execute).to.emit(this.mock, 'ProposalExecuted');
       await expect(this.receipts.execute).to.emit(this.timelock, 'CallExecuted');
-      await expect(this.receipts.execute).to.emit(this.receiver, 'JotsSupplyUpdated');
+      await expect(this.receipts.execute).to.emit(this.receiver, 'FlippingAmountUpdated');
     });
 
     runGovernorWorkflow();
@@ -74,7 +73,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
+          [this.receiver.interface.encodeFunctionData('setFlippingAmount', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],
@@ -108,7 +107,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
+          [this.receiver.interface.encodeFunctionData('setFlippingAmount', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],
@@ -132,7 +131,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
+          [this.receiver.interface.encodeFunctionData('setFlippingAmount', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],
@@ -155,7 +154,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
+          [this.receiver.interface.encodeFunctionData('setFlippingAmount', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],
@@ -186,7 +185,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
+          [this.receiver.interface.encodeFunctionData('setFlippingAmount', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],
@@ -221,7 +220,7 @@ describe('GovernorTimelockControl', function () {
         proposal: [
           [this.receiver.address],
           [web3.utils.toWei('0')],
-          [this.receiver.interface.encodeFunctionData('setJotsSupply', [200])],
+          [this.receiver.interface.encodeFunctionData('setFlippingAmount', [200])],
           '<proposal description>',
         ],
         voters: [{ voter: voter, support: Enums.VoteType.For }],
@@ -298,4 +297,3 @@ describe('GovernorTimelockControl', function () {
     });
   });
 });
-*/
