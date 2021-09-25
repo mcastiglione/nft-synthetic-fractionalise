@@ -309,7 +309,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     /**
      * @notice get collection manager address from collection ID
      */
-    function getCollectionManagerAddress(uint256 collectionID) public view returns (address) {
+    function getCollectionManagerAddressFromId(uint256 collectionID) public view returns (address) {
         address collectionAddress = _collectionIdToAddress[collectionID];
         return _collections[collectionAddress].collectionManagerAddress;
     }
