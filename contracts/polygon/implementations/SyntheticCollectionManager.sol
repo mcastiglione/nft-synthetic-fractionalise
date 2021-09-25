@@ -22,7 +22,6 @@ import "../libraries/ProtocolConstants.sol";
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
-    using ProtocolConstants for uint256;
 
     bytes32 public constant ROUTER = keccak256("ROUTER");
     bytes32 public constant AUCTION_MANAGER = keccak256("AUCTION_MANAGER");
@@ -138,22 +137,44 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     function reassignNFT(
         uint256 nftId_,
-        address newOwner_,
+        address newOwner_, 
         uint256 jotsSupply_
     ) external onlyRole(AUCTION_MANAGER) {
+        require(ISyntheticNFT(erc721address).exists(tokenId, "Non existent synthetic NFT");
+
         TokenData storage data = tokens[nftId_];
 
         // the auction could only be started if ownerSupply is 0
         assert(data.ownerSupply == 0);
 
-        // TODO: implement this logic
+        // Get original token ID
+        uint256 originalID = tokens[nftId_].originalTokenID;
 
-        // data.ownerSupply = jotsSupply_;
-        // data.sellingSupply = 0;
-        // data.soldSupply = 0;
-        // data.liquiditySupply = 0;
-        // data.liquiditySold = 0;
-        // data.fractionPrices = 0;
+        // Burn synthetic NFT
+        require(ISyntheticNFT(erc721address).burn(nftId_);
+
+        // Get new synthetic ID 
+        uint256 newSyntheticID = tokenCounter.current();
+
+        // Update original to synthetic mapping
+        _originalToSynthetic[originalID] = newSyntheticID;
+        
+        // Empty previous id
+        tokens[nftId_] = TokenData();
+
+        // Fill new ID
+        TokenData[newSyntheticID] = TokenData(
+            originalID,
+            ProtocolConstants.JOT_SUPPLY,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            false
+        );
+
     }
 
     /**
@@ -172,7 +193,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(tokenOwner == caller, "You are not the owner of the NFT!");
 
         // Change original token ID and set verified = false
-        uint256 originalID = tokens[syntheticID].originalID;
+        uint256 originalID = tokens[syntheticID].originalTokenID;
 
         _originalToSynthetic[originalID] = 0;
         _originalToSynthetic[newOriginalTokenID] = syntheticID;
@@ -210,7 +231,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * been already fractionalised.
      */
     function isSyntheticNFTFractionalised(uint256 tokenId) public view returns (bool) {
-        return tokens[tokenId].ownerSupply != 0;
+        return tokens[tokenId].originalTokenID != 0;
     }
 
     /**
@@ -261,8 +282,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             liquiditySold: 0,
             fractionPrices: priceFraction,
             lastFlipTime: 0,
-            verified: false,
-            originalID: 0
+            verified: false
         });
 
         tokens[syntheticID] = data;
@@ -509,6 +529,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function getOriginalID(uint256 tokenId) public view returns (uint256) {
         require(ISyntheticNFT(erc721address).exists(tokenId));
-        return tokens[tokenId].originalID;
+        return tokens[tokenId].originalTokenID;
     }
 }
