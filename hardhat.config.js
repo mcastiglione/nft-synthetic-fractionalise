@@ -23,7 +23,7 @@ module.exports = {
       tags: ['local'],
     },
     rinkeby_fork: {
-      url: 'http://127.0.0.1:7545', // ganache local network
+      url: 'http://127.0.0.1:8545', // ganache local network
       forking: {
         url: `https://rinkeby.infura.io/v3/${INFURA_API_KEY}`,
       },

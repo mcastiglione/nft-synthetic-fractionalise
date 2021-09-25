@@ -43,7 +43,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     mapping(bytes32 => Flip) private _flips;
 
-    mapping(uint256 => uint256) private _originalToSynthetic;
+    mapping(uint256 => uint256) public originalToSynthetic;
 
     Counters.Counter public tokenCounter;
 
@@ -153,7 +153,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 newSyntheticID = tokenCounter.current();
 
         // Update original to synthetic mapping
-        _originalToSynthetic[originalID] = newSyntheticID;
+        originalToSynthetic[originalID] = newSyntheticID;
 
         // Empty previous id
         tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, false);
@@ -181,8 +181,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // Change original token ID and set verified = false
         uint256 originalID = tokens[syntheticID].originalTokenID;
 
-        _originalToSynthetic[originalID] = 0;
-        _originalToSynthetic[newOriginalTokenID] = syntheticID;
+        originalToSynthetic[originalID] = 0;
+        originalToSynthetic[newOriginalTokenID] = syntheticID;
 
         tokens[syntheticID].originalTokenID = newOriginalTokenID;
         tokens[syntheticID].verified = false;
@@ -209,7 +209,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * been already fractionalized
      */
     function isSyntheticNFTCreated(uint256 tokenId) public view returns (bool) {
-        return _originalToSynthetic[tokenId] != 0;
+        return originalToSynthetic[tokenId] != 0;
     }
 
     /**
@@ -406,6 +406,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             address(0),
             block.timestamp // solhint-disable-line
         );
+
+        tokens[tokenId].liquiditySupply = 0;
+        tokens[tokenId].liquiditySold = 0;
     }
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {
@@ -514,4 +517,18 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(ISyntheticNFT(erc721address).exists(tokenId));
         return tokens[tokenId].originalTokenID;
     }
+
+    function depositJots(uint256 tokenId, uint256 amount) public {
+        ISyntheticNFT nft = ISyntheticNFT(erc721address);
+        address nftOwner = nft.ownerOf(tokenId);
+        require(nftOwner == msg.sender, "you are not the owner of the NFT!");
+
+        uint256 result = tokens[tokenId].ownerSupply += amount;
+
+        require(result <= ProtocolConstants.JOT_SUPPLY, "You can't deposit more than the Jot Supply limit");
+
+        IJot(jotAddress).transferFrom(msg.sender, address(this), amount);
+        tokens[tokenId].ownerSupply += amount;
+    }
+    
 }

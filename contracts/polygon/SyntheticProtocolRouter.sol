@@ -153,7 +153,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             collectionContract.initialize(
                 jotAddress,
                 collection,
-                syntheticNFTAddress,
+                syntheticNFTAddress, 
                 _auctionManager,
                 _protocol,
                 _fundingTokenAddress,
@@ -326,5 +326,9 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
      */
     function getOriginalCollectionAddress(uint256 collectionID) public view returns (address) {
         return _collectionIdToAddress[collectionID];
+    }
+
+    function getFundingTokenAddress() public view returns (address) {
+        return _fundingTokenAddress;
     }
 }
