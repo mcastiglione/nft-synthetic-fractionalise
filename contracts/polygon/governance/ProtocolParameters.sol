@@ -8,8 +8,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @notice the owner of this contract is the timelock controller of the governance feature
  */
 contract ProtocolParameters is Ownable {
-    // this is the number of Jots minted when a new single NFT is synthetic fractionalised
-    uint256 public jotsSupply;
 
     // interval in seconds between the one flip to another in one lock contract
     uint256 public flippingInterval;
@@ -23,7 +21,6 @@ contract ProtocolParameters is Ownable {
     // the duration of an NFT auction in seconds
     uint256 public auctionDuration;
 
-    event JotsSupplyUpdated(uint256 value);
     event FlippingIntervalUpdated(uint256 value);
     event FlippingRewardUpdated(uint256 value);
     event FlippingAmountUpdated(uint256 value);
@@ -34,7 +31,6 @@ contract ProtocolParameters is Ownable {
      *      also transfers the ownership to the governance
      */
     constructor(
-        uint256 jotsSupply_,
         uint256 flippingInterval_,
         uint256 flippingReward_,
         uint256 flippingAmount_,
@@ -44,11 +40,9 @@ contract ProtocolParameters is Ownable {
         require(flippingReward_ > 0, "Invalid Reward");
         require(flippingAmount_ > 0, "Invalid Amount");
         require(flippingReward_ < flippingAmount_, "Reward should be lower than Amount");
-        require(jotsSupply_ > 0, "Invalid Jots Supply");
         require(flippingInterval_ > 15 minutes, "Flipping Interval should be greater than 15 minutes");
         require(auctionDuration_ > 1 hours, "Auction duration should be greater than 1 hour");
 
-        jotsSupply = jotsSupply_;
         flippingInterval = flippingInterval_;
         flippingReward = flippingReward_;
         flippingAmount = flippingAmount_;
@@ -56,12 +50,6 @@ contract ProtocolParameters is Ownable {
 
         // transfer ownership
         transferOwnership(governanceContractAddress_);
-    }
-
-    function setJotsSupply(uint256 jotsSupply_) external onlyOwner {
-        require(jotsSupply_ > 0, "Invalid Jots Supply");
-        jotsSupply = jotsSupply_;
-        emit JotsSupplyUpdated(jotsSupply_);
     }
 
     function setFlippingInterval(uint256 flippingInterval_) external onlyOwner {

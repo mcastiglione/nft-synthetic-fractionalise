@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../governance/ProtocolParameters.sol";
+import "../libraries/ProtocolConstants.sol";
 
 contract JotPool is Initializable {
     using SafeERC20 for IERC20;
@@ -48,7 +49,7 @@ contract JotPool is Initializable {
             liquidity[msg.sender] -= amount;
             totalLiquidity -= amount;
         } else {
-            uint256 jots = protocol.jotsSupply();
+            uint256 jots = ProtocolConstants.JOT_SUPPLY;
             liquidity[msg.sender] = jots;
             totalLiquidity = jots;
         }

@@ -17,10 +17,12 @@ import "../Interfaces.sol";
 import "../governance/ProtocolParameters.sol";
 import "./Jot.sol";
 import "./Structs.sol";
+import "../libraries/ProtocolConstants.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
+    using ProtocolConstants for uint256;
 
     bytes32 public constant ROUTER = keccak256("ROUTER");
     bytes32 public constant AUCTION_MANAGER = keccak256("AUCTION_MANAGER");
@@ -122,7 +124,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         protocol = ProtocolParameters(protocol_);
         jotPool = jotPool_;
 
-        _jotsSupply = protocol.jotsSupply();
+        _jotsSupply = ProtocolConstants.JOT_SUPPLY;
         fundingTokenAddress = fundingTokenAddress_;
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);

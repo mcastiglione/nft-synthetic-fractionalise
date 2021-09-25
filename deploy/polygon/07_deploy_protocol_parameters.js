@@ -8,7 +8,6 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
   let governance = await ethers.getContract('TimelockController');
 
   const defaultParameters = {
-    jotsSupply: "100000000000000000000000",
     flippingInterval: String(time.duration.minutes(20)),
     flippingReward: "1000000000000000000",
     flippingAmount: "10000000000000000000",

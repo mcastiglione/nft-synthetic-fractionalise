@@ -30,7 +30,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   });
 
   const defaultParameters = {
-    jotsSupply: 100,
     flippingInterval: String(time.duration.days(1)),
     flippingReward: 5,
     flippingAmount: 20,

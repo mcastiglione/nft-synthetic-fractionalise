@@ -9,6 +9,7 @@ import "../governance/ProtocolParameters.sol";
 import "../implementations/SyntheticCollectionManager.sol";
 import "../SyntheticProtocolRouter.sol";
 import "./NFTAuction.sol";
+import "../libraries/ProtocolConstants.sol";
 
 contract AuctionsManager is AccessControl, Initializable {
     bytes32 public constant COLLECTION_MANAGER = keccak256("COLLECTION_MANAGER");
@@ -67,7 +68,7 @@ contract AuctionsManager is AccessControl, Initializable {
         uint256 nftId_,
         uint256 openingBid_
     ) external {
-        uint256 jotsSupply = protocol.jotsSupply();
+        uint256 jotsSupply = ProtocolConstants.JOT_SUPPLY;
         require(_whitelistedTokens[collection_][nftId_], "Token can't be auctioned");
         require(openingBid_ >= jotsSupply, "Opening bid too low");
         require(router.isSyntheticNFTCreated(collection_, nftId_), "Non registered token");
