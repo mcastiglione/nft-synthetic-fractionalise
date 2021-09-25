@@ -2,13 +2,12 @@ const { constants } = require('@openzeppelin/test-helpers');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
-  const { deployer } = await getNamedAccounts();
+  const { deployer, signatory } = await getNamedAccounts();
 
   // get the previously deployed governance (actually the timelock controller)
   let governance = await ethers.getContract('TimelockController');
 
-  // TODO: add the real oracle
-  let dummyMock = await deploy('EmptyMock', { from: deployer, log: true });
+  let symbolOracle = await deploy('SymbolOracleOffChain', { from: deployer, log: true, args: [signatory] });
 
   const mainParams = {
     minPoolMarginRatio: one(),
@@ -22,7 +21,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const defaultProtocolParameters = {
     mainParams,
-    futuresOracleAddress: dummyMock.address,
+    futuresOracleAddress: symbolOracle.address,
     futuresMultiplier: 1,
     futuresFeeRatio: 1,
     futuresFundingRateCoefficient: 1,
@@ -35,11 +34,16 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     owner = deployer;
   }
 
-  await deploy('FuturesProtocolParameters', {
+  let params = await deploy('FuturesProtocolParameters', {
     from: deployer,
     log: true,
     args: [...Object.values(defaultProtocolParameters), owner],
   });
+
+  if (symbolOracle.newlyDeployed) {
+    symbolOracle = await ethers.getContract('SymbolOracleOffChain');
+    await symbolOracle.initialize(params.address);
+  }
 };
 
 function one(value = 1, left = 0, right = 18) {

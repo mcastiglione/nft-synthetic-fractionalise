@@ -9,8 +9,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const tokenSymbol = 'MTKN';
   const tokenSupply = web3.utils.toWei('100');
 
-  let dummyMock = await deploy('EmptyMock', { from: deployer });
-
   let token = await deploy('ERC20VotesMock', {
     from: deployer,
     log: true,

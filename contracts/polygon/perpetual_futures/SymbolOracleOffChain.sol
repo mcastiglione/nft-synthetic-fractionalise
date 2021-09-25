@@ -2,24 +2,32 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
-import "./interfaces/IOracleWithUpdate.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../governance/FuturesProtocolParameters.sol";
+import "./interfaces/IOracleWithUpdate.sol";
 
-contract SymbolOracleOffChain is IOracleWithUpdate {
+contract SymbolOracleOffChain is IOracleWithUpdate, Initializable {
     address public immutable signatory;
     FuturesProtocolParameters private _protocolParameters;
 
     uint256 public timestamp;
     uint256 public price;
 
-    constructor(address signatory_, address protocolParameters_) {
+    address private _deployer;
+
+    constructor(address signatory_) {
         signatory = signatory_;
+        _deployer = msg.sender;
+    }
+
+    function initialize(address protocolParameters_) external initializer {
+        require(msg.sender == _deployer, "Only deployer can initialize");
         _protocolParameters = FuturesProtocolParameters(protocolParameters_);
     }
 
     function getPrice() external view override returns (uint256) {
         // solhint-disable-next-line
-        require(block.timestamp - timestamp <= _protocolParameters.oracleDelay(), "price expired");
+        require(block.timestamp - timestamp <= _protocolParameters.oracleDelay(), "Price expired");
         return price;
     }
 

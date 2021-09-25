@@ -62,6 +62,7 @@ module.exports = {
   namedAccounts: {
     deployer: 0,
     player: 1,
+    signatory: 2,
   },
   gasReporter: {
     enabled: false,
