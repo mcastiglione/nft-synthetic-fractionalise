@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./AuctionsManager.sol";
+import "../libraries/ProtocolConstants.sol";
 
 contract NFTAuction is Initializable {
     // parameters of the auction. Times are either
@@ -49,7 +50,7 @@ contract NFTAuction is Initializable {
         nftId = nftId_;
         auctionEndTime = block.timestamp + auctionDuration_; // solhint-disable-line
         highestBid = initialBid_;
-        _jotSupply = jotSupply_;
+        _jotSupply = ProtocolConstants.JOT_SUPPLY;
         jot = jot_;
         jotPool = jotPool_;
         syntheticCollection = syntheticCollection_;
@@ -113,7 +114,7 @@ contract NFTAuction is Initializable {
         }
 
         // reassign the NFT in the synthetic collection
-        AuctionsManager(auctionsManager).reassignNFT(syntheticCollection, nftId, highestBidder, _jotSupply);
+        AuctionsManager(auctionsManager).reassignNFT(syntheticCollection, nftId, highestBidder);
 
         emit AuctionEnded(highestBidder, highestBid);
     }

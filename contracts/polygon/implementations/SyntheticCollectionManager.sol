@@ -131,14 +131,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _setupRole(AUCTION_MANAGER, auctionManagerAddress);
     }
 
-    /**
-     * @dev we need to pass the jobSupply here to work well even when the governance
-     *      changes this protocol parameter in the middle of the auction
-     */
     function reassignNFT(
         uint256 nftId_,
-        address newOwner_, 
-        uint256 jotsSupply_
+        address newOwner_
     ) external onlyRole(AUCTION_MANAGER) {
         require(ISyntheticNFT(erc721address).exists(nftId_), "Non existent synthetic NFT");
 

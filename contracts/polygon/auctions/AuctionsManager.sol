@@ -57,10 +57,9 @@ contract AuctionsManager is AccessControl, Initializable {
     function reassignNFT(
         address collection_,
         uint256 nftId_,
-        address newOwner_,
-        uint256 jotsSupply_
+        address newOwner_
     ) external onlyRole(AUCTION) {
-        SyntheticCollectionManager(collection_).reassignNFT(nftId_, newOwner_, jotsSupply_);
+        SyntheticCollectionManager(collection_).reassignNFT(nftId_, newOwner_);
     }
 
     function startAuction(
