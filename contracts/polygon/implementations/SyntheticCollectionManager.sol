@@ -140,7 +140,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address newOwner_, 
         uint256 jotsSupply_
     ) external onlyRole(AUCTION_MANAGER) {
-        require(ISyntheticNFT(erc721address).exists(tokenId, "Non existent synthetic NFT");
+        require(ISyntheticNFT(erc721address).exists(nftId_), "Non existent synthetic NFT");
 
         TokenData storage data = tokens[nftId_];
 
@@ -151,7 +151,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 originalID = tokens[nftId_].originalTokenID;
 
         // Burn synthetic NFT
-        require(ISyntheticNFT(erc721address).burn(nftId_);
+        ISyntheticNFT(erc721address).safeBurn(nftId_);
 
         // Get new synthetic ID 
         uint256 newSyntheticID = tokenCounter.current();
@@ -160,20 +160,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _originalToSynthetic[originalID] = newSyntheticID;
         
         // Empty previous id
-        tokens[nftId_] = TokenData();
+        tokens[nftId_] = TokenData(0,0,0,0,0,0,0,0,false);
 
         // Fill new ID
-        TokenData[newSyntheticID] = TokenData(
-            originalID,
-            ProtocolConstants.JOT_SUPPLY,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            false
-        );
+        uint256 tokenSupply = ProtocolConstants.JOT_SUPPLY;
+        tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, false);
 
     }
 
@@ -198,7 +189,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _originalToSynthetic[originalID] = 0;
         _originalToSynthetic[newOriginalTokenID] = syntheticID;
 
-        tokens[syntheticID].originalID = newOriginalTokenID;
+        tokens[syntheticID].originalTokenID = newOriginalTokenID;
         tokens[syntheticID].verified = false;
     }
 

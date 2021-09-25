@@ -72,6 +72,7 @@ contract SyntheticNFT is ERC721, Initializable, AccessControl {
         uint256 tokenId,
         string memory metadata
     ) public onlyRole(MANAGER) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
         _tokenMetadata[tokenId] = metadata;
     }
 
