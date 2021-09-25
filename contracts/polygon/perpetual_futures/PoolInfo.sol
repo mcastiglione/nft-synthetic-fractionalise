@@ -3,7 +3,7 @@ pragma solidity ^0.8.2;
 
 import "./PerpetualPoolLite.sol";
 import "./library/SafeMath.sol";
-import "./interfaces/IPTokenLite.sol";
+import "../Interfaces.sol";
 
 contract PoolInfo is Initializable {
     using SafeMath for int256;

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "../interfaces/IPTokenLite.sol";
+import "../../Interfaces.sol";
 import "./PFERC721.sol";
 
 contract PTokenLite is IPTokenLite, PFERC721, Initializable {

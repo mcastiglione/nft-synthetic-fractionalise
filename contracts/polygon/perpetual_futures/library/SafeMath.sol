@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity ^0.8.4;
 
 library SafeMath {
     uint256 internal constant UMAX = 2**255 - 1;

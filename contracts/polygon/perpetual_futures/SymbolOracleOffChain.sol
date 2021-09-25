@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../governance/FuturesProtocolParameters.sol";
-import "./interfaces/IOracleWithUpdate.sol";
+import "../Interfaces.sol";
 
 contract SymbolOracleOffChain is IOracleWithUpdate, Initializable {
     address public immutable signatory;

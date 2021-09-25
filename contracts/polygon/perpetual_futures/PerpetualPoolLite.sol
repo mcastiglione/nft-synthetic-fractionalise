@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity ^0.8.4;
 
-import "./interfaces/IPerpetualPoolLite.sol";
-import "./interfaces/ILTokenLite.sol";
-import "./interfaces/IPTokenLite.sol";
+
+import "../Interfaces.sol";
 //import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "./interfaces/IOracle.sol";
-import "./interfaces/IOracleWithUpdate.sol";
-import "./interfaces/ILiquidatorQualifier.sol";
 import "./library/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
