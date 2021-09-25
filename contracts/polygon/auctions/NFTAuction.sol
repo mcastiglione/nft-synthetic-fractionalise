@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../libraries/ProtocolConstants.sol";
 import "./AuctionsManager.sol";
-import "../libraries/ProtocolConstants.sol";
 
 contract NFTAuction is Initializable {
     // parameters of the auction. Times are either
