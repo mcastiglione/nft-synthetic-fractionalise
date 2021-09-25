@@ -2,10 +2,14 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../interfaces/IPTokenLite.sol";
 import "./ERC721.sol";
 
-contract PTokenLite is IPTokenLite, ERC721 {
+
+
+contract PTokenLite is IPTokenLite, ERC721, Initializable {
+
     // PToken name
     string internal _name;
     // PToken symbol
@@ -16,6 +20,8 @@ contract PTokenLite is IPTokenLite, ERC721 {
     uint256 internal _totalMinted;
     // total PTokens hold by all traders
     uint256 internal _totalSupply;
+
+    address private _collectionManager;
 
     // tokenId => margin
     mapping(uint256 => int256) internal _tokenIdMargin;
@@ -30,13 +36,18 @@ contract PTokenLite is IPTokenLite, ERC721 {
         _;
     }
 
-    constructor(string memory name_, string memory symbol_) {
+    constructor() {}
+
+    function initialize(
+        string memory name_,
+        string memory symbol_
+    ) external initializer {
         _name = name_;
         _symbol = symbol_;
     }
 
-    function setPool(address newPool) public override {
-        require(_pool == address(0) || _pool == msg.sender, "LToken.setPool: not allowed");
+    function setPool(address newPool) public override  {
+        require(_pool == address(0) || _pool == msg.sender, 'PToken.setPool: not allowed');
         _pool = newPool;
     }
 

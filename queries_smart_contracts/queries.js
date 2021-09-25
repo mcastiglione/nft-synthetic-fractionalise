@@ -16,10 +16,13 @@ let nftID = "2";
 let ownerSupply = toInput(5000, decimals_jots);
 let initialPriceFraction =  toInput(5, decimals_jots);
 let collectionName =  "SiriusCreature";
-let collectionSymbol =   "OSC";
+let collectionSymbol = "OSC";
 
 let syntheticId = "0"
 let amountToBuy =  toInput(10, decimals_jots);
+let increaseAmount = toInput(10, decimals_jots);
+let decreaseAmount = toInput(10, decimals_jots);
+let newFractionPrice = toInput(3, decimals_funding);
 
 
 
@@ -53,19 +56,33 @@ async function get_collection_info() {
   console.log("JOT AMOUNT LEFT: ", ethers.utils.formatUnits(jotAmountLeft, decimals_jots))
   console.log("JOT BALANCE MANAGER: ", ethers.utils.formatUnits(jotBalanceManager, decimals_jots))
   console.log("---------------------------------------------")
-  
 }
 
 async function buyJotTokens() {
   let collection = await get_collection_manager();
   let result = await collection.buyJotTokens(syntheticId, amountToBuy);
-  console.log(result.hash)
+  console.log("Buy Jot Tokens... ", result.hash)
 }
 
 
+async function increaseSupply() {
+  let collection = await get_collection_manager();
+  let result = await collection.increaseSellingSupply(syntheticId, increaseAmount);
+  console.log("Increase Supply... ", result.hash)
+}
+
+async function decreaseSupply() {
+  let collection = await get_collection_manager();
+  let result = await collection.decreaseSellingSupply(syntheticId, decreaseAmount);
+  console.log("Decrease Supply... ", result.hash)
+}
 
 
-
+async function updatePriceFraction() {
+  let collection = await get_collection_manager();
+  let result = await collection.updatePriceFraction(syntheticId, newFractionPrice);
+  console.log("Update Fraction Price... ", result.hash)
+}
 
 
 
@@ -81,20 +98,25 @@ async function test() {
  
   // Get Collection Manager Info
   await get_collection_info();
+  
 
   // Buy Jot Tokens
-  await buyJotTokens();
+  // await buyJotTokens();
+
+  // Increase Supply Tokens
+  // await increaseSupply();
+
+  // Decrease Supply Tokens
+  // await decreaseSupply();
+
+  // Update Fraction Price
+  await updatePriceFraction();
+
+  await new Promise(resolve => setTimeout(resolve, 5000));
+
+  // Get Collection Manager Info
+  await get_collection_info();
   
-  // result = await collection.buyJotTokens(0, "1000000000000000000")
-  // result1 = await collection.getSoldSupply(0)
-  
-  // result2 = await collection.getSalePrice(0,"1000000000000000000")
-  //result =await collection.getRemainingSupply("1")
-  //collection = collection.attach("0x0a831A0ffDbbA048434dC1244E61166e2D5A76e4")
-  //console.log(await parameters.flippingInterval())
-  //result =await collection.getRemainingSupply("1")
-  //result = await router.registerNFT("0x8dd1792400d997bf2216d0ea09f6dcb45c8e96e7", 13, 100, 5, "Sirius", "SIRIUS")
-  //console.log( result, result1, result2)
 }
 
 test()

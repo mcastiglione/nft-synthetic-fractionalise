@@ -15,6 +15,9 @@ import "./auctions/AuctionsManager.sol";
 import "./Structs.sol";
 import "./governance/ProtocolParameters.sol";
 import "./governance/FuturesProtocolParameters.sol";
+//import "./perpetual_futures/NFTPerpetualFutures.sol";
+import "./governance/FuturesProtocolParameters.sol";
+
 
 contract SyntheticProtocolRouter is AccessControl, Ownable {
     using Counters for Counters.Counter;

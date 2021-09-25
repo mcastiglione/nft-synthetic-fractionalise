@@ -4,8 +4,15 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import "../interfaces/ILTokenLite.sol";
 import "./ERC20.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract LTokenLite is ILTokenLite, ERC20 {
+contract LTokenLite is ILTokenLite, Initializable, AccessControl, ERC20 {
+    bytes32 public constant ROUTER = keccak256("ROUTER"); 
+
+    // proxied values for the erc20 attributes
+    string private _proxiedName;
+    string private _proxiedSymbol;
     address private _pool;
 
     modifier _pool_() {
@@ -14,14 +21,24 @@ contract LTokenLite is ILTokenLite, ERC20 {
     }
 
     // solhint-disable-next-line
-    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {}
+    constructor() ERC20("Future Liquidity Token", "FLT") {}
+    
+    function initialize(
+        string memory name_,
+        string memory symbol_
+    ) external initializer {
+        _proxiedName = name_;
+        _proxiedSymbol = symbol_;
+
+        _setupRole(ROUTER, msg.sender);
+    }
 
     function pool() public view override returns (address) {
         return _pool;
     }
 
-    function setPool(address newPool) public override {
-        require(_pool == address(0) || _pool == msg.sender, "LToken.setPool: not allowed");
+    function setPool(address newPool) public override onlyRole(ROUTER) {
+        require(_pool == address(0), "LToken.setPool: not allowed");
         _pool = newPool;
     }
 
