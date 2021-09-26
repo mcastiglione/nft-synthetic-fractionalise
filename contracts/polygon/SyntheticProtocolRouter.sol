@@ -285,9 +285,9 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 syntheticNFTAddress,
                 swapAddress,
                 _auctionManager,
-                futuresParameters.lTokenLite_,
-                futuresParameters.pTokenLite_,
-                futuresParameters.perpetualPoolLiteAddress_
+                lTokenAddress,
+                pTokenAddress,
+                nftFutureAddress
             );
     }
 
