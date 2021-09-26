@@ -16,8 +16,12 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let futuresProtocol = await ethers.getContract('FuturesProtocolParameters');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
   let validator = await ethers.getContract('PolygonValidatorOracle');
-
+  let pool = await ethers.getContract('PerpetualPoolLite');
   let swapAddress;
+
+  let addresses = await pool.getAddresses();
+  let ltoken = addresses[1];
+  let ptoken = addresses[2];
 
   if (chainId == 1337 || chainId == 31337) {
     let UniSwapFactoryMock = await deploy('UniSwapFactoryMock', { from: deployer });
@@ -55,9 +59,9 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       auctionsManager.address,
       funding.address,
       randomConsumer.address,
-      validator.address,
-      perpetualPoolLiteAddress,
+      validator.address, 
       oracleAddress,
+      { lTokenLite_: ltoken, pTokenLite_: ptoken, perpetualPoolLiteAddress_: pool.address },
       { fractionalizeProtocol: protocol.address, futuresProtocol: futuresProtocol.address },
     ],
   });
@@ -77,4 +81,5 @@ module.exports.dependencies = [
   'synthetic_manager_implementation',
   'protocol_parameters',
   'futures_protocol_parameters',
+  'pool'
 ];

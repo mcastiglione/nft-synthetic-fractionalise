@@ -28,5 +28,5 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
 };
 
 module.exports.tags = ['protocol_parameters'];
-module.exports.dependencies = ['governance'];
+module.exports.dependencies = ['governance', 'timelock_controller'];
 

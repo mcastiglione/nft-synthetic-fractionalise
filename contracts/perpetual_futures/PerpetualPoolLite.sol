@@ -48,7 +48,7 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
     constructor(address[2] memory addresses) {
         _protocolAddress = addresses[0];
         _protocolParameters = FuturesProtocolParameters(addresses[0]);
-        _decimals = IERC20Metadata(addresses[1]).decimals();
+        _decimals = 18;
     }
 
     function initialize(address[6] memory addresses) external initializer {

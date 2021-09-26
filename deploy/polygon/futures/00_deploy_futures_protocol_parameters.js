@@ -9,7 +9,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   let symbolOracle = await deploy('SymbolOracleOffChain', { from: deployer, log: true, args: [signatory] });
 
-  const mainParams = {
+  const mainParams = { 
     minPoolMarginRatio: one(),
     minInitialMarginRatio: one(1, 1),
     minMaintenanceMarginRatio: one(5, 2),
@@ -52,4 +52,5 @@ function one(value = 1, left = 0, right = 18) {
   return ethers.BigNumber.from(value).mul(to).div(from);
 }
 
-module.exports.tags = ['protocol_parameters'];
+module.exports.tags = ['futures_protocol_parameters'];
+module.exports.dependencies = ['timelock_controller']

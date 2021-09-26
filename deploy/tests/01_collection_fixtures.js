@@ -18,6 +18,12 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let PerpetualPoolLiteMock = await deploy('PerpetualPoolLiteMock', { from: deployer });
   let MockOracle = await deploy('MockOracle', { from: deployer });
 
+  let pool = await ethers.getContract('PerpetualPoolLite');
+  let addresses = await pool.getAddresses();
+  let ltoken = addresses[1];
+  let ptoken = addresses[2];
+
+
   await deploy('TestSyntheticNFT', {
     contract: 'SyntheticNFT',
     from: deployer,
@@ -53,8 +59,8 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       funding.address, //constants.ZERO_ADDRESS,
       randomConsumer.address,
       validator.address,
-      PerpetualPoolLiteMock.address,
       MockOracle.address,
+      { lTokenLite_: ltoken, pTokenLite_: ptoken, perpetualPoolLiteAddress_: pool.address },
       { fractionalizeProtocol: protocol.address, futuresProtocol: futuresProtocol.address },
     ],
   });
@@ -85,6 +91,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
 module.exports.tags = ['collection_fixtures'];
 module.exports.dependencies = [
+  'pool',
   'auctions_manager',
   'jot_mock_implementation',
   'jot_pool_implementation',
