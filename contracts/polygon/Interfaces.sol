@@ -390,14 +390,22 @@ interface IMigratable is IOwnable {
     function executeMigration(address source) external;
 }
 
-interface IPerpetualPoolLite is IMigratable {
-struct SymbolInfo {
-        uint256 symbolId;
+interface IPerpetualPoolLite {
+// struct SymbolInfo {
+//         uint256 symbolId;
+//         string symbol;
+//         address oracleAddress;
+//         int256 multiplier;
+//         int256 feeRatio;
+//         int256 fundingRateCoefficient;
+//         int256 price;
+//         int256 cumulativeFundingRate;
+//         int256 tradersNetVolume;
+//         int256 tradersNetCost;
+//     }
+
+    struct SymbolInfo {
         string symbol;
-        address oracleAddress;
-        int256 multiplier;
-        int256 feeRatio;
-        int256 fundingRateCoefficient;
         int256 price;
         int256 cumulativeFundingRate;
         int256 tradersNetVolume;

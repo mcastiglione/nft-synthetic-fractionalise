@@ -550,36 +550,36 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
         IERC20(_bTokenAddress).safeTransfer(to, amount);
     }
 
-    function migrationTimestamp() external view override returns (uint256) {
-        // TODO: Implement
-    }
+    // function migrationTimestamp() external view override returns (uint256) {
+    //     // TODO: Implement
+    // }
 
-    function migrationDestination() external view override returns (address) {
-        // TODO: Implement
-    }
+    // function migrationDestination() external view override returns (address) {
+    //     // TODO: Implement
+    // }
 
-    function prepareMigration(address target, uint256 graceDays) external override {
-        // TODO: Implement
-    }
+    // function prepareMigration(address target, uint256 graceDays) external override {
+    //     // TODO: Implement
+    // }
 
-    function approveMigration() external override {
-        // TODO: Implement
-    }
+    // function approveMigration() external override {
+    //     // TODO: Implement
+    // }
 
-    function executeMigration(address source) override external {
-        // TODO: Implement
-    }
+    // function executeMigration(address source) override external {
+    //     // TODO: Implement
+    // }
 
-    function controller() external view override returns (address) {
-        // TODO: Implement
-    }
+    // function controller() external view override returns (address) {
+    //     // TODO: Implement
+    // }
 
-    function setNewController(address newController) external override {
-        // TODO: Implement
-    }
+    // function setNewController(address newController) external override {
+    //     // TODO: Implement
+    // }
 
-    function claimNewController() external override {
-        // TODO: Implement
-    }
+    // function claimNewController() external override {
+    //     // TODO: Implement
+    // }
 
 }
