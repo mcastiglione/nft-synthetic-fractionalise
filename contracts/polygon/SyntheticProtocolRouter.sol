@@ -203,7 +203,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
             _collectionIdToAddress[collectionID] = collectionAddress;
 
-            initPerpetualPoolLite(collectionID, originalName);
+            //initPerpetualPoolLite(collectionID, originalName);
 
             // whitelist the new collection contract on the random number consumer and the validator
             RandomNumberConsumer(_randomConsumerAddress).whitelistCollection(collectionAddress);
@@ -311,10 +311,10 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
      * @dev init Perpetual Pool Lite for a specific collection
      */
 
-    function initPerpetualPoolLite(uint256 collectionID, string memory name) internal view {
-        FuturesProtocolParameters futuresProtocol = FuturesProtocolParameters(_futuresProtocol);
-        address futuresOracleAddress = futuresProtocol.futuresOracleAddress();
-    }
+    // function initPerpetualPoolLite(uint256 collectionID, string memory name) internal view {
+    //     FuturesProtocolParameters futuresProtocol = FuturesProtocolParameters(_futuresProtocol);
+    //     address futuresOracleAddress = futuresProtocol.futuresOracleAddress();
+    // }
 
     /**
      * @notice checks whether a collection is registered or not
