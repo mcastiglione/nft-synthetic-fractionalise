@@ -2,14 +2,13 @@
 
 pragma solidity ^0.8.4;
 
-
-import "../Interfaces.sol";
+import "../polygon/Interfaces.sol";
 //import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "./library/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../governance/FuturesProtocolParameters.sol";
+import "../polygon/governance/FuturesProtocolParameters.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
@@ -49,7 +48,7 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
     constructor(address[2] memory addresses) {
         _protocolAddress = addresses[0];
         _protocolParameters = FuturesProtocolParameters(addresses[0]);
-        _decimals = IERC20Metadata(addresses[1]).decimals();
+        _decimals = 18;
     }
 
     function initialize(address[6] memory addresses) external initializer {
@@ -550,4 +549,37 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
         _protocolFeeAccrued += leftover.utoi();
         IERC20(_bTokenAddress).safeTransfer(to, amount);
     }
+
+    // function migrationTimestamp() external view override returns (uint256) {
+    //     // TODO: Implement
+    // }
+
+    // function migrationDestination() external view override returns (address) {
+    //     // TODO: Implement
+    // }
+
+    // function prepareMigration(address target, uint256 graceDays) external override {
+    //     // TODO: Implement
+    // }
+
+    // function approveMigration() external override {
+    //     // TODO: Implement
+    // }
+
+    // function executeMigration(address source) override external {
+    //     // TODO: Implement
+    // }
+
+    // function controller() external view override returns (address) {
+    //     // TODO: Implement
+    // }
+
+    // function setNewController(address newController) external override {
+    //     // TODO: Implement
+    // }
+
+    // function claimNewController() external override {
+    //     // TODO: Implement
+    // }
+
 }

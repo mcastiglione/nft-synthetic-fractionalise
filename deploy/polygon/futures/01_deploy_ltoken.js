@@ -9,4 +9,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   });
 };
 
-module.exports.tags = ['ltoken'];
+module.exports.tags = ['ltoken']; 
