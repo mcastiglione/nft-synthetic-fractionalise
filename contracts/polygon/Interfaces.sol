@@ -364,41 +364,40 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-interface ILTokenLite is IERC20 {
-    function pool() external view returns (address);
+interface IOwnable {
+    event ChangeController(address oldController, address newController);
 
-    function setPool(address newPool) external;
+    function controller() external view returns (address);
 
-    function mint(address account, uint256 amount) external;
+    function setNewController(address newController) external;
 
-    function burn(address account, uint256 amount) external;
+    function claimNewController() external;
 }
 
-interface ILiquidatorQualifier {
-    function isQualifiedLiquidator(address liquidator) external view returns (bool);
+interface IMigratable is IOwnable {
+    event PrepareMigration(uint256 migrationTimestamp, address source, address target);
+
+    event ExecuteMigration(uint256 migrationTimestamp, address source, address target);
+
+    function migrationTimestamp() external view returns (uint256);
+
+    function migrationDestination() external view returns (address);
+
+    function prepareMigration(address target, uint256 graceDays) external;
+
+    function approveMigration() external;
+
+    function executeMigration(address source) external;
 }
 
-interface IOracle {
-    function getPrice() external returns (uint256);
-}
-
-interface IOracleWithUpdate {
-    function getPrice() external returns (uint256);
-
-    function updatePrice(
-        address address_,
-        uint256 timestamp,
-        uint256 price,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
-}
-
-
-interface IPerpetualPoolLite {
-    struct SymbolInfo {
+interface IPerpetualPoolLite is IMigratable {
+struct SymbolInfo {
+        uint256 symbolId;
         string symbol;
+        address oracleAddress;
+        int256 multiplier;
+        int256 feeRatio;
+        int256 fundingRateCoefficient;
         int256 price;
         int256 cumulativeFundingRate;
         int256 tradersNetVolume;
@@ -532,4 +531,35 @@ interface IPTokenLite is IERC721 {
     function mint(address owner) external;
 
     function burn(address owner) external;
+}
+
+interface ILiquidatorQualifier {
+    function isQualifiedLiquidator(address liquidator) external view returns (bool);
+}
+
+interface ILTokenLite is IERC20 {
+    function pool() external view returns (address);
+
+    function setPool(address newPool) external;
+
+    function mint(address account, uint256 amount) external;
+
+    function burn(address account, uint256 amount) external;
+}
+
+interface IOracle {
+    function getPrice() external returns (uint256);
+}
+
+interface IOracleWithUpdate {
+    function getPrice() external returns (uint256);
+
+    function updatePrice(
+        address address_,
+        uint256 timestamp,
+        uint256 price,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
 }

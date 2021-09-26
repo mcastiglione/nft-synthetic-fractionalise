@@ -3,8 +3,8 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "../governance/FuturesProtocolParameters.sol";
-import "../Interfaces.sol";
+import "../polygon/governance/FuturesProtocolParameters.sol";
+import "../polygon/Interfaces.sol";
 
 contract SymbolOracleOffChain is IOracleWithUpdate, Initializable {
     address public immutable signatory;

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "../../Interfaces.sol";
+import "../../polygon/Interfaces.sol";
 import "./PFERC721.sol";
 
 contract PTokenLite is IPTokenLite, PFERC721, Initializable {

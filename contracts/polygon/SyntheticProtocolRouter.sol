@@ -15,11 +15,10 @@ import "./auctions/AuctionsManager.sol";
 import "./Structs.sol";
 import "./governance/ProtocolParameters.sol";
 import "./governance/FuturesProtocolParameters.sol";
-import "./governance/FuturesProtocolParameters.sol";
-import "./perpetual_futures/tokens/LTokenLite.sol";
-import "./perpetual_futures/tokens/PTokenLite.sol";
-import "./perpetual_futures/PerpetualPoolLite.sol";
-
+// import "../perpetual_futures/tokens/LTokenLite.sol";
+// import "../perpetual_futures/tokens/PTokenLite.sol";
+// import "../perpetual_futures/PerpetualPoolLite.sol";
+import "./Interfaces.sol";
 
 contract SyntheticProtocolRouter is AccessControl, Ownable {
     using Counters for Counters.Counter;
@@ -40,8 +39,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     address private _fundingTokenAddress;
     address private _randomConsumerAddress;
     address private _validatorAddress;
-    address private _perpetualPoolLiteAddress;
 
+    address private _perpetualPoolLiteAddress;
     address private _lTokenLite;
     address private _pTokenLite;
 
@@ -96,8 +95,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address fundingTokenAddress_,
         address randomConsumerAddress_,
         address validatorAddress_,
-        address lTokenLite_,
-        address pTokenLite_,
+//        address lTokenLite_,
+//        address pTokenLite_,
         address perpetualPoolLiteAddress_,
         address oracleAddress_,
         ProtocolParametersContracts memory parameters
@@ -113,8 +112,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         _fundingTokenAddress = fundingTokenAddress_;
         _randomConsumerAddress = randomConsumerAddress_;
         _validatorAddress = validatorAddress_;
-        _lTokenLite = lTokenLite_;
-        _pTokenLite = pTokenLite_;
+//        _lTokenLite = lTokenLite_;
+//        _pTokenLite = pTokenLite_;
         _perpetualPoolLiteAddress = perpetualPoolLiteAddress_;
         oracleAddress = oracleAddress_;
         _setupRole(ORACLE, oracleAddress_);
@@ -202,31 +201,33 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
             _collectionIdToAddress[collectionID] = collectionAddress;
 
+            initPerpetualPoolLite(collectionID, originalName);
+
             // Deploy futures
-            address lTokenAddress = Clones.clone(_lTokenLite);
-            LTokenLite(lTokenAddress).initialize(
-                string(abi.encodePacked("Liquidity Futures ", originalName)),
-                string(abi.encodePacked("LF_", originalSymbol))
-            );
+            // address lTokenAddress = Clones.clone(_lTokenLite);
+            // LTokenLite(lTokenAddress).initialize(
+            //     string(abi.encodePacked("Liquidity Futures ", originalName)),
+            //     string(abi.encodePacked("LF_", originalSymbol))
+            // );
 
-            address pTokenAddress = Clones.clone(_pTokenLite);
-            PTokenLite(pTokenAddress).initialize(
-                string(abi.encodePacked("Position Futures ", originalName)),
-                string(abi.encodePacked("PF_", originalSymbol))
-            );
+            // address pTokenAddress = Clones.clone(_pTokenLite);
+            // PTokenLite(pTokenAddress).initialize(
+            //     string(abi.encodePacked("Position Futures ", originalName)),
+            //     string(abi.encodePacked("PF_", originalSymbol))
+            // );
 
-            address nftFutureAddress = Clones.clone(_perpetualPoolLiteAddress);
-            PerpetualPoolLite(nftFutureAddress).initialize([
-                _fundingTokenAddress,
-                lTokenAddress,
-                pTokenAddress,
-                _jotPool, // TODO: change by liquidator address
-                _jotPool,
-                collection
-            ]);
+            // address nftFutureAddress = Clones.clone(_perpetualPoolLiteAddress);
+            // PerpetualPoolLite(nftFutureAddress).initialize([
+            //     _fundingTokenAddress,
+            //     lTokenAddress,
+            //     pTokenAddress,
+            //     _jotPool, // TODO: change by liquidator address
+            //     _jotPool,
+            //     collection
+            // ]);
 
-            LTokenLite(lTokenAddress).setPool(nftFutureAddress);
-            PTokenLite(pTokenAddress).setPool(nftFutureAddress);
+            // LTokenLite(lTokenAddress).setPool(nftFutureAddress);
+            // PTokenLite(pTokenAddress).setPool(nftFutureAddress);
 
             // whitelist the new collection contract on the random number consumer and the validator
             RandomNumberConsumer(_randomConsumerAddress).whitelistCollection(collectionAddress);

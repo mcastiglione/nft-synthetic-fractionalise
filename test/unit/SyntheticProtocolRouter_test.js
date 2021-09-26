@@ -3,9 +3,6 @@ const { ethers } = require('hardhat');
 const { getEventArgs } = require('./helpers/events');
 
 describe('SyntheticProtocolRouter', async function () {
-
-  const jotAmount = (amount) => ethers.utils.parseEther(amount);
-
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
     await deployments.fixture(['auctions_manager_initialization']);
@@ -31,7 +28,6 @@ describe('SyntheticProtocolRouter', async function () {
     const uniswapV2Pair = await jot.uniswapV2Pair();
     assert.ok(uniswapV2Pair);
   });
-
 
   it('after register NFT should be non-verified', async () => {
     let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
