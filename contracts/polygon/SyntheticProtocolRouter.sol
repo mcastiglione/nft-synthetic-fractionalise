@@ -95,29 +95,28 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address fundingTokenAddress_,
         address randomConsumerAddress_,
         address validatorAddress_,
-//        address lTokenLite_,
-//        address pTokenLite_,
-        address perpetualPoolLiteAddress_,
         address oracleAddress_,
-        ProtocolParametersContracts memory parameters
-    ) {
+        FuturesParametersContracts memory futuresParameters,
+        ProtocolParametersContracts memory protocolParameters
+        ) {
         swapAddress = swapAddress_;
         _jot = jot_;
         _jotPool = jotPool_;
         _collectionManager = collectionManager_;
         _syntheticNFT = syntheticNFT_;
         _auctionManager = auctionManager_;
-        _protocol = parameters.fractionalizeProtocol;
-        _futuresProtocol = parameters.futuresProtocol;
+        _protocol = protocolParameters.fractionalizeProtocol;
+        _futuresProtocol = protocolParameters.futuresProtocol;
         _fundingTokenAddress = fundingTokenAddress_;
         _randomConsumerAddress = randomConsumerAddress_;
         _validatorAddress = validatorAddress_;
-//        _lTokenLite = lTokenLite_;
-//        _pTokenLite = pTokenLite_;
-        _perpetualPoolLiteAddress = perpetualPoolLiteAddress_;
+        _lTokenLite = futuresParameters.lTokenLite_;
+        _pTokenLite = futuresParameters.pTokenLite_;
+        _perpetualPoolLiteAddress = futuresParameters.perpetualPoolLiteAddress_;
         oracleAddress = oracleAddress_;
         _setupRole(ORACLE, oracleAddress_);
     }
+    
 
     /**
      *  @notice register an NFT collection
