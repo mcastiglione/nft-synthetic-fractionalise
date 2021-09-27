@@ -1,5 +1,6 @@
 const { assert, expect } = require('chai');
 const { expectEvent, expectRevert, BN } = require('@openzeppelin/test-helpers');
+const { ethers } = require('hardhat');
 
 describe('JotPool', async function () {
   const addLiquidity = async (amount) => {
@@ -13,8 +14,9 @@ describe('JotPool', async function () {
     // Using fixture from hardhat-deploy
     await deployments.fixture(['jot_mock_implementation', 'jot_pool_implementation']);
     jot = await ethers.getContract('JotMock');
+    ft = await ethers.getContract('FundingTokenMock');
     pool = await ethers.getContract('JotPool');
-    await pool.initialize(jot.address, '', '');
+    await pool.initialize(jot.address, ft.address, '', '');
   });
 
   it('should be deployed', async () => {
@@ -44,6 +46,11 @@ describe('JotPool', async function () {
       await jot.approve(pool.address, amount);
 
       await expect(pool.addLiquidity(amount)).to.emit(pool, 'LiquidityAdded').withArgs(deployer, amount, 100);
+    });
+
+    it('should autostake', async () => {
+      const amount = jotAmount('200');
+      await expect(addLiquidity(amount)).to.emit(pool, 'Staked');
     });
   });
 
@@ -88,12 +95,24 @@ describe('JotPool', async function () {
 
       assert.deepEqual(await jot.balanceOf(pool.address), expectedJotBalance);
     });
+
+    it('should auto unstake', async () => {
+      const addAmount = jotAmount('200');
+      const removeAmount = 50;
+      await addLiquidity(addAmount);
+
+      await expect(pool.removeLiquidity(removeAmount)).to.emit(pool, 'Unstaked');
+    });
   });
 
   describe('stake', () => {
     const stake = async (amount) => {
       await jot.approve(pool.address, amount);
       await pool.stakeShares(amount);
+    };
+
+    const depositRewards = async (amount) => {
+      await ft.transfer(pool.address, amount);
     };
 
     it('should transfer jot to contract', async () => {
@@ -115,7 +134,7 @@ describe('JotPool', async function () {
     it('should update NFT on additional staking', async () => {
       const amount = jotAmount('100');
       await stake(amount);
-
+      depositRewards(amount);
       await stake(amount);
 
       const position = await pool.getPosition();
@@ -134,7 +153,7 @@ describe('JotPool', async function () {
       const position = await pool.getPosition();
       assert.equal(position.id, '1');
       assert.deepEqual(position.stake, jotAmount('50'));
-      assert.deepEqual(position.totalShares, jotAmount('0.01'));
+      assert.equal(position.totalShares, '0');
     });
 
     it('should burn NFT', async () => {
@@ -161,6 +180,7 @@ describe('JotPool', async function () {
     it('should emit Staked event', async () => {
       const { deployer } = await getNamedAccounts();
       const amount = jotAmount('100');
+      await jot.approve(pool.address, amount);
       await expect(pool.stakeShares(amount)).to.emit(pool, 'Staked').withArgs(deployer, amount, 1);
     });
 
@@ -170,17 +190,25 @@ describe('JotPool', async function () {
       await stake(amount);
       await stake(amount);
 
-      await expect(pool.unstakeShares(amount)).to.emit(pool, 'Unstaked').withArgs(deployer, amount, jotAmount('1'));
+      await expect(pool.unstakeShares(amount)).to.emit(pool, 'Unstaked').withArgs(deployer, amount, '0');
     });
     it('should transfer rewards', async () => {
       const amount = jotAmount('100');
       await stake(amount);
+      await depositRewards(jotAmount('10'));
 
       await pool.claimRewards();
 
-      assert.deepEqual(await jot.balanceOf(pool.address), jotAmount('100'));
+      assert.deepEqual(await ft.balanceOf(pool.address), jotAmount('9.9'));
     });
 
-    it('should emit RewardsClaimed event', async () => {});
+    it('should emit RewardsClaimed event', async () => {
+      const { deployer } = await getNamedAccounts();
+      const amount = jotAmount('100');
+      await stake(amount);
+      await depositRewards(jotAmount('10'));
+
+      await expect(pool.claimRewards()).to.emit(pool, 'RewardsClaimed').withArgs(deployer, jotAmount('0.1'));
+    });
   });
 });

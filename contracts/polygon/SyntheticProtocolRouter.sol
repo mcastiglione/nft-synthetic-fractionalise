@@ -157,6 +157,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             address jotPoolAddress = Clones.clone(_jotPool);
             JotPool(jotPoolAddress).initialize(
                 jotAddress,
+                _fundingTokenAddress,
                 string(abi.encodePacked("Privi JotPool ", originalName)),
                 string(abi.encodePacked(" ", originalName))
             );

@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "./StakingERC721.sol";
 import "../governance/ProtocolParameters.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../libraries/ProtocolConstants.sol";
@@ -22,6 +21,7 @@ contract JotPool is ERC721, Initializable {
     }
 
     address public jot;
+    address public fundingToken;
     ProtocolParameters private immutable protocol;
     uint256 public totalLiquidity;
 
@@ -44,6 +44,7 @@ contract JotPool is ERC721, Initializable {
     event LiquidityRemoved(address provider, uint256 amount, uint256 liquidityBurnt);
     event Staked(address staker, uint256 amount, uint256 positionId);
     event Unstaked(address recipient, uint256 amount, uint256 reward);
+    event RewardsClaimed(address recipient, uint256 reward);
 
     constructor(address _protocol) ERC721("", "") {
         require(_protocol != address(0), "Invalid protocol address");
@@ -52,11 +53,14 @@ contract JotPool is ERC721, Initializable {
 
     function initialize(
         address _jot,
+        address _fundingToken,
         string memory _name,
         string memory _symbol
     ) external initializer {
         require(_jot != address(0), "Invalid Jot token");
+        require(_fundingToken != address(0), "Invalid funding token");
         jot = _jot;
+        fundingToken = _fundingToken;
         _proxyName = _name;
         _proxySymbol = _symbol;
     }
@@ -76,7 +80,11 @@ contract JotPool is ERC721, Initializable {
             : 100;
         positions[msg.sender].liquidity += mintedLiquidity;
         totalLiquidity += mintedLiquidity;
+
         emit LiquidityAdded(msg.sender, amount, mintedLiquidity);
+
+        _stake(msg.sender, amount);
+
         IERC20(jot).safeTransferFrom(msg.sender, address(this), amount);
     }
 
@@ -94,6 +102,8 @@ contract JotPool is ERC721, Initializable {
 
         emit LiquidityRemoved(msg.sender, amount, liquidityBurnt);
 
+        _unstake(msg.sender, liquidityBurnt);
+
         IERC20(jot).safeTransfer(msg.sender, liquidityBurnt);
     }
 
@@ -103,15 +113,21 @@ contract JotPool is ERC721, Initializable {
 
     function stakeShares(uint256 amount) external {
         require(IERC20(jot).balanceOf(msg.sender) >= amount, "Insufficient Jot balance");
-        uint256 jotBalance = IERC20(jot).balanceOf(address(this));
-        uint256 x = jotBalance - lastReward;
+        address to = msg.sender;
+        _stake(to, amount);
+        IERC20(jot).safeTransferFrom(to, address(this), amount);
+    }
+
+    function _stake(address to, uint256 amount) internal {
+        uint256 ftBalance = IERC20(fundingToken).balanceOf(address(this));
+        uint256 x = ftBalance - lastReward;
         if (totalStaked != 0) {
             totalShares += ((x * stakerShare) * 10**18) / (totalStaked * stakerShareDenominator);
         }
         cumulativeRevenue += x;
-        lastReward = jotBalance;
+        lastReward = ftBalance;
         totalStaked += amount;
-        address to = msg.sender;
+
         uint256 id = positions[to].id;
         if (id == 0) {
             idGen.increment();
@@ -120,50 +136,56 @@ contract JotPool is ERC721, Initializable {
             _mint(to, id);
         }
 
-        positions[to].stake = amount;
+        positions[to].stake += amount;
         positions[to].totalShares = totalShares;
 
         emit Staked(msg.sender, amount, id);
-
-        IERC20(jot).safeTransferFrom(to, address(this), amount);
     }
 
     function unstakeShares(uint256 amount) external {
-        require(positions[msg.sender].stake >= amount, "Insufficient stake balance");
-        uint256 jotBalance = IERC20(jot).balanceOf(address(this));
-        uint256 x = jotBalance - lastReward;
+        _unstake(msg.sender, amount);
+        IERC20(jot).transfer(msg.sender, amount);
+    }
+
+    function _unstake(address to, uint256 amount) internal {
+        require(positions[to].stake >= amount, "Insufficient stake balance");
+        uint256 ftBalance = IERC20(fundingToken).balanceOf(address(this));
+        uint256 x = ftBalance - lastReward;
         if (totalStaked != 0) {
             totalShares += ((x * stakerShare) * 10**18) / (totalStaked * stakerShareDenominator);
         }
 
-        address owner = msg.sender;
-        uint256 reward = ((totalShares - positions[owner].totalShares) * positions[owner].stake) / 10**18;
-        lastReward = IERC20(jot).balanceOf(address(this)) - reward;
+        uint256 reward = ((totalShares - positions[to].totalShares) * positions[to].stake) / 10**18;
+        lastReward = ftBalance - reward;
 
-        if (amount == positions[owner].stake) {
-            _burn(positions[owner].id);
-            delete positions[owner];
+        if (amount == positions[to].stake) {
+            _burn(positions[to].id);
+            delete positions[to];
         } else {
-            positions[owner].stake -= amount;
-            positions[owner].totalShares = totalShares;
+            positions[to].stake -= amount;
+            positions[to].totalShares = totalShares;
         }
         totalStaked -= amount;
 
         emit Unstaked(msg.sender, amount, reward);
 
-        IERC20(jot).transfer(msg.sender, amount + reward);
+        IERC20(fundingToken).transfer(msg.sender, reward);
     }
 
     function claimRewards() external {
-        uint256 jotBalance = IERC20(jot).balanceOf(address(this));
-        uint256 x = jotBalance - lastReward;
+        uint256 ftBalance = IERC20(fundingToken).balanceOf(address(this));
+        uint256 x = ftBalance - lastReward;
         if (totalStaked != 0) {
             totalShares += ((x * stakerShare) * 10**18) / (totalStaked * stakerShareDenominator);
         }
 
         address owner = msg.sender;
         uint256 reward = ((totalShares - positions[owner].totalShares) * positions[owner].stake) / 10**18;
-        lastReward = IERC20(jot).balanceOf(address(this)) - reward;
+        lastReward = ftBalance - reward;
         positions[owner].totalShares = totalShares;
+
+        emit RewardsClaimed(msg.sender, reward);
+
+        IERC20(fundingToken).transfer(msg.sender, reward);
     }
 }
