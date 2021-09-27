@@ -12,6 +12,9 @@ struct SyntheticCollection {
     address syntheticNFTAddress;
     string originalName;
     string originalSymbol;
+    address lTokenAddress;
+    address pTokenAddress;
+    address perpetualPoolLiteAddress;
 }
 
 struct ProtocolParametersContracts {
