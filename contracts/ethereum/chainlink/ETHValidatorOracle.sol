@@ -47,12 +47,14 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
      * this method can be called only from the nft vault contract
      * @param collection the collection address
      * @param tokenId the id of the nft in the collection
+     * @param nonce the nonce
      * @return requestId the id of the request to the Chainlink oracle
      */
-    function verifyTokenIsWithdrawable(address collection, uint256 tokenId)
-        external
-        returns (bytes32 requestId)
-    {
+    function verifyTokenIsWithdrawable(
+        address collection,
+        uint256 tokenId,
+        uint256 nonce
+    ) external returns (bytes32 requestId) {
         Chainlink.Request memory request = buildChainlinkRequest(
             jobId,
             address(this),
@@ -63,7 +65,17 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
         Chainlink.add(
             request,
             "get",
-            string(abi.encodePacked(apiURL, "?collection=", collection, "&tokenId=", uint2str(tokenId)))
+            string(
+                abi.encodePacked(
+                    apiURL,
+                    "?collection=",
+                    collection,
+                    "&tokenId=",
+                    uint2str(tokenId),
+                    "&nonce=",
+                    uint2str(nonce)
+                )
+            )
         );
         Chainlink.add(request, "path", "withdrawable");
 

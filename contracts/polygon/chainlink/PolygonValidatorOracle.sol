@@ -46,6 +46,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
      * this method can be called only from the collection manager contract
      * @param ethereumCollection the collection address in ethereum
      * @param tokenId the id of the nft in the collection
+     * @param nonce the nonce
      * @return requestId the id of the request to the Chainlink oracle
      */
     function verifyTokenInCollection(
@@ -72,7 +73,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
                     ethereumCollection,
                     "&tokenId=",
                     uint2str(tokenId),
-                    "&tokenId=",
+                    "&nonce=",
                     uint2str(nonce)
                 )
             )
