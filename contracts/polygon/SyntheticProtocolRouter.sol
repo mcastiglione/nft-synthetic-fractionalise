@@ -72,6 +72,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address collectionManagerAddress,
         address jotAddress,
         address jotPoolAddress,
+        address jotPairAddress,
         address syntheticNFTAddress,
         address quickSwapAddress,
         address auctionAddress,
@@ -220,6 +221,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 collectionManagerAddress: collectionAddress,
                 jotAddress: jotAddress,
                 jotPoolAddress: jotPoolAddress,
+                jotPairAddress: Jot(jotAddress).uniswapV2Pair(),
                 syntheticNFTAddress: syntheticNFTAddress,
                 originalName: originalName,
                 originalSymbol: originalSymbol,
@@ -235,8 +237,9 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 collectionAddress,
                 jotAddress,
                 jotPoolAddress,
+                Jot(jotAddress).uniswapV2Pair(),
                 syntheticNFTAddress,
-                swapAddress,
+                swapAddress, 
                 _auctionManager,
                 futuresData.lTokenLite_,
                 futuresData.pTokenLite_,
@@ -409,6 +412,10 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
     function getCollectionPerpetualPoolAddress(address collection) public view returns (address) {
         return _collections[collection].perpetualPoolLiteAddress;
+    }
+
+    function getCollectionUniswapPair(address collection) public view returns (address) {
+        return _collections[collection].jotPairAddress;
     }
 
 }

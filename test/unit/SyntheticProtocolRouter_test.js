@@ -23,9 +23,7 @@ describe('SyntheticProtocolRouter', async function () {
 
   it('verify that UniSwap Pair was created after registerNFT', async () => {
     await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
-    const jotAddress = await router.getJotsAddress(NFT);
-    const jot = await ethers.getContractAt('Jot', jotAddress);
-    const uniswapV2Pair = await jot.uniswapV2Pair();
+    const uniswapV2Pair = await router.getCollectionUniswapPair(NFT);
     assert.ok(uniswapV2Pair);
   });
 
@@ -57,4 +55,16 @@ describe('SyntheticProtocolRouter', async function () {
     const response = await oracle.verifyNFT(NFT, args.syntheticTokenId);
     assert.ok(response);
   });
+
+  it('Verifiy it is created “LToken”, “PToken” and “PerpetualFutures” when initialised a new collection', async () => {
+    await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
+    const ltoken = await router.getCollectionlTokenAddress(NFT);
+    const ptoken = await router.getCollectionpTokenAddress(NFT);
+    const perpetualPoolAddress = await router.getCollectionPerpetualPoolAddress(NFT);
+
+    assert.ok(ltoken);
+    assert.ok(ptoken);
+    assert.ok(perpetualPoolAddress);
+  });
+
 });
