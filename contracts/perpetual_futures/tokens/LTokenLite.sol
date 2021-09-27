@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract LTokenLite is ILTokenLite, Initializable, AccessControl, ERC20 {
-    bytes32 public constant ROUTER = keccak256("ROUTER"); 
+    bytes32 public constant ROUTER = keccak256("ROUTER");
 
     // proxied values for the erc20 attributes
     string private _proxiedName;
@@ -22,15 +22,20 @@ contract LTokenLite is ILTokenLite, Initializable, AccessControl, ERC20 {
 
     // solhint-disable-next-line
     constructor() ERC20("Future Liquidity Token", "FLT") {}
-    
-    function initialize(
-        string memory name_,
-        string memory symbol_
-    ) external initializer {
+
+    function initialize(string memory name_, string memory symbol_) external initializer {
         _proxiedName = name_;
         _proxiedSymbol = symbol_;
 
         _setupRole(ROUTER, msg.sender);
+    }
+
+    function name() public view override returns (string memory) {
+        return _proxiedName;
+    }
+
+    function symbol() public view override returns (string memory) {
+        return _proxiedSymbol;
     }
 
     function pool() public view override returns (address) {
@@ -45,18 +50,9 @@ contract LTokenLite is ILTokenLite, Initializable, AccessControl, ERC20 {
     function mint(address account, uint256 amount) public override _pool_ {
         require(account != address(0), "LToken: mint to 0 address");
         _mint(account, amount);
-        //_balances[account] += amount;
-        //_totalSupply += amount;
-
-        //emit Transfer(address(0), account, amount);
     }
 
     function burn(address account, uint256 amount) public override _pool_ {
-        //require(_balances[account] >= amount, "LToken: burn amount exceeds balance");
         _burn(account, amount);
-        //_balances[account] -= amount;
-        //_totalSupply -= amount;
-
-        //emit Transfer(account, address(0), amount);
     }
 }

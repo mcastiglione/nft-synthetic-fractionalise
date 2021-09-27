@@ -4,7 +4,7 @@ const { expectRevert, constants } = require('@openzeppelin/test-helpers');
 describe('NFTVaultManager', async function () {
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
-    await deployments.fixture(['vault_manager']);
+    await deployments.fixture(['vault_fixtures']);
 
     this.vaultManager = await ethers.getContract('NFTVaultManager');
     this.collection = await ethers.getContract('NFTMock');

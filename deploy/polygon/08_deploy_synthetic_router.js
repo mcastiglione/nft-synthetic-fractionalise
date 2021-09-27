@@ -14,6 +14,9 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let syntheticNFT = await ethers.getContract('SyntheticNFT');
   let protocol = await ethers.getContract('ProtocolParameters');
   let futuresProtocol = await ethers.getContract('FuturesProtocolParameters');
+  let lTokenLite = await ethers.getContract('LTokenLite');
+  let pTokenLite = await ethers.getContract('PTokenLite');
+  let perpetualPoolLite = await ethers.getContract('PerpetualPoolLite');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
   let validator = await ethers.getContract('PolygonValidatorOracle');
   let pool = await ethers.getContract('PerpetualPoolLite');
@@ -47,6 +50,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     oracleAddress = MockOracle.address;
   }
 
+
   let router = await deploy('SyntheticProtocolRouter', {
     from: deployer,
     log: true,
@@ -61,7 +65,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       randomConsumer.address,
       validator.address, 
       oracleAddress,
-      { lTokenLite_: ltoken, pTokenLite_: ptoken, perpetualPoolLiteAddress_: pool.address },
+      { lTokenLite_: lTokenLite.address, pTokenLite_: pTokenLite.address, perpetualPoolLiteAddress_: perpetualPoolLite.address },
       { fractionalizeProtocol: protocol.address, futuresProtocol: futuresProtocol.address },
     ],
   });
