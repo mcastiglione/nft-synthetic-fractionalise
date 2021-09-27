@@ -491,7 +491,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(!tokens[tokenId].verified, "Token already verified");
         PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(
             originalCollectionAddress,
-            tokens[tokenId].originalTokenID
+            tokens[tokenId].originalTokenID,
+            nonces[tokens[tokenId].originalTokenID]
         );
     }
 

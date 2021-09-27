@@ -48,10 +48,11 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
      * @param tokenId the id of the nft in the collection
      * @return requestId the id of the request to the Chainlink oracle
      */
-    function verifyTokenInCollection(address ethereumCollection, uint256 tokenId)
-        external
-        returns (bytes32 requestId)
-    {
+    function verifyTokenInCollection(
+        address ethereumCollection,
+        uint256 tokenId,
+        uint256 nonce
+    ) external returns (bytes32 requestId) {
         require(_whitelistedCollections[msg.sender], "Invalid requester");
 
         Chainlink.Request memory request = buildChainlinkRequest(
@@ -65,7 +66,15 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
             request,
             "get",
             string(
-                abi.encodePacked(apiURL, "?collection=", ethereumCollection, "&tokenId=", uint2str(tokenId))
+                abi.encodePacked(
+                    apiURL,
+                    "?collection=",
+                    ethereumCollection,
+                    "&tokenId=",
+                    uint2str(tokenId),
+                    "&tokenId=",
+                    uint2str(nonce)
+                )
             )
         );
         Chainlink.add(request, "path", "locked");
