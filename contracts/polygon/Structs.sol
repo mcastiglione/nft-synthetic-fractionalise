@@ -9,6 +9,7 @@ struct SyntheticCollection {
     address collectionManagerAddress;
     address jotAddress;
     address jotPoolAddress;
+    address jotPairAddress;
     address syntheticNFTAddress;
     string originalName;
     string originalSymbol;
