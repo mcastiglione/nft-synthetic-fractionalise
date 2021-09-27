@@ -27,10 +27,11 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
      * this method can be called only from the nft vault contract
      * @return requestId the id of the request to the Chainlink oracle
      */
-    function verifyTokenIsWithdrawable(address collection, uint256 tokenId)
-        external
-        returns (bytes32 requestId)
-    {
+    function verifyTokenIsWithdrawable(
+        address collection,
+        uint256 tokenId,
+        uint256
+    ) external returns (bytes32 requestId) {
         requestId = keccak256(abi.encodePacked("requestId"));
         _verifyRequests[requestId] = VerifyRequest({tokenId: tokenId, collection: collection});
         processResponseMock(requestId, address(this));
