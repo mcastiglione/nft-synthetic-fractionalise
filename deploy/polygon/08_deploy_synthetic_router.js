@@ -13,10 +13,18 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let auctionsManager = await ethers.getContract('AuctionsManager');
   let syntheticNFT = await ethers.getContract('SyntheticNFT');
   let protocol = await ethers.getContract('ProtocolParameters');
+  let futuresProtocol = await ethers.getContract('FuturesProtocolParameters');
+  let lTokenLite = await ethers.getContract('LTokenLite');
+  let pTokenLite = await ethers.getContract('PTokenLite');
+  let perpetualPoolLite = await ethers.getContract('PerpetualPoolLite');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
   let validator = await ethers.getContract('PolygonValidatorOracle');
-
+  let pool = await ethers.getContract('PerpetualPoolLite');
   let swapAddress;
+
+  let addresses = await pool.getAddresses();
+  let ltoken = addresses[1];
+  let ptoken = addresses[2];
 
   if (chainId == 1337 || chainId == 31337) {
     let UniSwapFactoryMock = await deploy('UniSwapFactoryMock', { from: deployer });
@@ -42,6 +50,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     oracleAddress = MockOracle.address;
   }
 
+
   let router = await deploy('SyntheticProtocolRouter', {
     from: deployer,
     log: true,
@@ -52,12 +61,12 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       collectionManager.address,
       syntheticNFT.address,
       auctionsManager.address,
-      protocol.address,
-      funding.address, //constants.ZERO_ADDRESS,
+      funding.address,
       randomConsumer.address,
-      validator.address,
-      perpetualPoolLiteAddress,
+      validator.address, 
       oracleAddress,
+      { lTokenLite_: lTokenLite.address, pTokenLite_: pTokenLite.address, perpetualPoolLiteAddress_: perpetualPoolLite.address },
+      { fractionalizeProtocol: protocol.address, futuresProtocol: futuresProtocol.address },
     ],
   });
 
@@ -75,4 +84,6 @@ module.exports.dependencies = [
   'jot_pool_implementation',
   'synthetic_manager_implementation',
   'protocol_parameters',
+  'futures_protocol_parameters',
+  'pool'
 ];

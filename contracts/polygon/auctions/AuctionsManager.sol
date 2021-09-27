@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 import "../governance/ProtocolParameters.sol";
 import "../implementations/SyntheticCollectionManager.sol";
 import "../SyntheticProtocolRouter.sol";
+import "../libraries/ProtocolConstants.sol";
 import "./NFTAuction.sol";
 
 contract AuctionsManager is AccessControl, Initializable {
@@ -56,10 +57,9 @@ contract AuctionsManager is AccessControl, Initializable {
     function reassignNFT(
         address collection_,
         uint256 nftId_,
-        address newOwner_,
-        uint256 jotsSupply_
+        address newOwner_
     ) external onlyRole(AUCTION) {
-        SyntheticCollectionManager(collection_).reassignNFT(nftId_, newOwner_, jotsSupply_);
+        SyntheticCollectionManager(collection_).reassignNFT(nftId_, newOwner_);
     }
 
     function startAuction(
@@ -67,9 +67,8 @@ contract AuctionsManager is AccessControl, Initializable {
         uint256 nftId_,
         uint256 openingBid_
     ) external {
-        uint256 jotsSupply = protocol.jotsSupply();
         require(_whitelistedTokens[collection_][nftId_], "Token can't be auctioned");
-        require(openingBid_ >= jotsSupply, "Opening bid too low");
+        require(openingBid_ >= ProtocolConstants.JOT_SUPPLY, "Opening bid too low");
         require(router.isSyntheticNFTCreated(collection_, nftId_), "Non registered token");
 
         // blacklist the nft to avoid start a new auction
@@ -84,7 +83,6 @@ contract AuctionsManager is AccessControl, Initializable {
             jotToken,
             router.getJotPoolAddress(collection_),
             router.getCollectionManagerAddress(collection_),
-            jotsSupply,
             openingBid_,
             protocol.auctionDuration(),
             msg.sender

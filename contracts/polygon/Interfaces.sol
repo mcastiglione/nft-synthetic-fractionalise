@@ -374,7 +374,6 @@ interface IOwnable {
     function claimNewController() external;
 }
 
-
 interface IMigratable is IOwnable {
     event PrepareMigration(uint256 migrationTimestamp, address source, address target);
 
@@ -391,14 +390,22 @@ interface IMigratable is IOwnable {
     function executeMigration(address source) external;
 }
 
-interface IPerpetualPoolLite is IMigratable {
+interface IPerpetualPoolLite {
+// struct SymbolInfo {
+//         uint256 symbolId;
+//         string symbol;
+//         address oracleAddress;
+//         int256 multiplier;
+//         int256 feeRatio;
+//         int256 fundingRateCoefficient;
+//         int256 price;
+//         int256 cumulativeFundingRate;
+//         int256 tradersNetVolume;
+//         int256 tradersNetCost;
+//     }
+
     struct SymbolInfo {
-        uint256 symbolId;
         string symbol;
-        address oracleAddress;
-        int256 multiplier;
-        int256 feeRatio;
-        int256 fundingRateCoefficient;
         int256 price;
         int256 cumulativeFundingRate;
         int256 tradersNetVolume;
@@ -406,7 +413,6 @@ interface IPerpetualPoolLite is IMigratable {
     }
 
     struct SignedPrice {
-        uint256 symbolId;
         uint256 timestamp;
         uint256 price;
         uint8 v;
@@ -422,7 +428,7 @@ interface IPerpetualPoolLite is IMigratable {
 
     event RemoveMargin(address indexed account, uint256 bAmount);
 
-    event Trade(address indexed account, uint256 indexed symbolId, int256 tradeVolume, uint256 price);
+    event Trade(address indexed account, int256 tradeVolume, uint256 price);
 
     event Liquidate(address indexed account, address indexed liquidator, uint256 reward);
 
@@ -449,10 +455,12 @@ interface IPerpetualPoolLite is IMigratable {
             address lTokenAddress,
             address pTokenAddress,
             address liquidatorQualifierAddress,
-            address protocolFeeCollector
+            address protocolFeeCollector,
+            address underlyingAddress,
+            address protocolAddress
         );
 
-    function getSymbol(uint256 symbolId) external view returns (SymbolInfo memory);
+    function getSymbol() external view returns (SymbolInfo memory);
 
     function getLiquidity() external view returns (int256);
 
@@ -462,26 +470,6 @@ interface IPerpetualPoolLite is IMigratable {
 
     function collectProtocolFee() external;
 
-    function addSymbol(
-        uint256 symbolId,
-        string memory symbol,
-        address oracleAddress,
-        uint256 multiplier,
-        uint256 feeRatio,
-        uint256 fundingRateCoefficient
-    ) external;
-
-    function removeSymbol(uint256 symbolId) external;
-
-    function toggleCloseOnly(uint256 symbolId) external;
-
-    function setSymbolParameters(
-        uint256 symbolId,
-        address oracleAddress,
-        uint256 feeRatio,
-        uint256 fundingRateCoefficient
-    ) external;
-
     function addLiquidity(uint256 bAmount) external;
 
     function removeLiquidity(uint256 lShares) external;
@@ -490,23 +478,96 @@ interface IPerpetualPoolLite is IMigratable {
 
     function removeMargin(uint256 bAmount) external;
 
-    function trade(uint256 symbolId, int256 tradeVolume) external;
+    function trade(int256 tradeVolume) external;
 
     function liquidate(address account) external;
 
-    function addLiquidity(uint256 bAmount, SignedPrice[] memory prices) external;
+    function addLiquidity(uint256 bAmount, SignedPrice memory price) external;
 
-    function removeLiquidity(uint256 lShares, SignedPrice[] memory prices) external;
+    function removeLiquidity(uint256 lShares, SignedPrice memory price) external;
 
-    function addMargin(uint256 bAmount, SignedPrice[] memory prices) external;
+    function addMargin(uint256 bAmount, SignedPrice memory price) external;
 
-    function removeMargin(uint256 bAmount, SignedPrice[] memory prices) external;
+    function removeMargin(uint256 bAmount, SignedPrice memory price) external;
 
-    function trade(
-        uint256 symbolId,
-        int256 tradeVolume,
-        SignedPrice[] memory prices
+    function trade(int256 tradeVolume, SignedPrice memory price) external;
+
+    function liquidate(address account, SignedPrice memory price) external;
+}
+
+interface IPTokenLite is IERC721 {
+    struct Position {
+        // position volume, long is positive and short is negative
+        int256 volume;
+        // the cost the establish this position
+        int256 cost;
+        // the last cumulativeFundingRate since last funding settlement for this position
+        // the overflow for this value in intended
+        int256 lastCumulativeFundingRate;
+    }
+
+    event UpdateMargin(address indexed owner, int256 amount);
+
+    event UpdatePosition(address indexed owner, int256 volume, int256 cost, int256 lastCumulativeFundingRate);
+
+    function name() external view returns (string memory);
+
+    function symbol() external view returns (string memory);
+
+    function setPool(address newPool) external;
+
+    function pool() external view returns (address);
+
+    function totalMinted() external view returns (uint256);
+
+    function totalSupply() external view returns (uint256);
+
+    function getNumPositionHolders() external view returns (uint256);
+
+    function exists(address owner) external view returns (bool);
+
+    function getMargin(address owner) external view returns (int256);
+
+    function updateMargin(address owner, int256 margin) external;
+
+    function addMargin(address owner, int256 delta) external;
+
+    function getPosition(address owner) external view returns (Position memory);
+
+    function updatePosition(address owner, Position memory position) external;
+
+    function mint(address owner) external;
+
+    function burn(address owner) external;
+}
+
+interface ILiquidatorQualifier {
+    function isQualifiedLiquidator(address liquidator) external view returns (bool);
+}
+
+interface ILTokenLite is IERC20 {
+    function pool() external view returns (address);
+
+    function setPool(address newPool) external;
+
+    function mint(address account, uint256 amount) external;
+
+    function burn(address account, uint256 amount) external;
+}
+
+interface IOracle {
+    function getPrice() external returns (uint256);
+}
+
+interface IOracleWithUpdate {
+    function getPrice() external returns (uint256);
+
+    function updatePrice(
+        address address_,
+        uint256 timestamp,
+        uint256 price,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     ) external;
-
-    function liquidate(address account, SignedPrice[] memory prices) external;
 }

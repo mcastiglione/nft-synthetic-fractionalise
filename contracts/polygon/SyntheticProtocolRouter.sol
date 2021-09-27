@@ -14,6 +14,11 @@ import "./implementations/SyntheticNFT.sol";
 import "./auctions/AuctionsManager.sol";
 import "./Structs.sol";
 import "./governance/ProtocolParameters.sol";
+import "./governance/FuturesProtocolParameters.sol";
+import "../perpetual_futures/tokens/LTokenLite.sol";
+import "../perpetual_futures/tokens/PTokenLite.sol";
+import "../perpetual_futures/PerpetualPoolLite.sol";
+import "./Interfaces.sol";
 
 contract SyntheticProtocolRouter is AccessControl, Ownable {
     using Counters for Counters.Counter;
@@ -30,10 +35,14 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     address private _auctionManager;
 
     address private _protocol;
+    address private _futuresProtocol;
     address private _fundingTokenAddress;
     address private _randomConsumerAddress;
     address private _validatorAddress;
+
     address private _perpetualPoolLiteAddress;
+    address private _lTokenLite;
+    address private _pTokenLite;
 
     address public oracleAddress;
     /**
@@ -65,7 +74,10 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address jotPoolAddress,
         address syntheticNFTAddress,
         address quickSwapAddress,
-        address auctionAddress
+        address auctionAddress,
+        address lTokenLite_,
+        address pTokenLite_,
+        address perpetualPoolLiteAddress_
     );
 
     event TokenRegistered(
@@ -74,12 +86,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         uint256 syntheticTokenId
     );
 
-    event TokenChanged(
-        address collectionAddress,
-        uint256 syntheticID,
-        uint256 previousID,
-        uint256 newID
-    );
+    event TokenChanged(address collectionAddress, uint256 syntheticID, uint256 previousID, uint256 newID);
 
     constructor(
         address swapAddress_,
@@ -88,27 +95,31 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address collectionManager_,
         address syntheticNFT_,
         address auctionManager_,
-        address protocol_,
         address fundingTokenAddress_,
         address randomConsumerAddress_,
         address validatorAddress_,
-        address perpetualPoolLiteAddress_,
-        address oracleAddress_
-    ) {
+        address oracleAddress_,
+        FuturesParametersContracts memory futuresParameters,
+        ProtocolParametersContracts memory protocolParameters
+        ) {
         swapAddress = swapAddress_;
         _jot = jot_;
         _jotPool = jotPool_;
         _collectionManager = collectionManager_;
         _syntheticNFT = syntheticNFT_;
         _auctionManager = auctionManager_;
-        _protocol = protocol_;
+        _protocol = protocolParameters.fractionalizeProtocol;
+        _futuresProtocol = protocolParameters.futuresProtocol;
         _fundingTokenAddress = fundingTokenAddress_;
         _randomConsumerAddress = randomConsumerAddress_;
         _validatorAddress = validatorAddress_;
-        _perpetualPoolLiteAddress = perpetualPoolLiteAddress_;
+        _lTokenLite = futuresParameters.lTokenLite_;
+        _pTokenLite = futuresParameters.pTokenLite_;
+        _perpetualPoolLiteAddress = futuresParameters.perpetualPoolLiteAddress_;
         oracleAddress = oracleAddress_;
         _setupRole(ORACLE, oracleAddress_);
     }
+    
 
     /**
      *  @notice register an NFT collection
@@ -192,25 +203,32 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
             _collectionIdToAddress[collectionID] = collectionAddress;
 
-            initPerpetualPoolLite(collectionID, originalName);
+            //initPerpetualPoolLite(collectionID, originalName);
 
             // whitelist the new collection contract on the random number consumer and the validator
             RandomNumberConsumer(_randomConsumerAddress).whitelistCollection(collectionAddress);
             PolygonValidatorOracle(_validatorAddress).whitelistCollection(collectionAddress);
 
-            emit CollectionManagerRegistered(
-                collectionID,
-                collectionAddress,
-                jotAddress,
-                jotPoolAddress,
-                syntheticNFTAddress,
-                swapAddress,
-                _auctionManager
-            );
-
             protocolVaults.increment();
 
+            FuturesParametersContracts memory futuresParameters;
+            futuresParameters.lTokenLite_ = _lTokenLite;
+            futuresParameters.pTokenLite_ = _pTokenLite;
+            futuresParameters.perpetualPoolLiteAddress_ = _perpetualPoolLiteAddress;
+
+            deployFutures(originalName,
+                          originalSymbol,
+                          collection,
+                          collectionID,
+                          collectionAddress,
+                          jotAddress,
+                          jotPoolAddress,
+                          syntheticNFTAddress,
+                          futuresParameters
+            );
+
             //TODO: addSymbol with ”address” to the NFTPerpetualFutures
+
         } else {
             collectionAddress = _collections[collection].collectionManagerAddress;
         }
@@ -220,6 +238,57 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         uint256 syntheticID = collectionManager.register(tokenId, supplyToKeep, priceFraction, msg.sender);
 
         emit TokenRegistered(collectionAddress, collectionID, syntheticID);
+    }
+
+    function deployFutures(
+        string memory originalName,
+        string memory originalSymbol,
+        address collection,
+        uint256 collectionID,
+        address collectionAddress,
+        address jotAddress,
+        address jotPoolAddress,
+        address syntheticNFTAddress,
+        FuturesParametersContracts memory futuresParameters
+    ) private {
+            // Deploy futures
+            address lTokenAddress = Clones.clone(_lTokenLite);
+            LTokenLite(lTokenAddress).initialize(
+                string(abi.encodePacked("Liquidity Futures ", originalName)),
+                string(abi.encodePacked("LF_", originalSymbol))
+            );
+
+            address pTokenAddress = Clones.clone(_pTokenLite);
+            PTokenLite(pTokenAddress).initialize(
+                string(abi.encodePacked("Position Futures ", originalName)),
+                string(abi.encodePacked("PF_", originalSymbol))
+            );
+
+            address nftFutureAddress = Clones.clone(_perpetualPoolLiteAddress);
+            PerpetualPoolLite(nftFutureAddress).initialize([
+                _fundingTokenAddress,
+                lTokenAddress,
+                pTokenAddress,
+                _jotPool, // TODO: change by liquidator address
+                _jotPool,
+                collection
+            ]);
+
+            LTokenLite(lTokenAddress).setPool(nftFutureAddress);
+            PTokenLite(pTokenAddress).setPool(nftFutureAddress);
+
+            emit CollectionManagerRegistered(
+                collectionID,
+                collectionAddress,
+                jotAddress,
+                jotPoolAddress,
+                syntheticNFTAddress,
+                swapAddress,
+                _auctionManager,
+                lTokenAddress,
+                pTokenAddress,
+                nftFutureAddress
+            );
     }
 
     /**
@@ -235,36 +304,17 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         uint256 originalTokenID = manager.getOriginalID(syntheticID);
         manager.change(syntheticID, newOriginalTokenID, msg.sender);
 
-        emit TokenChanged(
-            collection,
-            syntheticID,
-            originalTokenID,
-            newOriginalTokenID
-        );
+        emit TokenChanged(collection, syntheticID, originalTokenID, newOriginalTokenID);
     }
 
     /**
      * @dev init Perpetual Pool Lite for a specific collection
      */
 
-    function initPerpetualPoolLite(uint256 collectionID, string memory name) internal {
-        ProtocolParameters protocol = ProtocolParameters(_protocol);
-        address futuresOracleAddress = protocol.futuresOracleAddress();
-        uint256 futuresMultiplier = protocol.futuresMultiplier();
-        uint256 futuresFeeRatio = protocol.futuresFeeRatio();
-        uint256 futuresFundingRateCoefficient = protocol.futuresFundingRateCoefficient();
-
-        IPerpetualPoolLite futures = IPerpetualPoolLite(_perpetualPoolLiteAddress);
-
-        futures.addSymbol(
-            collectionID,
-            name,
-            futuresOracleAddress,
-            futuresMultiplier,
-            futuresFeeRatio,
-            futuresFundingRateCoefficient
-        );
-    }
+    // function initPerpetualPoolLite(uint256 collectionID, string memory name) internal view {
+    //     FuturesProtocolParameters futuresProtocol = FuturesProtocolParameters(_futuresProtocol);
+    //     address futuresOracleAddress = futuresProtocol.futuresOracleAddress();
+    // }
 
     /**
      * @notice checks whether a collection is registered or not
@@ -330,7 +380,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     /**
      * @notice get collection manager address from collection ID
      */
-    function getCollectionManagerAddress(uint256 collectionID) public view returns (address) {
+    function getCollectionManagerAddressFromId(uint256 collectionID) public view returns (address) {
         address collectionAddress = _collectionIdToAddress[collectionID];
         return _collections[collectionAddress].collectionManagerAddress;
     }

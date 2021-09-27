@@ -28,7 +28,7 @@ contract NFTVaultManager is Ownable {
         IERC721(collection_).transferFrom(msg.sender, address(this), tokenId_);
 
         // the sender must be the collection contract
-        _holdings[collection_][tokenId_] == msg.sender;
+        _holdings[collection_][tokenId_] = msg.sender;
     }
 
     /**

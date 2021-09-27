@@ -5,10 +5,9 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../Interfaces.sol";
-import "./SyntheticCollectionManager.sol";
-import "./Structs.sol";
+import "../implementations/Structs.sol";
 
-contract SyntheticNFT is ERC721, Initializable, AccessControl {
+contract SyntheticNFTMock is ERC721, Initializable, AccessControl {
     bytes32 public constant MANAGER = keccak256("MANAGER");    
 
     // token metadata
@@ -98,9 +97,5 @@ contract SyntheticNFT is ERC721, Initializable, AccessControl {
         address,
         uint256 tokenId
     ) internal view override {
-        require(
-            !SyntheticCollectionManager(_collectionManager).lockedNFTs(tokenId),
-            "Token is locked and auctionable"
-        );
     }
 }

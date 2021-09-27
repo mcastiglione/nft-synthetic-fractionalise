@@ -11,7 +11,6 @@ struct TokenData {
     uint256 fractionPrices;
     uint256 lastFlipTime;
     bool verified;
-    uint256 originalID;
 }
 
 struct Flip {

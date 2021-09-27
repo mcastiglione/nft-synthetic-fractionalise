@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./StakingERC721.sol";
 import "../governance/ProtocolParameters.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "../libraries/ProtocolConstants.sol";
 
 contract JotPool is ERC721, Initializable {
     using SafeERC20 for IERC20;
@@ -83,7 +84,7 @@ contract JotPool is ERC721, Initializable {
             liquidity[msg.sender] -= amount;
             totalLiquidity -= amount;
         } else {
-            uint256 jots = protocol.jotsSupply();
+            uint256 jots = ProtocolConstants.JOT_SUPPLY;
             liquidity[msg.sender] = jots;
             totalLiquidity = jots;
         }

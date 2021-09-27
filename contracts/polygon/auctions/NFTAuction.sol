@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../libraries/ProtocolConstants.sol";
 import "./AuctionsManager.sol";
 
 contract NFTAuction is Initializable {
@@ -29,8 +30,6 @@ contract NFTAuction is Initializable {
     // by default initialized to `false`.
     bool private _claimed;
 
-    uint256 private _jotSupply;
-
     // events that will be emitted on changes.
     event HighestBidIncreased(address bidder, uint256 amount);
     event AuctionEnded(address winner, uint256 amount);
@@ -41,7 +40,6 @@ contract NFTAuction is Initializable {
         address jot_,
         address jotPool_,
         address syntheticCollection_,
-        uint256 jotSupply_,
         uint256 initialBid_,
         uint256 auctionDuration_,
         address initialBidder_
@@ -49,7 +47,6 @@ contract NFTAuction is Initializable {
         nftId = nftId_;
         auctionEndTime = block.timestamp + auctionDuration_; // solhint-disable-line
         highestBid = initialBid_;
-        _jotSupply = jotSupply_;
         jot = jot_;
         jotPool = jotPool_;
         syntheticCollection = syntheticCollection_;
@@ -106,14 +103,17 @@ contract NFTAuction is Initializable {
         _claimed = true;
 
         // transfer the jots
-        require(IERC20(jot).transfer(jot, _jotSupply), "Unable to transfer jots");
+        require(IERC20(jot).transfer(jot, ProtocolConstants.JOT_SUPPLY), "Unable to transfer jots");
 
-        if (highestBid - _jotSupply > 0) {
-            require(IERC20(jot).transfer(jotPool, highestBid - _jotSupply), "Unable to transfer jots");
+        if (highestBid - ProtocolConstants.JOT_SUPPLY > 0) {
+            require(
+                IERC20(jot).transfer(jotPool, highestBid - ProtocolConstants.JOT_SUPPLY),
+                "Unable to transfer jots"
+            );
         }
 
         // reassign the NFT in the synthetic collection
-        AuctionsManager(auctionsManager).reassignNFT(syntheticCollection, nftId, highestBidder, _jotSupply);
+        AuctionsManager(auctionsManager).reassignNFT(syntheticCollection, nftId, highestBidder);
 
         emit AuctionEnded(highestBidder, highestBid);
     }
