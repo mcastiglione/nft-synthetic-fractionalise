@@ -212,11 +212,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 originalName,
                 originalSymbol,
                 collection,
-                collectionID,
-                collectionAddress,
-                jotAddress,
-                jotPoolAddress,
-                syntheticNFTAddress,
                 futuresParameters
             );
 
@@ -265,41 +260,35 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         string memory originalName,
         string memory originalSymbol,
         address collection,
-        uint256 collectionID,
-        address collectionAddress,
-        address jotAddress,
-        address jotPoolAddress,
-        address syntheticNFTAddress,
         FuturesParametersContracts memory futuresParameters
     ) private returns (FuturesParametersContracts memory ) {
-            // Deploy futures
-            address lTokenAddress = Clones.clone(_lTokenLite);
-            LTokenLite(lTokenAddress).initialize(
-                string(abi.encodePacked("Liquidity Futures ", originalName)),
-                string(abi.encodePacked("LF_", originalSymbol))
-            );
+        // Deploy futures
+        address lTokenAddress = Clones.clone(_lTokenLite);
+        LTokenLite(lTokenAddress).initialize(
+            string(abi.encodePacked("Liquidity Futures ", originalName)),
+            string(abi.encodePacked("LF_", originalSymbol))
+        );
 
-            address pTokenAddress = Clones.clone(_pTokenLite);
-            PTokenLite(pTokenAddress).initialize(
-                string(abi.encodePacked("Position Futures ", originalName)),
-                string(abi.encodePacked("PF_", originalSymbol))
-            );
+        address pTokenAddress = Clones.clone(_pTokenLite);
+        PTokenLite(pTokenAddress).initialize(
+            string(abi.encodePacked("Position Futures ", originalName)),
+            string(abi.encodePacked("PF_", originalSymbol))
+        );
 
-            address nftFutureAddress = Clones.clone(_perpetualPoolLiteAddress);
-            PerpetualPoolLite(nftFutureAddress).initialize([
-                _fundingTokenAddress,
-                lTokenAddress,
-                pTokenAddress,
-                _jotPool, // TODO: change by liquidator address
-                _jotPool,
-                collection
-            ]);
+        address nftFutureAddress = Clones.clone(_perpetualPoolLiteAddress);
+        PerpetualPoolLite(nftFutureAddress).initialize([
+            _fundingTokenAddress,
+            lTokenAddress,
+            pTokenAddress,
+            _jotPool, // TODO: change by liquidator address
+            _jotPool,
+            collection
+        ]);
 
-            LTokenLite(lTokenAddress).setPool(nftFutureAddress);
-            PTokenLite(pTokenAddress).setPool(nftFutureAddress);
+        LTokenLite(lTokenAddress).setPool(nftFutureAddress);
+        PTokenLite(pTokenAddress).setPool(nftFutureAddress);
 
-            return FuturesParametersContracts(lTokenAddress, pTokenAddress, nftFutureAddress);
-
+        return FuturesParametersContracts(lTokenAddress, pTokenAddress, nftFutureAddress);
     }
 
     /**
