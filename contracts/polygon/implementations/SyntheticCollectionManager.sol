@@ -352,6 +352,16 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         }
     }
 
+    function depositJots(uint256 tokenId, uint256 amount) public {
+        ISyntheticNFT nft = ISyntheticNFT(erc721address);
+        address nftOwner = nft.ownerOf(tokenId);
+        require(nftOwner == msg.sender, "you are not the owner of the NFT!");
+        uint256 result = (tokens[tokenId].ownerSupply += amount);
+        require(result <= ProtocolConstants.JOT_SUPPLY, "You can't deposit more than the Jot Supply limit");
+        IJot(jotAddress).transferFrom(msg.sender, address(this), amount);
+        tokens[tokenId].ownerSupply += amount;
+    }
+
     /**
      * @notice increase selling supply for a given NFT
      * caller must be the owner of the NFT
