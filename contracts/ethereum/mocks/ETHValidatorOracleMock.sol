@@ -40,13 +40,14 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
     /**
      * @dev function to process the oracle response (only callable from oracle)
      * @param requestId the id of the request to the Chainlink oracle
-     * @param newOwner the address who can retrieve the nft (if 0 assumes is not withdrawable)
+     * @param newOwner_ the address who can retrieve the nft (if 0 assumes is not withdrawable)
      */
-    function processResponseMock(bytes32 requestId, address newOwner)
+    function processResponseMock(bytes32 requestId, uint256 newOwner_)
         public
         recordChainlinkFulfillment(requestId)
     {
         VerifyRequest memory requestData = _verifyRequests[requestId];
+        address newOwner = address(uint160(newOwner_));
 
         // only call the synthetic collection contract if is locked
         if (newOwner != address(0)) {
