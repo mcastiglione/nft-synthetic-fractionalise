@@ -92,9 +92,8 @@ contract SyntheticNFT is ERC721, Initializable, AccessControl {
         address,
         uint256 tokenId
     ) internal view override {
-        require(
-            !SyntheticCollectionManager(_collectionManager).lockedNFT(tokenId),
-            "Token is locked and auctionable"
-        );
+        if (_exists(tokenId)) {
+            require(!SyntheticCollectionManager(_collectionManager).lockedNFT(tokenId), "Token is locked");
+        }
     }
 }
