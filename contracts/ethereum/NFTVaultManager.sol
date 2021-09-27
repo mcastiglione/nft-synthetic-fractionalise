@@ -59,7 +59,11 @@ contract NFTVaultManager is AccessControl {
         require(approvedCollections[collection_], "Not approved collection");
         require(_holdings[collection_][tokenId_] != address(0), "Token not locked");
 
-        ETHValidatorOracle(_validatorOracleAddress).verifyTokenIsWithdrawable(collection_, tokenId_);
+        ETHValidatorOracle(_validatorOracleAddress).verifyTokenIsWithdrawable(
+            collection_,
+            tokenId_,
+            nonces[collection_][tokenId_]
+        );
 
         emit UnlockRequested(collection_, tokenId_);
     }
