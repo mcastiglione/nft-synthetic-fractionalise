@@ -21,8 +21,8 @@ contract NFTVaultManager is Ownable {
     function lockNFT(address collection_, uint256 tokenId_) external {
         require(approvedCollections[collection_], "Not approved collection");
 
-        // this should be an invariant (can't receive a token that the contract is already holding)
-        assert(_holdings[collection_][tokenId_] == address(0));
+        // can't receive a token that the contract is already holding
+        require(_holdings[collection_][tokenId_] == address(0), "Token already locked");
 
         // get the token
         IERC721(collection_).transferFrom(msg.sender, address(this), tokenId_);
