@@ -2,14 +2,12 @@
 pragma solidity ^0.8.4;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../implementations/SyntheticCollectionManager.sol";
+import "../NFTVaultManager.sol";
 import "./OracleStructs.sol";
 
-/**
- * @dev the ownership will be transferred after deployment to the router contract
- */
-contract PolygonValidatorOracle is ChainlinkClient, Ownable {
+contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
     /**
      * @dev oracle configuration parameters
      */
@@ -20,42 +18,43 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
     uint256 public nodeFee;
     address public linkToken;
 
-    mapping(bytes32 => VerifyRequest) private _verifyRequests;
-    mapping(address => bool) private _whitelistedCollections;
+    address private _vaultManagerAddress;
 
-    event ResponseReceived(
-        bytes32 indexed requestId,
-        address originalCollection,
-        address syntheticCollection,
-        uint256 tokenId,
-        bool verified
-    );
+    mapping(bytes32 => VerifyRequest) private _verifyRequests;
+
+    event ResponseReceived(bytes32 indexed requestId, address collection, uint256 tokenId, address newOwner);
 
     constructor(APIOracleInfo memory _oracleInfo) {
         linkToken = _oracleInfo.linkToken;
         chainlinkNode = _oracleInfo.chainlinkNode;
         jobId = stringToBytes32(_oracleInfo.jobId);
-        nodeFee = _oracleInfo.nodeFee;
+        nodeFee = (_oracleInfo.nodeFee * LINK_DIVISIBILITY) / 1000;
         apiURL = "SHOULD BE DEPLOYED YET";
 
         setChainlinkToken(linkToken);
     }
 
     /**
-     * @dev call to verify if a token is locked in ethereum vault,
-     * this method can be called only from the collection manager contract
-     * @param ethereumCollection the collection address in ethereum
+     * @dev only owner can initialize, and the ownership is removed after that
+     */
+    function initialize(address _vault) external initializer onlyOwner {
+        _vaultManagerAddress = _vault;
+        renounceOwnership();
+    }
+
+    /**
+     * @dev call to verify if a token is withdrawble in the synthetic collection,
+     * this method can be called only from the nft vault contract
+     * @param collection the collection address
      * @param tokenId the id of the nft in the collection
      * @param nonce the nonce
      * @return requestId the id of the request to the Chainlink oracle
      */
-    function verifyTokenInCollection(
-        address ethereumCollection,
+    function verifyTokenIsWithdrawable(
+        address collection,
         uint256 tokenId,
         uint256 nonce
     ) external returns (bytes32 requestId) {
-        require(_whitelistedCollections[msg.sender], "Invalid requester");
-
         Chainlink.Request memory request = buildChainlinkRequest(
             jobId,
             address(this),
@@ -70,7 +69,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
                 abi.encodePacked(
                     apiURL,
                     "?collection=",
-                    ethereumCollection,
+                    collection,
                     "&tokenId=",
                     uint2str(tokenId),
                     "&nonce=",
@@ -78,49 +77,36 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
                 )
             )
         );
-        Chainlink.add(request, "path", "locked");
+        Chainlink.add(request, "path", "withdrawable_by");
 
         // Send the request
         requestId = sendChainlinkRequestTo(chainlinkNode, request, nodeFee);
 
-        _verifyRequests[requestId] = VerifyRequest({
-            tokenId: tokenId,
-            originalCollection: ethereumCollection,
-            syntheticCollection: msg.sender
-        });
+        _verifyRequests[requestId] = VerifyRequest({tokenId: tokenId, collection: collection});
     }
 
     /**
      * @dev function to process the oracle response (only callable from oracle)
      * @param requestId the id of the request to the Chainlink oracle
-     * @param verified wether the nft is locked or not on ethereum
+     * @param newOwner_ the address who can retrieve the nft (if 0 assumes is not withdrawable)
      */
-    function processResponse(bytes32 requestId, bool verified) public recordChainlinkFulfillment(requestId) {
+    function processResponse(bytes32 requestId, uint256 newOwner_)
+        public
+        recordChainlinkFulfillment(requestId)
+    {
         VerifyRequest memory requestData = _verifyRequests[requestId];
+        address newOwner = address(uint160(newOwner_));
 
         // only call the synthetic collection contract if is locked
-        if (verified) {
-            SyntheticCollectionManager(requestData.syntheticCollection).processSuccessfulVerify(
-                requestData.tokenId
+        if (newOwner != address(0)) {
+            NFTVaultManager(_vaultManagerAddress).unlockNFT(
+                requestData.collection,
+                requestData.tokenId,
+                newOwner
             );
         }
 
-        emit ResponseReceived(
-            requestId,
-            requestData.originalCollection,
-            requestData.syntheticCollection,
-            requestData.tokenId,
-            verified
-        );
-    }
-
-    /**
-     * @dev whitelist collections in order to allow calling this contract
-     * (only router can whitelist after deploying the proxy, the router contract owns this one)
-     * @param collectionId the collection manager (sythetic collection from polygon)
-     */
-    function whitelistCollection(address collectionId) external onlyOwner {
-        _whitelistedCollections[collectionId] = true;
+        emit ResponseReceived(requestId, requestData.collection, requestData.tokenId, newOwner);
     }
 
     function stringToBytes32(string memory source) private pure returns (bytes32 result) {

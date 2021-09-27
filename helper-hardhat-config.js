@@ -22,6 +22,9 @@ const networkConfig = {
   },
   4: {
     name: 'rinkeby',
+    validatorChainlinkNode: '0xfF07C97631Ff3bAb5e5e5660Cdf47AdEd8D4d4Fd',
+    validatorJobId: '2075d7d470ef47d68612abfa3f1a5bd9',
+    validatorNodeFee: web3.utils.toWei('0.1'),
     linkToken: '0x01be23585060835e02b77ef475b0cc51aa1e0709',
     vrfCoordinator: '0xb3dCcb4Cf7a26f6cf6B120Cf5A73875B7BBc655B',
     keyHash: '0x2ed0feb3e7fd2022120aa84fab1945545a9f2ffc9076fd6156fa96eaff4c1311',
@@ -36,10 +39,10 @@ const networkConfig = {
     linkToken: '0x514910771af9ca656af840dff83e8264ecf986ca',
   },
   80001: {
+    name: 'mumbai',
     validatorChainlinkNode: '0x0dc63a45c513bef5b84555d3fe56c227caa8e13e',
     validatorJobId: '531caa20390041ce8b05f5249b74776a',
     validatorNodeFee: web3.utils.toWei('0.1'),
-    name: 'mumbai',
     linkToken: '0x326C977E6efc84E512bB9C30f76E30c160eD06FB',
     keyHash: '0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4',
     vrfCoordinator: '0x8C7382F9D8f56b33781fE506E897a4F1e2d17255',

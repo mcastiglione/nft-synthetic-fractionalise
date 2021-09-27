@@ -4,7 +4,7 @@ const { expectRevert, constants } = require('@openzeppelin/test-helpers');
 describe('NFTVaultManager', async function () {
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
-    await deployments.fixture(['vault_manager']);
+    await deployments.fixture(['vault_fixtures']);
 
     this.vaultManager = await ethers.getContract('NFTVaultManager');
     this.collection = await ethers.getContract('NFTMock');
@@ -30,7 +30,7 @@ describe('NFTVaultManager', async function () {
   it('fails to safe approve collections to non IERC721 contracts', async () => {
     await expectRevert(
       this.vaultManager.safeApproveCollection(this.vaultManager.address),
-      "Transaction reverted: function selector was not recognized and there's no fallback function"
+      "Address doesn't support IERC721 interface"
     );
   });
 

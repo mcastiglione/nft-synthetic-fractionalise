@@ -27,10 +27,11 @@ contract PolygonValidatorOracleMock is ChainlinkClient, Ownable {
     /**
      * @dev this is a mock just for testing purposes
      */
-    function verifyTokenInCollection(address ethereumCollection, uint256 tokenId)
-        external
-        returns (bytes32 requestId)
-    {
+    function verifyTokenInCollection(
+        address ethereumCollection,
+        uint256 tokenId,
+        uint256
+    ) external returns (bytes32 requestId) {
         requestId = keccak256(abi.encodePacked("requestId"));
 
         processResponseMock(requestId, true, ethereumCollection, msg.sender, tokenId);

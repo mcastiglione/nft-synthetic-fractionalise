@@ -9,7 +9,7 @@ import "./SyntheticCollectionManager.sol";
 import "./Structs.sol";
 
 contract SyntheticNFT is ERC721, Initializable, AccessControl {
-    bytes32 public constant MANAGER = keccak256("MANAGER");    
+    bytes32 public constant MANAGER = keccak256("MANAGER");
 
     // token metadata
     mapping(uint256 => string) private _tokenMetadata;
@@ -61,17 +61,11 @@ contract SyntheticNFT is ERC721, Initializable, AccessControl {
         return _exists(tokenId);
     }
 
-    function safeMint(
-        address to,
-        uint256 tokenId
-    ) public onlyRole(MANAGER) {
+    function safeMint(address to, uint256 tokenId) public onlyRole(MANAGER) {
         _mint(to, tokenId);
     }
 
-    function setMetadata(
-        uint256 tokenId,
-        string memory metadata
-    ) public onlyRole(MANAGER) {
+    function setMetadata(uint256 tokenId, string memory metadata) public onlyRole(MANAGER) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
         _tokenMetadata[tokenId] = metadata;
     }
@@ -98,9 +92,8 @@ contract SyntheticNFT is ERC721, Initializable, AccessControl {
         address,
         uint256 tokenId
     ) internal view override {
-        require(
-            !SyntheticCollectionManager(_collectionManager).lockedNFTs(tokenId),
-            "Token is locked and auctionable"
-        );
+        if (_exists(tokenId)) {
+            require(!SyntheticCollectionManager(_collectionManager).lockedNFT(tokenId), "Token is locked");
+        }
     }
 }

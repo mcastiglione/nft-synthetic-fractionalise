@@ -75,9 +75,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     mapping(uint256 => TokenData) public tokens;
 
     /**
-     * @notice the nft should be auctioned to unlock it
+     * @dev the nonce to avoid double verification (quantity of exits for original token id)
      */
-    mapping(uint256 => bool) public lockedNFTs;
+    mapping(uint256 => uint256) public nonces;
+    mapping(uint256 => mapping(uint256 => address)) public ownersByNonce;
 
     /**
      * @notice Synthetic NFT Address  for this collection
@@ -173,6 +174,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     ) public onlyRole(ROUTER) {
         // Token must be registered
         require(ISyntheticNFT(erc721address).exists(syntheticID), "token not registered!");
+        require(tokens[syntheticID].ownerSupply != 0, "Token is locked");
 
         // Caller must be token owner
         address tokenOwner = IERC721(erc721address).ownerOf(syntheticID);
@@ -295,7 +297,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function getJotAmountLeft(uint256 tokenId) public view returns (uint256) {
-        return tokens[tokenId].sellingSupply - tokens[tokenId].soldSupply;
+        TokenData storage token = tokens[tokenId];
+        return token.sellingSupply - token.soldSupply;
     }
 
     function getSalePrice(uint256 tokenId, uint256 buyAmount) public view returns (uint256) {
@@ -315,18 +318,21 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice allows the caller to buy jots using the Funding token
      */
     function buyJotTokens(uint256 tokenId, uint256 buyAmount) public {
+        TokenData storage token = tokens[tokenId];
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
-        require(tokens[tokenId].fractionPrices > 0, "Token price not set");
+        require(token.fractionPrices > 0, "Token price not set");
+        require(token.verified, "Token not verified yet");
+        require(token.ownerSupply != 0, "Token is locked");
 
         // Calculate amount left
-        uint256 amountLeft = tokens[tokenId].sellingSupply - tokens[tokenId].soldSupply;
+        uint256 amountLeft = token.sellingSupply - token.soldSupply;
 
         // If amount left is lesser than buying amount
         // then buying amount = amount left
         if (amountLeft < buyAmount) {
             buyAmount = amountLeft;
         }
-        uint256 amount = (buyAmount * tokens[tokenId].fractionPrices) / 10**18;
+        uint256 amount = (buyAmount * token.fractionPrices) / 10**18;
         // Can't sell zero tokens
         require(amount != 0, "No tokens left!");
 
@@ -337,8 +343,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         IJot(jotAddress).transfer(msg.sender, buyAmount);
 
         //Increase sold supply (amount in token) and liquidity sold (amount in ether)
-        tokens[tokenId].soldSupply += buyAmount;
-        tokens[tokenId].liquiditySold += amount;
+        token.soldSupply += buyAmount;
+        token.liquiditySold += amount;
 
         //If all jots have been sold, then add liquidity
         if (amount == amountLeft) {
@@ -352,11 +358,16 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
 
     function increaseSellingSupply(uint256 tokenId, uint256 amount) public {
+        TokenData storage token = tokens[tokenId];
         require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
-        require(tokens[tokenId].ownerSupply >= amount, "You do not have enough tokens left");
-        tokens[tokenId].ownerSupply -= amount;
-        tokens[tokenId].sellingSupply += amount / 2;
-        tokens[tokenId].liquiditySupply += amount / 2;
+
+        require(token.verified, "Token not verified yet");
+        require(token.ownerSupply != 0, "Token is locked");
+
+        require(token.ownerSupply >= amount, "You do not have enough tokens left");
+        token.ownerSupply -= amount;
+        token.sellingSupply += amount / 2;
+        token.liquiditySupply += amount / 2;
     }
 
     /**
@@ -365,12 +376,23 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     function decreaseSellingSupply(uint256 tokenId, uint256 amount) public {
         require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
-        require(tokens[tokenId].liquiditySupply >= amount / 2, "You do not have enough liquidity left");
-        require(tokens[tokenId].sellingSupply >= amount / 2, "You do not have enough selling supply left");
 
-        tokens[tokenId].ownerSupply += amount;
-        tokens[tokenId].sellingSupply -= amount / 2;
-        tokens[tokenId].liquiditySupply -= amount / 2;
+        TokenData storage token = tokens[tokenId];
+
+        require(token.verified, "Token not verified yet");
+        require(token.ownerSupply != 0, "Token is locked");
+
+        require(token.liquiditySupply >= amount / 2, "You do not have enough liquidity left");
+        require(token.sellingSupply >= amount / 2, "You do not have enough selling supply left");
+
+        token.ownerSupply += amount;
+        token.sellingSupply -= amount / 2;
+        token.liquiditySupply -= amount / 2;
+    }
+
+    function lockedNFT(uint256 tokenId) public view returns (bool) {
+        TokenData storage token = tokens[tokenId];
+        return !token.verified || token.ownerSupply == 0;
     }
 
     /**
@@ -379,16 +401,24 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     function updatePriceFraction(uint256 tokenId, uint256 newFractionPrice) public {
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
+
+        TokenData storage token = tokens[tokenId];
+
+        require(token.verified, "Token not verified yet");
+        require(token.ownerSupply != 0, "Token is locked");
+
         require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
-        tokens[tokenId].fractionPrices = newFractionPrice;
+        token.fractionPrices = newFractionPrice;
     }
 
     /**
      * @notice add available liquidity for a given token to UniSwap pool
      */
-    function addLiquidityToPool(uint256 tokenId) public {
-        uint256 liquiditySupply = tokens[tokenId].liquiditySupply;
-        uint256 liquiditySold = tokens[tokenId].liquiditySold;
+    function addLiquidityToPool(uint256 tokenId) internal {
+        TokenData storage token = tokens[tokenId];
+
+        uint256 liquiditySupply = token.liquiditySupply;
+        uint256 liquiditySold = token.liquiditySold;
 
         // approve token transfer to cover all possible scenarios
         IJot(jotAddress).approve(address(uniswapV2Router), liquiditySupply);
@@ -417,8 +447,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function flipJot(uint256 tokenId, uint64 prediction) external {
+        TokenData storage token = tokens[tokenId];
+
         require(isAllowedToFlip(tokenId), "Flip is not allowed yet");
-        tokens[tokenId].lastFlipTime = block.timestamp; // solhint-disable-line
+        require(token.ownerSupply != 0, "Token is locked");
+
+        token.lastFlipTime = block.timestamp; // solhint-disable-line
 
         bytes32 requestId = RandomNumberConsumer(_randomConsumerAddress).getRandomNumber();
         _flips[requestId] = Flip({tokenId: tokenId, prediction: prediction, player: msg.sender});
@@ -468,7 +502,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // lock the nft and make it auctionable
         if (tokens[flip.tokenId].ownerSupply == 0) {
-            lockedNFTs[flip.tokenId] = true;
             AuctionsManager(_auctionsManagerAddress).whitelistNFT(flip.tokenId);
         }
 
@@ -481,16 +514,40 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * gets the metadata of the NFT
      */
     function verify(uint256 tokenId) external {
+        TokenData storage token = tokens[tokenId];
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
-        require(!tokens[tokenId].verified, "Token already verified");
+        require(!token.verified, "Token already verified");
         PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(
             originalCollectionAddress,
-            tokens[tokenId].originalTokenID
+            token.originalTokenID,
+            nonces[token.originalTokenID]
         );
     }
 
     function processSuccessfulVerify(uint256 tokenId) external onlyRole(VALIDATOR_ORACLE) {
         tokens[tokenId].verified = true;
+    }
+
+    /**
+     * @notice allows to exit the protocol (retrieve the token)
+     */
+    function exitProtocol(uint256 tokenId) external {
+        TokenData storage token = tokens[tokenId];
+        uint256 ownerSupply = token.ownerSupply;
+        require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
+        require(ownerSupply >= ProtocolConstants.JOT_SUPPLY, "Insufficient jot supply in the token");
+
+        // increase nonce to avoid double verification
+        uint256 currentNonce = nonces[token.originalTokenID];
+        ownersByNonce[tokenId][currentNonce] = msg.sender;
+        nonces[token.originalTokenID] = currentNonce + 1;
+
+        // free space and get refunds
+        delete tokens[tokenId];
+
+        // burn the jots and the nft
+        Jot(jotAddress).burn(ownerSupply);
+        safeBurn(tokenId);
     }
 
     /**

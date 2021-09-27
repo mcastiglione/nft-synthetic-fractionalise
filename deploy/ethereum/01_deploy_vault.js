@@ -2,20 +2,18 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  // deploy NFT mock in local networks
-  if (network.tags.local) {
-    await deploy('NFTMock', {
-      from: deployer,
-      log: true,
-      args: [],
-    });
-  }
+  let validator = await ethers.getContract('ETHValidatorOracle');
 
-  await deploy('NFTVaultManager', {
+  let vault = await deploy('NFTVaultManager', {
     from: deployer,
     log: true,
-    args: [],
+    args: [validator.address],
   });
+
+  if (vault.newlyDeployed) {
+    await validator.initialize(vault.address);
+  }
 };
 
 module.exports.tags = ['vault_manager'];
+module.exports.dependencies = ['eth_validator_oracle'];
