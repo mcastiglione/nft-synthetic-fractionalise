@@ -101,7 +101,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address oracleAddress_,
         FuturesParametersContracts memory futuresParameters,
         ProtocolParametersContracts memory protocolParameters
-        ) {
+    ) {
         swapAddress = swapAddress_;
         _jot = jot_;
         _jotPool = jotPool_;
@@ -119,7 +119,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         oracleAddress = oracleAddress_;
         _setupRole(ORACLE, oracleAddress_);
     }
-    
 
     /**
      *  @notice register an NFT collection
@@ -156,7 +155,11 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
             // deploys a minimal proxy contract from the jotPool contract implementation
             address jotPoolAddress = Clones.clone(_jotPool);
-            JotPool(jotPoolAddress).initialize(jotAddress);
+            JotPool(jotPoolAddress).initialize(
+                jotAddress,
+                string(abi.encodePacked("Privi JotPool ", originalName)),
+                string(abi.encodePacked(" ", originalName))
+            );
 
             address syntheticNFTAddress = Clones.clone(_syntheticNFT);
 
@@ -216,19 +219,19 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             futuresParameters.pTokenLite_ = _pTokenLite;
             futuresParameters.perpetualPoolLiteAddress_ = _perpetualPoolLiteAddress;
 
-            deployFutures(originalName,
-                          originalSymbol,
-                          collection,
-                          collectionID,
-                          collectionAddress,
-                          jotAddress,
-                          jotPoolAddress,
-                          syntheticNFTAddress,
-                          futuresParameters
+            deployFutures(
+                originalName,
+                originalSymbol,
+                collection,
+                collectionID,
+                collectionAddress,
+                jotAddress,
+                jotPoolAddress,
+                syntheticNFTAddress,
+                futuresParameters
             );
 
             //TODO: addSymbol with ”address” to the NFTPerpetualFutures
-
         } else {
             collectionAddress = _collections[collection].collectionManagerAddress;
         }
@@ -251,44 +254,46 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address syntheticNFTAddress,
         FuturesParametersContracts memory futuresParameters
     ) private {
-            // Deploy futures
-            address lTokenAddress = Clones.clone(_lTokenLite);
-            LTokenLite(lTokenAddress).initialize(
-                string(abi.encodePacked("Liquidity Futures ", originalName)),
-                string(abi.encodePacked("LF_", originalSymbol))
-            );
+        // Deploy futures
+        address lTokenAddress = Clones.clone(_lTokenLite);
+        LTokenLite(lTokenAddress).initialize(
+            string(abi.encodePacked("Liquidity Futures ", originalName)),
+            string(abi.encodePacked("LF_", originalSymbol))
+        );
 
-            address pTokenAddress = Clones.clone(_pTokenLite);
-            PTokenLite(pTokenAddress).initialize(
-                string(abi.encodePacked("Position Futures ", originalName)),
-                string(abi.encodePacked("PF_", originalSymbol))
-            );
+        address pTokenAddress = Clones.clone(_pTokenLite);
+        PTokenLite(pTokenAddress).initialize(
+            string(abi.encodePacked("Position Futures ", originalName)),
+            string(abi.encodePacked("PF_", originalSymbol))
+        );
 
-            address nftFutureAddress = Clones.clone(_perpetualPoolLiteAddress);
-            PerpetualPoolLite(nftFutureAddress).initialize([
+        address nftFutureAddress = Clones.clone(_perpetualPoolLiteAddress);
+        PerpetualPoolLite(nftFutureAddress).initialize(
+            [
                 _fundingTokenAddress,
                 lTokenAddress,
                 pTokenAddress,
                 _jotPool, // TODO: change by liquidator address
                 _jotPool,
                 collection
-            ]);
+            ]
+        );
 
-            LTokenLite(lTokenAddress).setPool(nftFutureAddress);
-            PTokenLite(pTokenAddress).setPool(nftFutureAddress);
+        LTokenLite(lTokenAddress).setPool(nftFutureAddress);
+        PTokenLite(pTokenAddress).setPool(nftFutureAddress);
 
-            emit CollectionManagerRegistered(
-                collectionID,
-                collectionAddress,
-                jotAddress,
-                jotPoolAddress,
-                syntheticNFTAddress,
-                swapAddress,
-                _auctionManager,
-                lTokenAddress,
-                pTokenAddress,
-                nftFutureAddress
-            );
+        emit CollectionManagerRegistered(
+            collectionID,
+            collectionAddress,
+            jotAddress,
+            jotPoolAddress,
+            syntheticNFTAddress,
+            swapAddress,
+            _auctionManager,
+            lTokenAddress,
+            pTokenAddress,
+            nftFutureAddress
+        );
     }
 
     /**

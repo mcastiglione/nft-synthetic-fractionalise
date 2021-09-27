@@ -15,6 +15,8 @@ contract JotPool is ERC721, Initializable {
     using Counters for Counters.Counter;
 
     struct Position {
+        uint256 id;
+        uint256 liquidity;
         uint256 stake;
         uint256 totalShares;
     }
@@ -22,7 +24,6 @@ contract JotPool is ERC721, Initializable {
     address public jot;
     ProtocolParameters private immutable protocol;
     uint256 public totalLiquidity;
-    mapping(address => uint256) private liquidity;
 
     string private _proxyName;
     string private _proxySymbol;
@@ -32,15 +33,17 @@ contract JotPool is ERC721, Initializable {
     uint256 public totalShares;
     uint256 public totalStaked;
 
-    uint256 public stakerShare;
-    uint256 public stakerShareDenominator;
+    uint256 public stakerShare = 10;
+    uint256 public stakerShareDenominator = 1000;
 
     Counters.Counter private idGen;
 
-    mapping(uint256 => Position) private positions;
+    mapping(address => Position) private positions;
 
     event LiquidityAdded(address provider, uint256 amount, uint256 mintedLiquidity);
     event LiquidityRemoved(address provider, uint256 amount, uint256 liquidityBurnt);
+    event Staked(address staker, uint256 amount, uint256 positionId);
+    event Unstaked(address recipient, uint256 amount, uint256 reward);
 
     constructor(address _protocol) ERC721("", "") {
         require(_protocol != address(0), "Invalid protocol address");
@@ -71,21 +74,21 @@ contract JotPool is ERC721, Initializable {
         uint256 mintedLiquidity = totalLiquidity > 0
             ? (totalLiquidity * amount) / IERC20(jot).balanceOf(address(this))
             : 100;
-        liquidity[msg.sender] += mintedLiquidity;
+        positions[msg.sender].liquidity += mintedLiquidity;
         totalLiquidity += mintedLiquidity;
         emit LiquidityAdded(msg.sender, amount, mintedLiquidity);
         IERC20(jot).safeTransferFrom(msg.sender, address(this), amount);
     }
 
     function removeLiquidity(uint256 amount) external {
-        require(liquidity[msg.sender] >= amount, "Remove amount exceeds balance");
+        require(positions[msg.sender].liquidity >= amount, "Remove amount exceeds balance");
         uint256 liquidityBurnt = (IERC20(jot).balanceOf(address(this)) * amount) / totalLiquidity;
         if (totalLiquidity - amount > 0) {
-            liquidity[msg.sender] -= amount;
+            positions[msg.sender].liquidity -= amount;
             totalLiquidity -= amount;
         } else {
             uint256 jots = ProtocolConstants.JOT_SUPPLY;
-            liquidity[msg.sender] = jots;
+            positions[msg.sender].liquidity = jots;
             totalLiquidity = jots;
         }
 
@@ -94,8 +97,8 @@ contract JotPool is ERC721, Initializable {
         IERC20(jot).safeTransfer(msg.sender, liquidityBurnt);
     }
 
-    function balance() external view returns (uint256) {
-        return liquidity[msg.sender];
+    function getPosition() external view returns (Position memory) {
+        return positions[msg.sender];
     }
 
     function stakeShares(uint256 amount) external {
@@ -108,44 +111,59 @@ contract JotPool is ERC721, Initializable {
         cumulativeRevenue += x;
         lastReward = jotBalance;
         totalStaked += amount;
+        address to = msg.sender;
+        uint256 id = positions[to].id;
+        if (id == 0) {
+            idGen.increment();
+            id = idGen.current();
+            positions[to].id = id;
+            _mint(to, id);
+        }
 
-        mintPositionNFT(msg.sender, amount);
+        positions[to].stake = amount;
+        positions[to].totalShares = totalShares;
+
+        emit Staked(msg.sender, amount, id);
+
+        IERC20(jot).safeTransferFrom(to, address(this), amount);
     }
 
-    function mintPositionNFT(address to, uint256 amount) internal {
-        idGen.increment();
-        uint256 id = idGen.current();
-        positions[id].stake = amount;
-        positions[id].totalShares = totalShares;
-        _mint(to, id);
-    }
-
-    function unstakeShares(uint256 id, uint256 amount) external {
+    function unstakeShares(uint256 amount) external {
+        require(positions[msg.sender].stake >= amount, "Insufficient stake balance");
         uint256 jotBalance = IERC20(jot).balanceOf(address(this));
         uint256 x = jotBalance - lastReward;
         if (totalStaked != 0) {
             totalShares += ((x * stakerShare) * 10**18) / (totalStaked * stakerShareDenominator);
         }
-        uint256 reward = ((totalShares - positions[id].totalShares) * positions[id].stake) / 10**18;
+
+        address owner = msg.sender;
+        uint256 reward = ((totalShares - positions[owner].totalShares) * positions[owner].stake) / 10**18;
         lastReward = IERC20(jot).balanceOf(address(this)) - reward;
-        if (amount == positions[id].stake) {
-            _burn(id);
-            delete positions[id];
+
+        if (amount == positions[owner].stake) {
+            _burn(positions[owner].id);
+            delete positions[owner];
         } else {
-            positions[id].stake -= amount;
-            positions[id].totalShares = totalShares;
+            positions[owner].stake -= amount;
+            positions[owner].totalShares = totalShares;
         }
-        totalShares -= amount;
+        totalStaked -= amount;
+
+        emit Unstaked(msg.sender, amount, reward);
+
+        IERC20(jot).transfer(msg.sender, amount + reward);
     }
 
-    function claimRewards(uint256 id) external {
+    function claimRewards() external {
         uint256 jotBalance = IERC20(jot).balanceOf(address(this));
         uint256 x = jotBalance - lastReward;
         if (totalStaked != 0) {
             totalShares += ((x * stakerShare) * 10**18) / (totalStaked * stakerShareDenominator);
         }
-        uint256 reward = ((totalShares - positions[id].totalShares) * positions[id].stake) / 10**18;
+
+        address owner = msg.sender;
+        uint256 reward = ((totalShares - positions[owner].totalShares) * positions[owner].stake) / 10**18;
         lastReward = IERC20(jot).balanceOf(address(this)) - reward;
-        positions[id].totalShares = totalShares;
+        positions[owner].totalShares = totalShares;
     }
 }
