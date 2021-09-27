@@ -30,7 +30,7 @@ describe('NFTVaultManager', async function () {
   it('fails to safe approve collections to non IERC721 contracts', async () => {
     await expectRevert(
       this.vaultManager.safeApproveCollection(this.vaultManager.address),
-      "Transaction reverted: function selector was not recognized and there's no fallback function"
+      "Address doesn't support IERC721 interface"
     );
   });
 
