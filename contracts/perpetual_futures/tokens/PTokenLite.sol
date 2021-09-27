@@ -7,7 +7,6 @@ import "../../polygon/Interfaces.sol";
 import "./PFERC721.sol";
 
 contract PTokenLite is IPTokenLite, PFERC721, Initializable {
-
     // PToken name
     string internal _name;
     // PToken symbol
@@ -34,18 +33,13 @@ contract PTokenLite is IPTokenLite, PFERC721, Initializable {
         _;
     }
 
-    constructor() {}
-
-    function initialize(
-        string memory name_,
-        string memory symbol_
-    ) external initializer {
+    function initialize(string memory name_, string memory symbol_) external initializer {
         _name = name_;
         _symbol = symbol_;
     }
 
-    function setPool(address newPool) public override  {
-        require(_pool == address(0) || _pool == msg.sender, 'PToken.setPool: not allowed');
+    function setPool(address newPool) public override {
+        require(_pool == address(0) || _pool == msg.sender, "PToken.setPool: not allowed");
         _pool = newPool;
     }
 
