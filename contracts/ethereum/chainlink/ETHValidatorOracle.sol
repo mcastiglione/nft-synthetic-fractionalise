@@ -77,7 +77,7 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
                 )
             )
         );
-        Chainlink.add(request, "path", "withdrawable");
+        Chainlink.add(request, "path", "withdrawable_by");
 
         // Send the request
         requestId = sendChainlinkRequestTo(chainlinkNode, request, nodeFee);
