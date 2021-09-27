@@ -9,6 +9,7 @@ contract NFTMock is ERC721 {
 
     Counters.Counter private _tokenIdCounter;
 
+    // solhint-disable-next-line
     constructor() ERC721("MyToken", "MTK") {}
 
     function safeMint(address to) public {
