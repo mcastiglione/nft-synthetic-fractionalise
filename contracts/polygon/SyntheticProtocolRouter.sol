@@ -409,4 +409,17 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     function getOriginalCollectionAddress(uint256 collectionID) public view returns (address) {
         return _collectionIdToAddress[collectionID];
     }
+
+    function getCollectionlTokenAddress(address collection) public view returns (address) {
+        return _collections[collection].lTokenAddress;
+    }
+
+    function getCollectionpTokenAddress(address collection) public view returns (address) {
+        return _collections[collection].pTokenAddress;
+    }
+
+    function getCollectionPerpetualPoolAddress(address collection) public view returns (address) {
+        return _collections[collection].perpetualPoolLiteAddress;
+    }
+
 }
