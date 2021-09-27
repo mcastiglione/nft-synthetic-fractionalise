@@ -80,6 +80,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     mapping(uint256 => bool) public lockedNFTs;
 
     /**
+     * @dev the nonce to avoid double verification (quantity of exits for original token id)
+     */
+    mapping(uint256 => uint256) public nonces;
+    mapping(uint256 => mapping(uint256 => address)) public ownersByNonce;
+
+    /**
      * @notice Synthetic NFT Address  for this collection
      */
     address public erc721address;
@@ -508,6 +514,27 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function processSuccessfulVerify(uint256 tokenId) external onlyRole(VALIDATOR_ORACLE) {
         tokens[tokenId].verified = true;
+    }
+
+    /**
+     * @notice allows to exit the protocol (retrieve the token)
+     */
+    function exitProtocol(uint256 tokenId) external {
+        uint256 ownerSupply = tokens[tokenId].ownerSupply;
+        require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
+        require(ownerSupply >= ProtocolConstants.JOT_SUPPLY, "Insufficient jot supply in the token");
+
+        // increase nonce to avoid double verification
+        uint256 currentNonce = nonces[tokens[tokenId].originalTokenID];
+        ownersByNonce[tokenId][currentNonce] = msg.sender;
+        nonces[tokens[tokenId].originalTokenID] = currentNonce + 1;
+
+        // free space and get refunds
+        delete tokens[tokenId];
+
+        // burn the jots and the nft
+        Jot(jotAddress).burn(ownerSupply);
+        safeBurn(tokenId);
     }
 
     /**
