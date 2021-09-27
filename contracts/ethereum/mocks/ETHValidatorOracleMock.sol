@@ -34,7 +34,7 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
     ) external returns (bytes32 requestId) {
         requestId = keccak256(abi.encodePacked("requestId"));
         _verifyRequests[requestId] = VerifyRequest({tokenId: tokenId, collection: collection});
-        processResponseMock(requestId, address(this));
+        processResponseMock(requestId, 0);
     }
 
     /**
