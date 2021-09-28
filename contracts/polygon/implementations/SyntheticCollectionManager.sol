@@ -56,6 +56,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     ProtocolParameters public protocol;
 
+    address private _swapAddress;
+
     /**
      * @notice address of the original collection
      */
@@ -105,6 +107,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     constructor(address randomConsumerAddress, address validatorAddress) {
         _randomConsumerAddress = randomConsumerAddress;
         _validatorAddress = validatorAddress;
+        
     }
 
     function initialize(
@@ -114,7 +117,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address auctionManagerAddress,
         address protocol_,
         address fundingTokenAddress_,
-        address jotPool_
+        address jotPool_,
+        address swapAddress
     ) external initializer {
         jotAddress = _jotAddress;
         erc721address = _erc721address;
@@ -123,7 +127,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _auctionsManagerAddress = auctionManagerAddress;
         protocol = ProtocolParameters(protocol_);
         jotPool = jotPool_;
-
+        _swapAddress = swapAddress;
         _jotsSupply = ProtocolConstants.JOT_SUPPLY;
         fundingTokenAddress = fundingTokenAddress_;
 
@@ -423,9 +427,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     function addLiquidityToPool(uint256 tokenId) public {
 
-        address uniswapV2Pair = IJot(jotAddress).uniswapV2Pair();
-
-        IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(uniswapV2Pair);
+        IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
 
         TokenData storage token = tokens[tokenId];
         require(tokens[tokenId].soldSupply > 0, "soldSupply is zero");
@@ -452,10 +454,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             block.timestamp // solhint-disable-line
         );
 
-        tokens[tokenId].liquiditySupply -= amountA;
-        tokens[tokenId].liquiditySold -= amountB;
-        tokens[tokenId].sellingSupply -= amountA;
-        tokens[tokenId].soldSupply -= amountB;
+        liquiditySupply -= (liquiditySupply - amountA);
+        liquiditySold -= (liquiditySold - amountB);
+
+        tokens[tokenId].liquiditySupply -= liquiditySupply;
+        tokens[tokenId].liquiditySold -= liquiditySold;
+        tokens[tokenId].sellingSupply -= liquiditySupply;
+        tokens[tokenId].soldSupply -= liquiditySold;
     }
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {

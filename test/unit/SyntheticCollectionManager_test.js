@@ -56,6 +56,40 @@ describe('SyntheticCollectionManager', async function () {
     });
   });
 
+  describe('Add Liquidity to Pool', async function () {
+    it('should fail if NFT is not registered ', async () => {
+      
+      // Verify NFT
+      let oracleAddress = await router.oracleAddress();
+      const oracle = await ethers.getContractAt('MockOracle', oracleAddress);
+      oracle.setRouter(router.address);
+      await oracle.verifyNFT(NFT, args.syntheticTokenId);
+      
+      const tokenId = args.syntheticTokenId;
+
+      const amount = 1000;
+
+      const fundingTokenAddress = await manager.fundingTokenAddress();
+      console.log('Manager address', managerAddress);
+      console.log('fundingTokenAddress', fundingTokenAddress);
+      const fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
+
+      await jot.mint(owner.address, amount*10000);
+      await jot.approve(managerAddress, amount*10000);
+      await fundingToken.mint(owner.address, amount*10000);
+      await fundingToken.approve(managerAddress, amount*10000);
+
+      await manager.depositJots(tokenId, amount*10);
+
+      await manager.increaseSellingSupply(tokenId, amount*10);
+
+      await manager.buyJotTokens(tokenId, amount);  
+      
+      await manager.addLiquidityToPool(tokenId);
+      //console.log('jot UniSwap pair', await router.getCollectionUniswapPair(NFT)); 
+    });
+  });
+
   describe('depositJots', async function () {
     it('Verify that the SyntheticCollectionManager balance increases correctly', async () => {
       const amount = 1000;

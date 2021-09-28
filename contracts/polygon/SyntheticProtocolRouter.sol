@@ -175,7 +175,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 _auctionManager,
                 _protocol,
                 _fundingTokenAddress,
-                jotPoolAddress
+                jotPoolAddress,
+                swapAddress
             );
 
             AuctionsManager(_auctionManager).grantRole(
