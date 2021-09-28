@@ -438,9 +438,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         IERC20(fundingTokenAddress).approve(address(uniswapV2Router), liquiditySold);
         
-        uint amountA;
-        uint amountB;
-        uint liquidity;
+        uint256 amountA;
+        uint256 amountB;
+        uint256 liquidity;
 
         // add the liquidity
         (amountA, amountB, liquidity) = uniswapV2Router.addLiquidity(
@@ -453,14 +453,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             address(0),
             block.timestamp // solhint-disable-line
         );
-
-        liquiditySupply -= (liquiditySupply - amountA);
-        liquiditySold -= (liquiditySold - amountB);
-
-        tokens[tokenId].liquiditySupply -= liquiditySupply;
-        tokens[tokenId].liquiditySold -= liquiditySold;
-        tokens[tokenId].sellingSupply -= liquiditySupply;
-        tokens[tokenId].soldSupply -= liquiditySold;
+        unchecked {
+            tokens[tokenId].liquiditySupply -= amountA;
+            tokens[tokenId].liquiditySold -= amountB;
+            tokens[tokenId].sellingSupply -= amountA;
+            tokens[tokenId].soldSupply  -= amountB;
+        }
     }
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {

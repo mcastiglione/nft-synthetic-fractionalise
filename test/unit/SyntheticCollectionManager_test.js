@@ -70,8 +70,6 @@ describe('SyntheticCollectionManager', async function () {
       const amount = 1000;
 
       const fundingTokenAddress = await manager.fundingTokenAddress();
-      console.log('Manager address', managerAddress);
-      console.log('fundingTokenAddress', fundingTokenAddress);
       const fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
 
       await jot.mint(owner.address, amount*10000);
