@@ -345,11 +345,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         //Increase sold supply (amount in token) and liquidity sold (amount in ether)
         token.soldSupply += buyAmount;
         token.liquiditySold += amount;
-
-        //If all jots have been sold, then add liquidity
-        if (amount == amountLeft) {
-            addLiquidityToPool(tokenId);
-        }
     }
 
     function depositJots(uint256 tokenId, uint256 amount) public {
@@ -424,7 +419,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice add available liquidity for a given token to UniSwap pool
      */
-    function addLiquidityToPool(uint256 tokenId) internal {
+    function addLiquidityToPool(uint256 tokenId) public {
         TokenData storage token = tokens[tokenId];
 
         uint256 liquiditySupply = token.liquiditySupply;
@@ -446,6 +441,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             address(0),
             block.timestamp // solhint-disable-line
         );
+
+        tokens[tokenId].liquiditySupply -= liquiditySupply;
+        tokens[tokenId].liquiditySold -= liquiditySold;
+        tokens[tokenId].sellingSupply -= liquiditySupply;
+        tokens[tokenId].soldSupply -= liquiditySupply;
     }
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {
