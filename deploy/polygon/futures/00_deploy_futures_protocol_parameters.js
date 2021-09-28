@@ -7,9 +7,9 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   // get the previously deployed governance (actually the timelock controller)
   let governance = await ethers.getContract('TimelockController');
 
-  let symbolOracle = await deploy('SymbolOracleOffChain', { from: deployer, log: true, args: [signatory] });
+  let symbolOracle = await deploy('SymbolOracleOffChain', { from: deployer, log: true, args: [deployer] });
 
-  const mainParams = { 
+  const mainParams = {
     minPoolMarginRatio: one(),
     minInitialMarginRatio: one(1, 1),
     minMaintenanceMarginRatio: one(5, 2),
@@ -53,4 +53,4 @@ function one(value = 1, left = 0, right = 18) {
 }
 
 module.exports.tags = ['futures_protocol_parameters'];
-module.exports.dependencies = ['timelock_controller']
+module.exports.dependencies = ['timelock_controller'];
