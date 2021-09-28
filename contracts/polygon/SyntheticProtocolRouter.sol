@@ -157,7 +157,12 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
             // deploys a minimal proxy contract from the jotPool contract implementation
             address jotPoolAddress = Clones.clone(_jotPool);
-            JotPool(jotPoolAddress).initialize(jotAddress);
+            JotPool(jotPoolAddress).initialize(
+                jotAddress,
+                _fundingTokenAddress,
+                string(abi.encodePacked("Privi JotPool ", originalName)),
+                string(abi.encodePacked(" ", originalName))
+            );
 
             address syntheticNFTAddress = Clones.clone(_syntheticNFT);
 

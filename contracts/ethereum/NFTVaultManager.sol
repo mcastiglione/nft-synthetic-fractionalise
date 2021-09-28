@@ -10,10 +10,6 @@ contract NFTVaultManager is AccessControl {
     bytes32 public constant MANAGER = keccak256("MANAGER");
     bytes32 public constant VALIDATOR_ORACLE = keccak256("VALIDATOR_ORACLE");
 
-    /**
-     * @notice the whitelist for the NFT collection addresses accpeted
-     */
-    mapping(address => bool) public approvedCollections;
 
     /**
      * @dev map to check if a holder has a token registered over an approved collection
@@ -45,7 +41,6 @@ contract NFTVaultManager is AccessControl {
     }
 
     function lockNFT(address collection_, uint256 tokenId_) external {
-        require(approvedCollections[collection_], "Not approved collection");
         require(_holdings[collection_][tokenId_] == address(0), "Token already locked");
 
         // get the token
@@ -56,7 +51,6 @@ contract NFTVaultManager is AccessControl {
     }
 
     function requestUnlock(address collection_, uint256 tokenId_) external {
-        require(approvedCollections[collection_], "Not approved collection");
         require(_holdings[collection_][tokenId_] != address(0), "Token not locked");
 
         ETHValidatorOracle(_validatorOracleAddress).verifyTokenIsWithdrawable(
@@ -83,7 +77,7 @@ contract NFTVaultManager is AccessControl {
      */
     function isTokenInVault(address collection_, uint256 tokenId_) external view returns (bool) {
         address previousOwner = _holdings[collection_][tokenId_];
-        return approvedCollections[collection_] && previousOwner != address(0);
+        return previousOwner != address(0);
     }
 
     function withdraw(address collection_, uint256 tokenId_) external {
@@ -99,27 +93,4 @@ contract NFTVaultManager is AccessControl {
         IERC721(collection_).transferFrom(address(this), msg.sender, tokenId_);
     }
 
-    /**
-     * @notice approve a collection contract
-     */
-    function approveCollection(address collection_) external onlyRole(MANAGER) {
-        require(!approvedCollections[msg.sender], "Collection already approved");
-        approvedCollections[collection_] = true;
-    }
-
-    /**
-     * @notice use ERC-165 to check for IERC721 interface in the collection contract
-     *         before approve
-     */
-    function safeApproveCollection(address collection_) external onlyRole(MANAGER) {
-        bytes4 erc721interfaceId = type(IERC721).interfaceId;
-
-        require(!approvedCollections[msg.sender], "Collection already approved");
-        require(
-            IERC165(collection_).supportsInterface(erc721interfaceId),
-            "Address doesn't support IERC721 interface"
-        );
-
-        approvedCollections[collection_] = true;
-    }
 }

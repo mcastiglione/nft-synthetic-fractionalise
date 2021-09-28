@@ -4,6 +4,15 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   let protocol = await ethers.getContract('ProtocolParameters');
 
+  if (network.tags.local) {
+    await deploy('FundingTokenMock', {
+      contract: 'FundingTokenMock',
+      from: deployer,
+      log: true,
+      args: [],
+    });
+  }
+
   await deploy('JotPool', {
     from: deployer,
     log: true,
