@@ -14,30 +14,9 @@ describe('NFTVaultManager', async function () {
     assert.ok(this.vaultManager.address);
   });
 
-  it('should fail on receive ERC721 check with non approved collection', async () => {
-    let tokenId = 1;
-
-    await expectRevert(this.vaultManager.lockNFT(constants.ZERO_ADDRESS, tokenId), 'Not approved collection');
-  });
-
-  it('permit to approve collections', async () => {
-    await this.vaultManager.approveCollection(this.collection.address);
-
-    let approved = await this.vaultManager.approvedCollections(this.collection.address);
-    assert.isTrue(approved, 'Invalid approval process');
-  });
-
-  it('fails to safe approve collections to non IERC721 contracts', async () => {
-    await expectRevert(
-      this.vaultManager.safeApproveCollection(this.vaultManager.address),
-      "Address doesn't support IERC721 interface"
-    );
-  });
-
   it('checks if token is in vault (when is not)', async () => {
     let tokenId = 1;
 
-    await this.vaultManager.approveCollection(this.collection.address);
     let tokenInVault = await this.vaultManager.isTokenInVault(this.collection.address, tokenId);
 
     assert.isFalse(tokenInVault, 'Token should not be in vault');
@@ -46,9 +25,6 @@ describe('NFTVaultManager', async function () {
   it('return true for tokens in vault', async () => {
     let tokenId = 1;
     [tokenOwner] = await ethers.getSigners();
-
-    // the admin approves the collection
-    await this.vaultManager.approveCollection(this.collection.address);
 
     // mint the mock token and approve it to the vault
     await this.collection.safeMint(tokenOwner.address);
