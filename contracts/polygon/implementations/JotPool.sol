@@ -107,6 +107,18 @@ contract JotPool is ERC721, Initializable {
         IERC20(jot).safeTransfer(msg.sender, liquidityBurnt);
     }
 
+    function getLiquidityValue(uint256 amount) external view returns (uint256) {
+        return _getLiquidityValue(amount);
+    }
+
+    function getTotalLiquidityValue() external view returns (uint256) {
+        return _getLiquidityValue(positions[msg.sender].liquidity);
+    }
+
+    function _getLiquidityValue(uint256 amount) internal view returns (uint256) {
+        return (IERC20(jot).balanceOf(address(this)) * amount) / totalLiquidity;
+    }
+
     function getPosition() external view returns (Position memory) {
         return positions[msg.sender];
     }
@@ -119,11 +131,7 @@ contract JotPool is ERC721, Initializable {
     }
 
     function _stake(address to, uint256 amount) internal {
-        uint256 ftBalance = IERC20(fundingToken).balanceOf(address(this));
-        uint256 x = ftBalance - lastReward;
-        if (totalStaked != 0) {
-            totalShares += ((x * stakerShare) * 10**18) / (totalStaked * stakerShareDenominator);
-        }
+        (uint256 ftBalance, uint256 x) = _sync();
         cumulativeRevenue += x;
         lastReward = ftBalance;
         totalStaked += amount;
@@ -142,6 +150,16 @@ contract JotPool is ERC721, Initializable {
         emit Staked(msg.sender, amount, id);
     }
 
+    function _sync() internal returns (uint256, uint256) {
+        uint256 ftBalance = IERC20(fundingToken).balanceOf(address(this));
+        uint256 x = ftBalance - lastReward;
+        if (totalStaked != 0) {
+            totalShares += ((x * stakerShare) * 10**18) / (totalStaked * stakerShareDenominator);
+        }
+
+        return (ftBalance, x);
+    }
+
     function unstakeShares(uint256 amount) external {
         _unstake(msg.sender, amount);
         IERC20(jot).transfer(msg.sender, amount);
@@ -149,13 +167,9 @@ contract JotPool is ERC721, Initializable {
 
     function _unstake(address to, uint256 amount) internal {
         require(positions[to].stake >= amount, "Insufficient stake balance");
-        uint256 ftBalance = IERC20(fundingToken).balanceOf(address(this));
-        uint256 x = ftBalance - lastReward;
-        if (totalStaked != 0) {
-            totalShares += ((x * stakerShare) * 10**18) / (totalStaked * stakerShareDenominator);
-        }
+        (uint256 ftBalance, ) = _sync();
 
-        uint256 reward = ((totalShares - positions[to].totalShares) * positions[to].stake) / 10**18;
+        uint256 reward = _getReward(to);
         lastReward = ftBalance - reward;
 
         if (amount == positions[to].stake) {
@@ -173,19 +187,23 @@ contract JotPool is ERC721, Initializable {
     }
 
     function claimRewards() external {
-        uint256 ftBalance = IERC20(fundingToken).balanceOf(address(this));
-        uint256 x = ftBalance - lastReward;
-        if (totalStaked != 0) {
-            totalShares += ((x * stakerShare) * 10**18) / (totalStaked * stakerShareDenominator);
-        }
+        (uint256 ftBalance, ) = _sync();
 
         address owner = msg.sender;
-        uint256 reward = ((totalShares - positions[owner].totalShares) * positions[owner].stake) / 10**18;
+        uint256 reward = _getReward(owner);
         lastReward = ftBalance - reward;
         positions[owner].totalShares = totalShares;
 
         emit RewardsClaimed(msg.sender, reward);
 
         IERC20(fundingToken).transfer(msg.sender, reward);
+    }
+
+    function getReward() external view returns (uint256 reward) {
+        reward = _getReward(msg.sender);
+    }
+
+    function _getReward(address owner) internal view returns (uint256 reward) {
+        reward = ((totalShares - positions[owner].totalShares) * positions[owner].stake) / 10**18;
     }
 }
