@@ -18,6 +18,8 @@ import "../governance/ProtocolParameters.sol";
 import "./Jot.sol";
 import "./Structs.sol";
 import "../libraries/ProtocolConstants.sol";
+import "hardhat/console.sol";
+
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
@@ -85,8 +87,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     address public erc721address;
 
-    IUniswapV2Router02 public uniswapV2Router;
-
     address public jotPool;
 
     event CoinFlipped(
@@ -130,6 +130,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ROUTER, msg.sender);
         _setupRole(AUCTION_MANAGER, auctionManagerAddress);
+        _setupRole(VALIDATOR_ORACLE, msg.sender);
+
     }
 
     /**
@@ -302,7 +304,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function getSalePrice(uint256 tokenId, uint256 buyAmount) public view returns (uint256) {
-        uint256 amount = (buyAmount * tokens[tokenId].fractionPrices) / 10**18;
+        uint256 amount = (buyAmount * tokens[tokenId].fractionPrices);
         return amount;
     }
 
@@ -332,7 +334,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         if (amountLeft < buyAmount) {
             buyAmount = amountLeft;
         }
-        uint256 amount = (buyAmount * token.fractionPrices) / 10**18;
+        uint256 amount = (buyAmount * token.fractionPrices);
         // Can't sell zero tokens
         require(amount != 0, "No tokens left!");
 
@@ -351,7 +353,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         ISyntheticNFT nft = ISyntheticNFT(erc721address);
         address nftOwner = nft.ownerOf(tokenId);
         require(nftOwner == msg.sender, "you are not the owner of the NFT!");
-        uint256 result = (tokens[tokenId].ownerSupply += amount);
+        uint256 result = tokens[tokenId].ownerSupply + amount;
         require(result <= ProtocolConstants.JOT_SUPPLY, "You can't deposit more than the Jot Supply limit");
         IJot(jotAddress).transferFrom(msg.sender, address(this), amount);
         tokens[tokenId].ownerSupply += amount;
@@ -420,18 +422,26 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice add available liquidity for a given token to UniSwap pool
      */
     function addLiquidityToPool(uint256 tokenId) public {
-        TokenData storage token = tokens[tokenId];
 
+        address uniswapV2Pair = IJot(jotAddress).uniswapV2Pair();
+
+        IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(uniswapV2Pair);
+
+        TokenData storage token = tokens[tokenId];
+        require(tokens[tokenId].soldSupply > 0, "soldSupply is zero");
         uint256 liquiditySupply = token.liquiditySupply;
         uint256 liquiditySold = token.liquiditySold;
 
-        // approve token transfer to cover all possible scenarios
         IJot(jotAddress).approve(address(uniswapV2Router), liquiditySupply);
 
         IERC20(fundingTokenAddress).approve(address(uniswapV2Router), liquiditySold);
+        
+        uint amountA;
+        uint amountB;
+        uint liquidity;
 
         // add the liquidity
-        uniswapV2Router.addLiquidity(
+        (amountA, amountB, liquidity) = uniswapV2Router.addLiquidity(
             jotAddress,
             fundingTokenAddress,
             liquiditySupply,
@@ -442,10 +452,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             block.timestamp // solhint-disable-line
         );
 
-        tokens[tokenId].liquiditySupply -= liquiditySupply;
-        tokens[tokenId].liquiditySold -= liquiditySold;
-        tokens[tokenId].sellingSupply -= liquiditySupply;
-        tokens[tokenId].soldSupply -= liquiditySupply;
+        tokens[tokenId].liquiditySupply -= amountA;
+        tokens[tokenId].liquiditySold -= amountB;
+        tokens[tokenId].sellingSupply -= amountA;
+        tokens[tokenId].soldSupply -= amountB;
     }
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {

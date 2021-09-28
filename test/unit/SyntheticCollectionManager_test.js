@@ -1,11 +1,31 @@
-const { assert } = require('chai');
+const { ethers } = require('hardhat');
+const { assert, expect } = require('chai');
+const { getEventArgs } = require('./helpers/events');
 
 describe('SyntheticCollectionManager', async function () {
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
     await deployments.fixture(['collection_fixtures']);
 
+    /* address */
+    [ owner, address1 ] = await ethers.getSigners();
+
+    /* Contracts */
     router = await ethers.getContract('SyntheticProtocolRouter');
+
+    nftID = 1;
+    NFT = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
+
+    const tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
+    await expect(tx).to.emit(router, 'TokenRegistered');
+    args = await getEventArgs(tx, 'TokenRegistered', router);
+
+    managerAddress = await router.getCollectionManagerAddress(NFT);
+    manager = await ethers.getContractAt('SyntheticCollectionManager', managerAddress);
+
+    jotAddress = await router.getJotsAddress(NFT);
+    jot = await ethers.getContractAt('JotMock', jotAddress);
+
   });
 
   describe('flip the coin game', async function () {
@@ -35,4 +55,27 @@ describe('SyntheticCollectionManager', async function () {
       it('if all tokens are sold, should add liquidity to pool');
     });
   });
+
+  describe('depositJots', async function () {
+    it('Verify that the SyntheticCollectionManager balance increases correctly', async () => {
+      const amount = 1000;
+      const tokenId = args.syntheticTokenId;
+      await jot.mint(owner.address, amount);
+      await jot.approve(managerAddress, amount);
+
+      // Store the balance of the SyntheticCollectionManager
+      // to which it is deposited to validate that the balance increases after the deposit
+      const beforeBalance = (await manager.tokens(tokenId)).ownerSupply.toNumber();
+
+      await manager.depositJots(tokenId, amount);
+
+      const afterBalance = (await manager.tokens(tokenId)).ownerSupply.toNumber();
+
+      expect(afterBalance).to.be.equal(beforeBalance + amount);
+    });
+
+    it('should fail if NFT is not the owner');
+    it('should fail if it exceeds the Jot Supply limit');
+  });
+
 });

@@ -15,7 +15,6 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let futuresProtocol = await ethers.getContract('FuturesProtocolParameters');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
   let validator = await ethers.getContract('PolygonValidatorOracle');
-  let PerpetualPoolLiteMock = await deploy('PerpetualPoolLiteMock', { from: deployer });
   let MockOracle = await deploy('MockOracle', { from: deployer });
 
   let pool = await ethers.getContract('PerpetualPoolLite');
@@ -34,7 +33,13 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let swapAddress;
 
   if (chainId == 1337 || chainId == 31337) {
-    let UniSwapFactoryMock = await deploy('UniSwapFactoryMock', { from: deployer });
+    let UniswapPairMock = await deploy('UniswapPairMock', {
+      from: deployer
+    });
+    let UniSwapFactoryMock = await deploy('UniSwapFactoryMock', {
+      from: deployer,
+      args: [UniswapPairMock.address]      
+    });
     let UniSwapRouterMock = await deploy('UniSwapRouterMock', {
       from: deployer,
       args: [UniSwapFactoryMock.address],
