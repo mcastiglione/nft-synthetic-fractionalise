@@ -111,8 +111,8 @@ contract JotPool is ERC721, Initializable {
         return _getLiquidityValue(amount);
     }
 
-    function getTotalLiquidityValue() external view returns (uint256) {
-        return _getLiquidityValue(positions[msg.sender].liquidity);
+    function getTotalLiquidityValue(address owner) external view returns (uint256) {
+        return _getLiquidityValue(positions[owner].liquidity);
     }
 
     function _getLiquidityValue(uint256 amount) internal view returns (uint256) {
