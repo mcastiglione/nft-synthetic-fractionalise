@@ -10,6 +10,7 @@ const networkConfig = {
     uniswapAddress: constants.ZERO_ADDRESS,
     maticToken: constants.ZERO_ADDRESS,
     vrfFee: '100000000000000',
+    usdtTokenAddress: constants.ZERO_ADDRESS,
   },
   31337: {
     name: 'hardhat',
@@ -19,6 +20,7 @@ const networkConfig = {
     uniswapAddress: constants.ZERO_ADDRESS,
     maticToken: constants.ZERO_ADDRESS,
     vrfFee: '100000000000000',
+    usdtTokenAddress: constants.ZERO_ADDRESS,
   },
   4: {
     name: 'rinkeby',
@@ -51,6 +53,7 @@ const networkConfig = {
     maticToken: '0x101f4779090843bb394902a973D9bf1e37F00635',
     oracleAddress: '0xC5324aE5b70712F24602b5b2b13618356c44B965',
     perpetualPoolLiteAddress: '0xE409e138362Ea53125e46732f17d4E758c06dDEe',
+    usdtTokenAddress: '0xa02f6adc7926efebbd59fd43a84f4e0c0c91e832',
   },
   137: {
     name: 'polygon',
