@@ -531,6 +531,18 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         emit FlipProcessed(requestId, flip.tokenId, flip.prediction, randomNumber);
     }
 
+    function recoverToken(uint256 tokenId) external {
+        require(AuctionsManager(_auctionsManagerAddress).isRecoverable(tokenId), "Token is not recoverable");
+        require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
+
+        // reverts on failure
+        IERC20(jotAddress).safeTransferFrom(msg.sender, address(this), ProtocolConstants.JOT_SUPPLY);
+
+        tokens[tokenId].ownerSupply = ProtocolConstants.JOT_SUPPLY;
+
+        AuctionsManager(_auctionsManagerAddress).blacklistNFT(tokenId);
+    }
+
     /**
      * @notice This method calls chainlink oracle and
      * verifies if the NFT has been locked on NFTVaultManager. In addition

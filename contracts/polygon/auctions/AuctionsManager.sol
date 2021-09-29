@@ -52,6 +52,10 @@ contract AuctionsManager is AccessControl, Initializable {
         _recoverableTillDate[msg.sender][nftId_] = block.timestamp + protocol.recoveryThreshold(); // solhint-disable-line
     }
 
+    function blacklistNFT(uint256 nftId_) external onlyRole(COLLECTION_MANAGER) {
+        _whitelistedTokens[msg.sender][nftId_] = false;
+    }
+
     function isRecoverable(uint256 nftId_) public view returns (bool) {
         // solhint-disable-next-line
         return (_whitelistedTokens[msg.sender][nftId_] &&
