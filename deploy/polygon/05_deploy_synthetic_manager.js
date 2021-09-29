@@ -1,6 +1,10 @@
+const { network } = require('hardhat');
+const { networkConfig } = require('../../helper-hardhat-config');
+
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
+  const chainId = await getChainId();
 
   // get the previously deployed contracts
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
@@ -9,7 +13,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await deploy('SyntheticCollectionManager', {
     from: deployer,
     log: true,
-    args: [randomConsumer.address, validator.address],
+    args: [randomConsumer.address, validator.address, networkConfig[chainId].usdtTokenAddress],
   });
 };
 
