@@ -8,7 +8,7 @@ describe('SyntheticCollectionManager', async function () {
     await deployments.fixture(['collection_fixtures']);
 
     /* address */
-    [ owner, address1 ] = await ethers.getSigners();
+    [owner, address1] = await ethers.getSigners();
 
     /* Contracts */
     router = await ethers.getContract('SyntheticProtocolRouter');
@@ -26,7 +26,6 @@ describe('SyntheticCollectionManager', async function () {
 
     jotAddress = await router.getJotsAddress(NFT);
     jot = await ethers.getContractAt('JotMock', jotAddress);
-
   });
 
   describe('flip the coin game', async function () {
@@ -46,7 +45,7 @@ describe('SyntheticCollectionManager', async function () {
       it('should send funds to caller ');
       it('should emit te FlipProcessed event');
     });
-    
+
     describe('buyJotTokens', async function () {
       it('should fail if NFT is not registered ');
       it('should fail if token price is zero');
@@ -59,31 +58,27 @@ describe('SyntheticCollectionManager', async function () {
 
   describe('Add Liquidity to Pool', async function () {
     it('should fail if NFT is not registered ', async () => {
-      
       // Verify NFT
-      let oracleAddress = await router.oracleAddress();
-      const oracle = await ethers.getContractAt('MockOracle', oracleAddress);
-      oracle.setRouter(router.address);
-      await oracle.verifyNFT(NFT, tokenId);
+      await router.verifyNFT(NFT, tokenId);
 
       const amount = 1000;
 
       const fundingTokenAddress = await manager.fundingTokenAddress();
       const fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
 
-      await jot.mint(owner.address, amount*10000);
-      await jot.approve(managerAddress, amount*10000);
-      await fundingToken.mint(owner.address, amount*10000);
-      await fundingToken.approve(managerAddress, amount*10000);
+      await jot.mint(owner.address, amount * 10000);
+      await jot.approve(managerAddress, amount * 10000);
+      await fundingToken.mint(owner.address, amount * 10000);
+      await fundingToken.approve(managerAddress, amount * 10000);
 
-      await manager.depositJots(tokenId, amount*10);
+      await manager.depositJots(tokenId, amount * 10);
 
-      await manager.increaseSellingSupply(tokenId, amount*10);
+      await manager.increaseSellingSupply(tokenId, amount * 10);
 
-      await manager.buyJotTokens(tokenId, amount);  
-      
+      await manager.buyJotTokens(tokenId, amount);
+
       await manager.addLiquidityToPool(tokenId);
-      //console.log('jot UniSwap pair', await router.getCollectionUniswapPair(NFT)); 
+      //console.log('jot UniSwap pair', await router.getCollectionUniswapPair(NFT));
     });
   });
 
@@ -107,11 +102,11 @@ describe('SyntheticCollectionManager', async function () {
     it('should fail if NFT is not the owner', async () => {
       const amount = 1000;
 
-      await expect(manager.connect(address1).depositJots(tokenId, amount))
-      .to.revertedWith('you are not the owner of the NFT!');
+      await expect(manager.connect(address1).depositJots(tokenId, amount)).to.revertedWith(
+        'you are not the owner of the NFT!'
+      );
     });
 
     it('should fail if it exceeds the Jot Supply limit');
   });
-
 });

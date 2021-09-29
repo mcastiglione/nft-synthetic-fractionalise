@@ -96,7 +96,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address fundingTokenAddress_,
         address randomConsumerAddress_,
         address validatorAddress_,
-        address oracleAddress_,
         FuturesParametersContracts memory futuresParameters,
         ProtocolParametersContracts memory protocolParameters
     ) {
