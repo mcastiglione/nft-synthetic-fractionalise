@@ -405,7 +405,6 @@ interface IPerpetualPoolLite {
 //     }
 
     struct SymbolInfo {
-        string symbol;
         int256 price;
         int256 cumulativeFundingRate;
         int256 tradersNetVolume;
