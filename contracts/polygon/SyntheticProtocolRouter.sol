@@ -365,11 +365,11 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     /**
      * @notice verify a synthetic NFT
      */
-    function verifyNFT(address collection, uint256 tokenId) public onlyRole(ORACLE) {
+    function verifyNFT(address collection, uint256 tokenId) public {
         require(isSyntheticNFTCreated(collection, tokenId), "NFT not registered");
         address collectionManager = getCollectionManagerAddress(collection);
         SyntheticCollectionManager(collectionManager).verify(tokenId);
-    }
+    } 
 
     function processSuccessfulVerify(address collection, uint256 tokenId) public onlyRole(ORACLE) {
         require(isSyntheticNFTCreated(collection, tokenId), "NFT not registered");

@@ -440,9 +440,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 liquiditySupply = token.liquiditySupply;
         uint256 liquiditySold = token.liquiditySold;
 
-        IJot(jotAddress).approve(address(uniswapV2Router), liquiditySupply);
+        IJot(jotAddress).approve(_swapAddress, liquiditySupply);
 
-        IERC20(fundingTokenAddress).approve(address(uniswapV2Router), liquiditySold);
+        IERC20(fundingTokenAddress).approve(_swapAddress, liquiditySold);
         
         uint256 amountA;
         uint256 amountB;
