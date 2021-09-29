@@ -354,15 +354,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     }
 
     /**
-     * @notice checks whether a Synthetic has been verified or not
-     */
-    function isNFTVerified(address collection, uint256 tokenId) public view returns (bool) {
-        require(isSyntheticNFTCreated(collection, tokenId), "NFT not registered");
-        address collectionManager = getCollectionManagerAddress(collection);
-        return SyntheticCollectionManager(collectionManager).isVerified(tokenId);
-    }
-
-    /**
      * @notice getter for Jot Address of a collection
      */
     function getJotsAddress(address collection) public view returns (address) {
