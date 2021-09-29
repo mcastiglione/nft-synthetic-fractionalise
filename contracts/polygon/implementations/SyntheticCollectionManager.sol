@@ -543,7 +543,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(
             originalCollectionAddress,
-            token.originalTokenID,
+            tokenId,
             nonces[token.originalTokenID]
         );
     }
@@ -592,7 +592,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function getOriginalID(uint256 tokenId) public view returns (uint256) {
-        require(ISyntheticNFT(erc721address).exists(tokenId));
+        require(ISyntheticNFT(erc721address).exists(tokenId), "NFT not minted");
         return tokens[tokenId].originalTokenID;
+    }
+
+    function getTokenURI(uint256 tokenId) public view returns (string memory) {
+        return ISyntheticNFT(erc721address).tokenURI(tokenId);
     }
 }
