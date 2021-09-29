@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../extensions/IERC20ManagedAccounts.sol";
 import "../Interfaces.sol";
+import "hardhat/console.sol";
 
 contract JotMock is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
     bytes32 public constant ROUTER = keccak256("ROUTER");
@@ -46,6 +47,16 @@ contract JotMock is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
 
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(swapAddress);
         uniswapV2Router = _uniswapV2Router;
+
+        IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
+            address(this),
+            fundingTokenAddress
+        );
+
+        uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory()).getPair(
+            address(this),
+            fundingTokenAddress
+        );
 
     }
 

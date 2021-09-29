@@ -27,7 +27,13 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let ptoken = addresses[2];
 
   if (chainId == 1337 || chainId == 31337) {
-    let UniSwapFactoryMock = await deploy('UniSwapFactoryMock', { from: deployer });
+    let UniswapPairMock = await deploy('UniswapPairMock', {
+      from: deployer
+    });
+    let UniSwapFactoryMock = await deploy('UniSwapFactoryMock', {
+      from: deployer,
+      args: [UniswapPairMock.address]      
+    });
     let UniSwapRouterMock = await deploy('UniSwapRouterMock', {
       from: deployer,
       args: [UniSwapFactoryMock.address],
@@ -65,7 +71,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       randomConsumer.address,
       validator.address, 
       oracleAddress,
-      { lTokenLite_: lTokenLite.address, pTokenLite_: pTokenLite.address, perpetualPoolLiteAddress_: perpetualPoolLite.address },
+      { lTokenLite_: ltoken, pTokenLite_: ptoken, perpetualPoolLiteAddress_: pool.address },
       { fractionalizeProtocol: protocol.address, futuresProtocol: futuresProtocol.address },
     ],
   });

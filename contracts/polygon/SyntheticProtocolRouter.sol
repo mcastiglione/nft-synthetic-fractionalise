@@ -175,7 +175,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 _auctionManager,
                 _protocol,
                 _fundingTokenAddress,
-                jotPoolAddress
+                jotPoolAddress,
+                swapAddress
             );
 
             AuctionsManager(_auctionManager).grantRole(
@@ -362,6 +363,12 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         require(isSyntheticNFTCreated(collection, tokenId), "NFT not registered");
         address collectionManager = getCollectionManagerAddress(collection);
         SyntheticCollectionManager(collectionManager).verify(tokenId);
+    }
+
+    function processSuccessfulVerify(address collection, uint256 tokenId) public onlyRole(ORACLE) {
+        require(isSyntheticNFTCreated(collection, tokenId), "NFT not registered");
+        address collectionManager = getCollectionManagerAddress(collection);
+        SyntheticCollectionManager(collectionManager).processSuccessfulVerify(tokenId);
     }
 
     /**

@@ -16,7 +16,7 @@ contract MockOracle {
 
     function verifyNFT(address collection, uint256 tokenId) public {
         SyntheticProtocolRouter routerInstance = SyntheticProtocolRouter(router);
-        routerInstance.verifyNFT(collection, tokenId);
+        routerInstance.processSuccessfulVerify(collection, tokenId);
     }
 
 }
