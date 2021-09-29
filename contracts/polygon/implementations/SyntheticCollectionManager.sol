@@ -163,11 +163,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _originalToSynthetic[originalID] = newSyntheticID;
 
         // Empty previous id
-        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, false);
+        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, false, false);
 
         // Fill new ID
         uint256 tokenSupply = ProtocolConstants.JOT_SUPPLY;
-        tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, false);
+        tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, false, false);
     }
 
     /**
@@ -281,7 +281,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             liquiditySold: 0,
             fractionPrices: priceFraction,
             lastFlipTime: 0,
-            verified: false
+            verified: false,
+            verifying: false
         });
 
         tokens[syntheticID] = data;
@@ -551,10 +552,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             tokenId,
             nonces[token.originalTokenID]
         );
+
+        tokens[tokenId].verifying = true;
+
     }
 
     function processSuccessfulVerify(uint256 tokenId) external onlyRole(VALIDATOR_ORACLE) {
         tokens[tokenId].verified = true;
+        tokens[tokenId].verifying = false;
     }
 
     /**
@@ -604,4 +609,16 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function getTokenURI(uint256 tokenId) public view returns (string memory) {
         return ISyntheticNFT(erc721address).tokenURI(tokenId);
     }
+
+    function setMetadata(uint256 tokenId, string memory metadata) public {
+        TokenData storage token = tokens[tokenId];
+        require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
+        require(!token.verified, "Can't change metadata after verify");
+        require(token.verifying, "Can't change metadata while verifying");
+
+        address tokenOwner = IERC721(erc721address).ownerOf(tokenId);
+        require(msg.sender == tokenOwner, "You are not the owner of the NFT!");
+        ISyntheticNFT(erc721address).setMetadata(tokenId, metadata);
+    }
 }
+ 
