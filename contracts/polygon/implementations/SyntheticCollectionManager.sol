@@ -138,7 +138,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      *      changes this protocol parameter in the middle of the auction
      */
     function reassignNFT(uint256 nftId_, address newOwner_) external onlyRole(AUCTION_MANAGER) {
-        require(ISyntheticNFT(erc721address).exists(nftId_), "Non existent synthetic NFT");
+        string memory metadata = ISyntheticNFT(erc721address).tokenURI(nftId_);
 
         TokenData storage data = tokens[nftId_];
 
@@ -153,6 +153,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // Get new synthetic ID
         uint256 newSyntheticID = tokenCounter.current();
+
+        // Mint new one
+        ISyntheticNFT(erc721address).safeMint(newOwner_, newSyntheticID, metadata);
 
         // Update original to synthetic mapping
         _originalToSynthetic[originalID] = newSyntheticID;
