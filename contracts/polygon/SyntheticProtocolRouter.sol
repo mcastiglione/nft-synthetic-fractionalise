@@ -23,8 +23,6 @@ import "./Interfaces.sol";
 contract SyntheticProtocolRouter is AccessControl, Ownable {
     using Counters for Counters.Counter;
 
-    bytes32 public constant ORACLE = keccak256("ORACLE");
-
     /**
      * @dev implementation addresses for proxies
      */
@@ -44,7 +42,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     address private _lTokenLite;
     address private _pTokenLite;
 
-    address public oracleAddress;
     /**
      * @dev collections map.
      * collection address => collection data
@@ -117,8 +114,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         _lTokenLite = futuresParameters.lTokenLite_;
         _pTokenLite = futuresParameters.pTokenLite_;
         _perpetualPoolLiteAddress = futuresParameters.perpetualPoolLiteAddress_;
-        oracleAddress = oracleAddress_;
-        _setupRole(ORACLE, oracleAddress_);
     }
 
     /**

@@ -28,11 +28,11 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
   if (chainId == 1337 || chainId == 31337) {
     let UniswapPairMock = await deploy('UniswapPairMock', {
-      from: deployer
+      from: deployer,
     });
     let UniSwapFactoryMock = await deploy('UniSwapFactoryMock', {
       from: deployer,
-      args: [UniswapPairMock.address]      
+      args: [UniswapPairMock.address],
     });
     let UniSwapRouterMock = await deploy('UniSwapRouterMock', {
       from: deployer,
@@ -51,11 +51,8 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     oracleAddress = networkConfig[chainId].oracleAddress;
   } else {
     let PerpetualPoolLiteMock = await deploy('PerpetualPoolLiteMock', { from: deployer });
-    let MockOracle = await deploy('MockOracle', { from: deployer });
     perpetualPoolLiteAddress = PerpetualPoolLiteMock.address;
-    oracleAddress = MockOracle.address;
   }
-
 
   let router = await deploy('SyntheticProtocolRouter', {
     from: deployer,
@@ -69,8 +66,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       auctionsManager.address,
       funding.address,
       randomConsumer.address,
-      validator.address, 
-      oracleAddress,
+      validator.address,
       { lTokenLite_: ltoken, pTokenLite_: ptoken, perpetualPoolLiteAddress_: pool.address },
       { fractionalizeProtocol: protocol.address, futuresProtocol: futuresProtocol.address },
     ],
@@ -91,5 +87,5 @@ module.exports.dependencies = [
   'synthetic_manager_implementation',
   'protocol_parameters',
   'futures_protocol_parameters',
-  'pool'
+  'pool',
 ];
