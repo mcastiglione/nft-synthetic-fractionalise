@@ -15,13 +15,11 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let futuresProtocol = await ethers.getContract('FuturesProtocolParameters');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
   let validator = await ethers.getContract('PolygonValidatorOracle');
-  let MockOracle = await deploy('MockOracle', { from: deployer });
 
   let pool = await ethers.getContract('PerpetualPoolLite');
   let addresses = await pool.getAddresses();
   let ltoken = addresses[1];
   let ptoken = addresses[2];
-
 
   await deploy('TestSyntheticNFT', {
     contract: 'SyntheticNFT',
@@ -34,11 +32,11 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
   if (chainId == 1337 || chainId == 31337) {
     let UniswapPairMock = await deploy('UniswapPairMock', {
-      from: deployer
+      from: deployer,
     });
     let UniSwapFactoryMock = await deploy('UniSwapFactoryMock', {
       from: deployer,
-      args: [UniswapPairMock.address]      
+      args: [UniswapPairMock.address],
     });
     let UniSwapRouterMock = await deploy('UniSwapRouterMock', {
       from: deployer,
@@ -64,7 +62,6 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       funding.address, //constants.ZERO_ADDRESS,
       randomConsumer.address,
       validator.address,
-      MockOracle.address,
       { lTokenLite_: ltoken, pTokenLite_: ptoken, perpetualPoolLiteAddress_: pool.address },
       { fractionalizeProtocol: protocol.address, futuresProtocol: futuresProtocol.address },
     ],

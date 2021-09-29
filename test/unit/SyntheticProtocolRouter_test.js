@@ -8,9 +8,6 @@ describe('SyntheticProtocolRouter', async function () {
     await deployments.fixture(['auctions_manager_initialization']);
     deployer = await getNamedAccounts();
     router = await ethers.getContract('SyntheticProtocolRouter');
-    let oracleAddress = await router.oracleAddress();
-    oracle = await ethers.getContractAt('MockOracle', oracleAddress);
-    await oracle.setRouter(router.address);
 
     NFT = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
 
@@ -29,30 +26,21 @@ describe('SyntheticProtocolRouter', async function () {
 
   it('after register NFT should be non-verified', async () => {
     let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
-    
+
     await expect(tx).to.emit(router, 'TokenRegistered');
     let args = await getEventArgs(tx, 'TokenRegistered', router);
-    
+
     const verified = await router.isNFTVerified(NFT, args.syntheticTokenId);
     assert.equal(verified, false);
   });
 
-  it('try to verify with non-verifier address', async () => {
-    let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
-    
-    await expect(tx).to.emit(router, 'TokenRegistered');
-    let args = await getEventArgs(tx, 'TokenRegistered', router);
-    
-    await expect(router.verifyNFT(NFT, args.syntheticTokenId)).to.be.reverted;
-  });
-
   it('verify with correct address', async () => {
     let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
-    
+
     await expect(tx).to.emit(router, 'TokenRegistered');
     let args = await getEventArgs(tx, 'TokenRegistered', router);
-    
-    const response = await oracle.verifyNFT(NFT, args.syntheticTokenId);
+
+    const response = await router.verifyNFT(NFT, args.syntheticTokenId);
     assert.ok(response);
   });
 
@@ -66,5 +54,4 @@ describe('SyntheticProtocolRouter', async function () {
     assert.ok(ptoken);
     assert.ok(perpetualPoolAddress);
   });
-
 });

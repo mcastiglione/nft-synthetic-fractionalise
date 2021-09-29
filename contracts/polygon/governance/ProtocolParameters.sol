@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @notice the owner of this contract is the timelock controller of the governance feature
  */
 contract ProtocolParameters is Ownable {
-
     // interval in seconds between the one flip to another in one lock contract
     uint256 public flippingInterval;
 
@@ -21,10 +20,14 @@ contract ProtocolParameters is Ownable {
     // the duration of an NFT auction in seconds
     uint256 public auctionDuration;
 
-    event FlippingIntervalUpdated(uint256 value);
-    event FlippingRewardUpdated(uint256 value);
-    event FlippingAmountUpdated(uint256 value);
-    event AuctionDurationUpdated(uint256 value);
+    // the period of grace to recover the nft after reaching 0 owner supply
+    uint256 public recoveryThreshold;
+
+    event FlippingIntervalUpdated(uint256 from, uint256 to);
+    event FlippingRewardUpdated(uint256 from, uint256 to);
+    event FlippingAmountUpdated(uint256 from, uint256 to);
+    event AuctionDurationUpdated(uint256 from, uint256 to);
+    event RecoveryThresholdUpdated(uint256 from, uint256 to);
 
     /**
      * @dev sets the default (initial) values of the parameters
@@ -54,27 +57,33 @@ contract ProtocolParameters is Ownable {
 
     function setFlippingInterval(uint256 flippingInterval_) external onlyOwner {
         require(flippingInterval_ > 15 minutes, "Flipping Interval should be greater than 15 minutes");
+        emit FlippingIntervalUpdated(flippingInterval, flippingInterval_);
         flippingInterval = flippingInterval_;
-        emit FlippingIntervalUpdated(flippingInterval_);
     }
 
     function setFlippingReward(uint256 flippingReward_) external onlyOwner {
         require(flippingReward_ > 0, "Invalid Reward");
         require(flippingReward_ < flippingAmount, "Reward should be lower than Amount");
+        emit FlippingRewardUpdated(flippingReward, flippingReward_);
         flippingReward = flippingReward_;
-        emit FlippingRewardUpdated(flippingReward_);
     }
 
     function setFlippingAmount(uint256 flippingAmount_) external onlyOwner {
         require(flippingAmount_ > 0, "Invalid Amount");
         require(flippingReward < flippingAmount_, "Reward should be lower than Amount");
+        emit FlippingAmountUpdated(flippingAmount, flippingAmount_);
         flippingAmount = flippingAmount_;
-        emit FlippingAmountUpdated(flippingAmount_);
     }
 
     function setAuctionDuration(uint256 auctionDuration_) external onlyOwner {
         require(auctionDuration_ > 1 hours, "Auction duration should be greater than 1 hour");
+        emit AuctionDurationUpdated(auctionDuration, auctionDuration_);
         auctionDuration = auctionDuration_;
-        emit AuctionDurationUpdated(auctionDuration_);
+    }
+
+    function setRecoveryThreshold(uint256 recoveryThreshold_) external onlyOwner {
+        require(recoveryThreshold_ > 1 hours, "Recovery threshold should be greater than 1 hour");
+        emit RecoveryThresholdUpdated(recoveryThreshold, recoveryThreshold_);
+        recoveryThreshold = recoveryThreshold_;
     }
 }

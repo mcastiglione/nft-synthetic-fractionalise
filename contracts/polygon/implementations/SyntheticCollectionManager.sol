@@ -18,7 +18,6 @@ import "../governance/ProtocolParameters.sol";
 import "./Jot.sol";
 import "./Structs.sol";
 import "../libraries/ProtocolConstants.sol";
-import "hardhat/console.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
@@ -135,7 +134,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ROUTER, msg.sender);
         _setupRole(AUCTION_MANAGER, auctionManagerAddress);
-        _setupRole(VALIDATOR_ORACLE, msg.sender);
     }
 
     /**
@@ -439,9 +437,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 liquiditySupply = token.liquiditySupply;
         uint256 liquiditySold = token.liquiditySold;
 
-        IJot(jotAddress).approve(address(uniswapV2Router), liquiditySupply);
+        IJot(jotAddress).approve(_swapAddress, liquiditySupply);
 
-        IERC20(fundingTokenAddress).approve(address(uniswapV2Router), liquiditySold);
+        IERC20(fundingTokenAddress).approve(_swapAddress, liquiditySold);
 
         uint256 amountA;
         uint256 amountB;
