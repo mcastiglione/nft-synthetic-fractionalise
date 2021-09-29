@@ -18,7 +18,7 @@ describe('RandomNumberConsumer', async function () {
   });
 
   it('should allow to flip from collection contract', async () => {
-    let tx = await this.router.registerNFT(ORIGINAL_COLLECTION_ADDRESS, '1', 10, 5, 'My Collection', 'MYC');
+    let tx = await this.router.registerNFT(ORIGINAL_COLLECTION_ADDRESS, '1', 10, 5, 'My Collection', 'MYC', '');
     await expect(tx).to.emit(this.router, 'CollectionManagerRegistered');
 
     // use the helper to get event args

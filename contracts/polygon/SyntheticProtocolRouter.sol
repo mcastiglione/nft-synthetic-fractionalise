@@ -137,12 +137,12 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         uint256 supplyToKeep,
         uint256 priceFraction,
         string memory originalName,
-        string memory originalSymbol
+        string memory originalSymbol,
+        string memory metadata
     ) public {
         require(collection != address(0), "Invalid collection");
 
         address collectionAddress;
-        uint256 collectionID = protocolVaults.current();
         // Checks whether a collection is registered or not
         // If not registered, then register it and increase the Vault counter
         if (!isSyntheticCollectionRegistered(collection)) {
@@ -223,7 +223,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             );
 
             _collections[collection] = SyntheticCollection({
-                collectionID: collectionID,
+                collectionID: protocolVaults.current(),
                 collectionManagerAddress: collectionAddress,
                 jotAddress: jotAddress,
                 jotPoolAddress: jotPoolAddress,
@@ -236,10 +236,10 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 perpetualPoolLiteAddress: futuresData.perpetualPoolLiteAddress_
             });
 
-            _collectionIdToAddress[collectionID] = collectionAddress;
+            _collectionIdToAddress[protocolVaults.current()] = collectionAddress;
 
             emit CollectionManagerRegistered(
-                collectionID,
+                protocolVaults.current(),
                 collectionAddress,
                 jotAddress,
                 jotPoolAddress,
@@ -260,9 +260,15 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
         SyntheticCollectionManager collectionManager = SyntheticCollectionManager(collectionAddress);
 
-        uint256 syntheticID = collectionManager.register(tokenId, supplyToKeep, priceFraction, msg.sender);
+        uint256 syntheticID = collectionManager.register(
+            tokenId, 
+            supplyToKeep, 
+            priceFraction, 
+            msg.sender, 
+            metadata
+        );
 
-        emit TokenRegistered(collectionAddress, collectionID, syntheticID);
+        emit TokenRegistered(collectionAddress, protocolVaults.current(), syntheticID);
     }
 
     function deployFutures(

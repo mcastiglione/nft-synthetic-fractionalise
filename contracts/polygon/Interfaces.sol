@@ -17,7 +17,8 @@ interface ISyntheticNFT is IERC721Metadata {
 
     function safeMint(
         address to,
-        uint256 tokenId
+        uint256 tokenId,
+        string memory metadata
     ) external;
 
     function safeBurn(uint256 tokenId) external;

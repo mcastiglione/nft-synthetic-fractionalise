@@ -232,9 +232,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice Checks isSyntheticNFTCreated(address, id) is False.
      * Then it mints a new NFT with: ”to”, ”id” and ”metadata”
      */
-    function generateSyntheticNFT(address to, uint256 tokenId) private {
-        ISyntheticNFT(erc721address).safeMint(to, tokenId);
-    }
+    function generateSyntheticNFT(
+        address to, 
+        uint256 tokenId, 
+        string memory metadata
+    ) private {
+        ISyntheticNFT(erc721address).safeMint(to, tokenId, metadata);
+    } 
 
     /**
      * @notice First
@@ -253,14 +257,15 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 tokenId,
         uint256 supplyToKeep,
         uint256 priceFraction,
-        address nftOwner
+        address nftOwner,
+        string memory metadata
     ) public onlyRole(ROUTER) returns (uint256) {
         require(priceFraction > 0, "priceFraction can't be zero");
         require(isSyntheticNFTCreated(tokenId) == false, "Synthetic NFT already generated!");
 
         uint256 syntheticID = tokenCounter.current();
 
-        generateSyntheticNFT(nftOwner, syntheticID);
+        generateSyntheticNFT(nftOwner, syntheticID, metadata);
 
         Jot(jotAddress).mint(address(this), _jotsSupply);
 

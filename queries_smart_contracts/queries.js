@@ -12,7 +12,7 @@ async function test() {
 
   
   // let txn = await router.registerNFT("0xd03659fed272a197129b8a65f4e732fabfcee99a", "100", 
-  //                  "500000000000000000000", "5000000", "SiriusCreature", "OSC");
+  //                  "500000000000000000000", "5000000", "SiriusCreature", "OSC", "");
   //const jotAddress = await router.getCollectionManagerAddress(NFT);
   // console.log( txn)
 
@@ -24,7 +24,7 @@ async function test() {
   //collection = collection.attach("0x0a831A0ffDbbA048434dC1244E61166e2D5A76e4")
   //console.log(await parameters.flippingInterval())
   //result =await collection.getRemainingSupply("1")
-  //result = await router.registerNFT("0x8dd1792400d997bf2216d0ea09f6dcb45c8e96e7", 13, 100, 5, "Sirius", "SIRIUS")
+  //result = await router.registerNFT("0x8dd1792400d997bf2216d0ea09f6dcb45c8e96e7", 13, 100, 5, "Sirius", "SIRIUS", """)
   console.log( result, result1, result2)
 }
 

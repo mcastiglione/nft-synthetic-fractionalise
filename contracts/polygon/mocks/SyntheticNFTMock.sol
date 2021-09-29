@@ -62,9 +62,11 @@ contract SyntheticNFTMock is ERC721, Initializable, AccessControl {
 
     function safeMint(
         address to,
-        uint256 tokenId
+        uint256 tokenId, 
+        string memory metadata
     ) public onlyRole(MANAGER) {
         _mint(to, tokenId);
+        _tokenMetadata[tokenId] = metadata;
     }
 
     function setMetadata(

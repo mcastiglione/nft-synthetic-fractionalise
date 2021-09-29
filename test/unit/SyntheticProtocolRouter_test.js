@@ -22,13 +22,13 @@ describe('SyntheticProtocolRouter', async function () {
   });
 
   it('verify that UniSwap Pair was created after registerNFT', async () => {
-    await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
+    await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
     const uniswapV2Pair = await router.getCollectionUniswapPair(NFT);
     assert.ok(uniswapV2Pair);
   });
 
   it('after register NFT should be non-verified', async () => {
-    let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
+    let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
     
     await expect(tx).to.emit(router, 'TokenRegistered');
     let args = await getEventArgs(tx, 'TokenRegistered', router);
@@ -38,7 +38,7 @@ describe('SyntheticProtocolRouter', async function () {
   });
 
   it('try to verify with non-verifier address', async () => {
-    let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
+    let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
     
     await expect(tx).to.emit(router, 'TokenRegistered');
     let args = await getEventArgs(tx, 'TokenRegistered', router);
@@ -47,7 +47,7 @@ describe('SyntheticProtocolRouter', async function () {
   });
 
   it('verify with correct address', async () => {
-    let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
+    let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
     
     await expect(tx).to.emit(router, 'TokenRegistered');
     let args = await getEventArgs(tx, 'TokenRegistered', router);
@@ -57,7 +57,7 @@ describe('SyntheticProtocolRouter', async function () {
   });
 
   it('Verifiy it is created “LToken”, “PToken” and “PerpetualFutures” when initialised a new collection', async () => {
-    await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
+    await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
     const ltoken = await router.getCollectionlTokenAddress(NFT);
     const ptoken = await router.getCollectionpTokenAddress(NFT);
     const perpetualPoolAddress = await router.getCollectionPerpetualPoolAddress(NFT);

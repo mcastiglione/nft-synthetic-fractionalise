@@ -30,15 +30,15 @@ describe('Contract Implementations SyntheticNFT', async function () {
 
   it('Testing on safeMint', async () => {
     const syntheticByManager = await ethers.getContract('SyntheticNFT', manager);
-    assert.ok(await syntheticByManager.safeMint(account, 1));
+    assert.ok(await syntheticByManager.safeMint(account, 1, ''));
 
     const syntheticsByAccount = await ethers.getContract('SyntheticNFT');
-    await expect(syntheticsByAccount.safeMint(account, 2)).to.be.reverted;
+    await expect(syntheticsByAccount.safeMint(account, 2, '')).to.be.reverted;
   })
 
   it ('Check if token exists and does not exist', async () => {
     const syntheticByManager = await ethers.getContract('SyntheticNFT', manager);
-    await syntheticByManager.safeMint(account, 1);
+    await syntheticByManager.safeMint(account, 1, '');
 
     assert.ok(await syntheticByManager.exists(1));
     expect(await syntheticByManager.exists(3)).to.be.equal(false);
@@ -46,7 +46,7 @@ describe('Contract Implementations SyntheticNFT', async function () {
 
   it ('Check setMetadata and tokenUri', async () => {
     const syntheticByManager = await ethers.getContract('SyntheticNFT', manager);
-    await syntheticByManager.safeMint(account, 1);
+    await syntheticByManager.safeMint(account, 1, '');
 
     assert.ok(await syntheticByManager.setMetadata(1, 'save this metadata'));
     expect(await syntheticByManager.tokenURI(1)).to.be.equal('save this metadata');
@@ -57,13 +57,13 @@ describe('Contract Implementations SyntheticNFT', async function () {
 
   it ('Check safeBurn', async () => {
     const syntheticByManager = await ethers.getContract('SyntheticNFT', manager);
-    await syntheticByManager.safeMint(account, 1);
+    await syntheticByManager.safeMint(account, 1, '');
     assert.ok(await syntheticByManager.safeBurn(1));
 
-    await syntheticByManager.safeMint(account, 3);
+    await syntheticByManager.safeMint(account, 3, '');
     assert.ok(await syntheticByManager.safeBurn(3));
 
-    await syntheticByManager.safeMint(account, 2);
+    await syntheticByManager.safeMint(account, 2, '');
     const syntheticByAccount = await ethers.getContract('SyntheticNFT', account);
     await expect(syntheticByAccount.safeBurn(2)).to.be.reverted;
   })

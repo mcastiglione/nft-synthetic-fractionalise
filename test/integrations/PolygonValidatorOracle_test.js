@@ -16,7 +16,7 @@ skip.if(network.name != 'mumbai').describe('PolygonValidatorOracle', async () =>
       let syntheticTokenId;
 
       if (!isRegisterd) {
-        let tx = await this.router.registerNFT(ORIGINAL_COLLECTION_ADDRESS, '1', 10, 5, 'My Collection', 'MYC');
+        let tx = await this.router.registerNFT(ORIGINAL_COLLECTION_ADDRESS, '1', 10, 5, 'My Collection', 'MYC', '');
 
         await expect(tx).to.emit(this.router, 'CollectionManagerRegistered');
 
