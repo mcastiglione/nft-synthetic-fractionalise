@@ -104,7 +104,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 randomResult
     );
 
-    constructor(address randomConsumerAddress, address validatorAddress, address usdtAddress) {
+    constructor(
+        address randomConsumerAddress,
+        address validatorAddress,
+        address usdtAddress
+    ) {
         _randomConsumerAddress = randomConsumerAddress;
         _validatorAddress = validatorAddress;
         _usdtAddress = usdtAddress;
@@ -568,8 +572,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         tokens[tokenId].verifying = true;
     }
 
-    function processSuccessfulVerify(uint256 tokenId) external onlyRole(VALIDATOR_ORACLE) {
-        tokens[tokenId].verified = true;
+    function processSuccessfulVerify(uint256 tokenId, bool verified) external onlyRole(VALIDATOR_ORACLE) {
+        tokens[tokenId].verified = verified;
         tokens[tokenId].verifying = false;
     }
 

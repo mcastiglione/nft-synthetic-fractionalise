@@ -99,11 +99,10 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         VerifyRequest memory requestData = _verifyRequests[requestId];
 
         // only call the synthetic collection contract if is locked
-        if (verified) {
-            SyntheticCollectionManager(requestData.syntheticCollection).processSuccessfulVerify(
-                requestData.tokenId
-            );
-        }
+        SyntheticCollectionManager(requestData.syntheticCollection).processSuccessfulVerify(
+            requestData.tokenId,
+            verified
+        );
 
         emit ResponseReceived(
             requestId,
