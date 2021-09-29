@@ -18,7 +18,8 @@ describe('SyntheticCollectionManager', async function () {
 
     const tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC');
     await expect(tx).to.emit(router, 'TokenRegistered');
-    args = await getEventArgs(tx, 'TokenRegistered', router);
+    const args = await getEventArgs(tx, 'TokenRegistered', router);
+    tokenId = args.syntheticTokenId;
 
     managerAddress = await router.getCollectionManagerAddress(NFT);
     manager = await ethers.getContractAt('SyntheticCollectionManager', managerAddress);
@@ -63,9 +64,7 @@ describe('SyntheticCollectionManager', async function () {
       let oracleAddress = await router.oracleAddress();
       const oracle = await ethers.getContractAt('MockOracle', oracleAddress);
       oracle.setRouter(router.address);
-      await oracle.verifyNFT(NFT, args.syntheticTokenId);
-      
-      const tokenId = args.syntheticTokenId;
+      await oracle.verifyNFT(NFT, tokenId);
 
       const amount = 1000;
 
@@ -91,7 +90,6 @@ describe('SyntheticCollectionManager', async function () {
   describe('depositJots', async function () {
     it('Verify that the SyntheticCollectionManager balance increases correctly', async () => {
       const amount = 1000;
-      const tokenId = args.syntheticTokenId;
       await jot.mint(owner.address, amount);
       await jot.approve(managerAddress, amount);
 
@@ -106,7 +104,13 @@ describe('SyntheticCollectionManager', async function () {
       expect(afterBalance).to.be.equal(beforeBalance + amount);
     });
 
-    it('should fail if NFT is not the owner');
+    it('should fail if NFT is not the owner', async () => {
+      const amount = 1000;
+
+      await expect(manager.connect(address1).depositJots(tokenId, amount))
+      .to.revertedWith('you are not the owner of the NFT!');
+    });
+
     it('should fail if it exceeds the Jot Supply limit');
   });
 
