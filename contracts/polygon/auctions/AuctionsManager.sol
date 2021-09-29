@@ -76,7 +76,7 @@ contract AuctionsManager is AccessControl, Initializable {
         uint256 openingBid_
     ) external {
         require(_whitelistedTokens[collection_][nftId_], "Token can't be auctioned");
-        require(_recoverableTillDate[msg.sender][nftId_] < block.timestamp, "Token is yet recoverable");
+        require(_recoverableTillDate[msg.sender][nftId_] < block.timestamp, "Token is yet recoverable"); //solhint-disable-line
         require(openingBid_ >= ProtocolConstants.JOT_SUPPLY, "Opening bid too low");
         require(router.isSyntheticNFTCreated(collection_, nftId_), "Non registered token");
 

@@ -131,7 +131,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ROUTER, msg.sender);
         _setupRole(AUCTION_MANAGER, auctionManagerAddress);
-        _setupRole(VALIDATOR_ORACLE, msg.sender);
     }
 
     /**
@@ -438,7 +437,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         IJot(jotAddress).approve(_swapAddress, liquiditySupply);
 
         IERC20(fundingTokenAddress).approve(_swapAddress, liquiditySold);
-        
+
         uint256 amountA;
         uint256 amountB;
         uint256 liquidity;
