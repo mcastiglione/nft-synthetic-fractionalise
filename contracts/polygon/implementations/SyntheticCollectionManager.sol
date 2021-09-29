@@ -20,7 +20,6 @@ import "./Structs.sol";
 import "../libraries/ProtocolConstants.sol";
 import "hardhat/console.sol";
 
-
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
@@ -107,7 +106,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     constructor(address randomConsumerAddress, address validatorAddress) {
         _randomConsumerAddress = randomConsumerAddress;
         _validatorAddress = validatorAddress;
-        
     }
 
     function initialize(
@@ -135,7 +133,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _setupRole(ROUTER, msg.sender);
         _setupRole(AUCTION_MANAGER, auctionManagerAddress);
         _setupRole(VALIDATOR_ORACLE, msg.sender);
-
     }
 
     /**
@@ -233,12 +230,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * Then it mints a new NFT with: ”to”, ”id” and ”metadata”
      */
     function generateSyntheticNFT(
-        address to, 
-        uint256 tokenId, 
+        address to,
+        uint256 tokenId,
         string memory metadata
     ) private {
         ISyntheticNFT(erc721address).safeMint(to, tokenId, metadata);
-    } 
+    }
 
     /**
      * @notice First
@@ -432,7 +429,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice add available liquidity for a given token to UniSwap pool
      */
     function addLiquidityToPool(uint256 tokenId) public {
-
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
 
         TokenData storage token = tokens[tokenId];
@@ -443,7 +439,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         IJot(jotAddress).approve(address(uniswapV2Router), liquiditySupply);
 
         IERC20(fundingTokenAddress).approve(address(uniswapV2Router), liquiditySold);
-        
+
         uint256 amountA;
         uint256 amountB;
         uint256 liquidity;
@@ -463,7 +459,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             tokens[tokenId].liquiditySupply -= amountA;
             tokens[tokenId].liquiditySold -= amountB;
             tokens[tokenId].sellingSupply -= amountA;
-            tokens[tokenId].soldSupply  -= amountB;
+            tokens[tokenId].soldSupply -= amountB;
         }
     }
 
@@ -554,7 +550,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         );
 
         tokens[tokenId].verifying = true;
-
     }
 
     function processSuccessfulVerify(uint256 tokenId) external onlyRole(VALIDATOR_ORACLE) {
@@ -612,13 +607,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function setMetadata(uint256 tokenId, string memory metadata) public {
         TokenData storage token = tokens[tokenId];
-        require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         require(!token.verified, "Can't change metadata after verify");
-        require(token.verifying, "Can't change metadata while verifying");
+        require(!token.verifying, "Can't change metadata while verifying");
 
         address tokenOwner = IERC721(erc721address).ownerOf(tokenId);
         require(msg.sender == tokenOwner, "You are not the owner of the NFT!");
         ISyntheticNFT(erc721address).setMetadata(tokenId, metadata);
     }
 }
- 
