@@ -89,6 +89,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     address public jotPool;
 
+    address private _usdtAddress;
+
     event CoinFlipped(
         bytes32 indexed requestId,
         address indexed player,
@@ -102,9 +104,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 randomResult
     );
 
-    constructor(address randomConsumerAddress, address validatorAddress) {
+    constructor(address randomConsumerAddress, address validatorAddress, address usdtAddress) {
         _randomConsumerAddress = randomConsumerAddress;
         _validatorAddress = validatorAddress;
+        _usdtAddress = usdtAddress;
     }
 
     function initialize(
@@ -138,7 +141,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      *      changes this protocol parameter in the middle of the auction
      */
     function reassignNFT(uint256 nftId_, address newOwner_) external onlyRole(AUCTION_MANAGER) {
-        require(ISyntheticNFT(erc721address).exists(nftId_), "Non existent synthetic NFT");
+        string memory metadata = ISyntheticNFT(erc721address).tokenURI(nftId_);
 
         TokenData storage data = tokens[nftId_];
 
@@ -153,6 +156,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // Get new synthetic ID
         uint256 newSyntheticID = tokenCounter.current();
+
+        // Mint new one
+        ISyntheticNFT(erc721address).safeMint(newOwner_, newSyntheticID, metadata);
 
         // Update original to synthetic mapping
         _originalToSynthetic[originalID] = newSyntheticID;
@@ -623,5 +629,27 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address tokenOwner = IERC721(erc721address).ownerOf(tokenId);
         require(msg.sender == tokenOwner, "You are not the owner of the NFT!");
         ISyntheticNFT(erc721address).setMetadata(tokenId, metadata);
+    }
+
+    function exchangeOwnerJot(uint256 tokenId, uint256 amount) external {
+        require(tokens[tokenId].ownerSupply >= amount, "Exchange amount exceeds balance");
+        IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
+        address[] memory path = new address[](2);
+        path[0] = jotAddress;
+        path[1] = _usdtAddress;
+
+        tokens[tokenId].ownerSupply -= amount;
+        if (tokens[tokenId].ownerSupply == 0) {
+            AuctionsManager(_auctionsManagerAddress).whitelistNFT(tokenId);
+        }
+
+        uniswapV2Router.swapExactTokensForTokens(
+            amount,
+            0, //we don't care about slippage
+            path,
+            msg.sender,
+            // solhint-disable-next-line
+            block.timestamp
+        );
     }
 }
