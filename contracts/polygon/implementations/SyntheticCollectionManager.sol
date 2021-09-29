@@ -18,7 +18,6 @@ import "../governance/ProtocolParameters.sol";
 import "./Jot.sol";
 import "./Structs.sol";
 import "../libraries/ProtocolConstants.sol";
-import "hardhat/console.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;

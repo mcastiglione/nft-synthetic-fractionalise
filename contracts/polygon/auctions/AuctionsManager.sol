@@ -25,6 +25,7 @@ contract AuctionsManager is AccessControl, Initializable {
     SyntheticProtocolRouter public router;
 
     mapping(address => mapping(uint256 => bool)) private _whitelistedTokens;
+    mapping(address => mapping(uint256 => uint256)) private _recoverableTillDate;
 
     event AuctionStarted(
         address indexed collection,
@@ -48,6 +49,13 @@ contract AuctionsManager is AccessControl, Initializable {
 
     function whitelistNFT(uint256 nftId_) external onlyRole(COLLECTION_MANAGER) {
         _whitelistedTokens[msg.sender][nftId_] = true;
+        _recoverableTillDate[msg.sender][nftId_] = block.timestamp + protocol.recoveryThreshold(); // solhint-disable-line
+    }
+
+    function isRecoverable(uint256 nftId_) public view returns (bool) {
+        // solhint-disable-next-line
+        return (_whitelistedTokens[msg.sender][nftId_] &&
+            _recoverableTillDate[msg.sender][nftId_] >= block.timestamp);
     }
 
     /**
@@ -68,6 +76,7 @@ contract AuctionsManager is AccessControl, Initializable {
         uint256 openingBid_
     ) external {
         require(_whitelistedTokens[collection_][nftId_], "Token can't be auctioned");
+        require(_recoverableTillDate[msg.sender][nftId_] < block.timestamp, "Token is yet recoverable");
         require(openingBid_ >= ProtocolConstants.JOT_SUPPLY, "Opening bid too low");
         require(router.isSyntheticNFTCreated(collection_, nftId_), "Non registered token");
 
