@@ -19,7 +19,7 @@ describe('SyntheticCollectionManager', async function () {
     nftID = 1;
     NFT = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
 
-    const tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
+    const tx = await router.registerNFT(NFT, nftID, 5000, 5, 'My Collection', 'MYC', '');
     await expect(tx).to.emit(router, 'TokenRegistered');
     const args = await getEventArgs(tx, 'TokenRegistered', router);
     tokenId = args.syntheticTokenId;
@@ -100,15 +100,35 @@ describe('SyntheticCollectionManager', async function () {
       const afterBalance = (await manager.tokens(tokenId)).ownerSupply.toNumber();
 
       expect(afterBalance).to.be.equal(beforeBalance + amount);
-      await expect(manager.depositJots(tokenId, amount ** 5))
+      await expect(manager.depositJots(tokenId, 5000))
       .to.revertedWith('ERC20: transfer amount exceeds balance');
     });
 
     it('should fail if NFT is not the owner', async () => {
-      const amount = 1000;
+      const amount = parseAmount('1000');
 
       await expect(manager.connect(address1).depositJots(tokenId, amount))
       .to.revertedWith('you are not the owner of the NFT!');
     });
   });
+
+  describe('withdrawJots', async function () {
+    it('check withdrawJots', async () => {
+
+      const balance = await manager.getOwnerSupply(tokenId);
+
+      await manager.withdrawJots(tokenId, 1);
+
+      const new_balance = await manager.getOwnerSupply(tokenId);
+
+      const jotBalance = (await jot.balanceOf(owner.address)).toString()
+      
+
+      assert.equal(new_balance, balance -1);
+      assert.equal(jotBalance, '1');
+      
+
+    });
+  });
+
 });
