@@ -3,6 +3,9 @@ const { assert, expect } = require('chai');
 const { getEventArgs } = require('./helpers/events');
 
 describe('SyntheticCollectionManager', async function () {
+
+  const parseAmount = (amount) => ethers.utils.parseEther(amount);
+
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
     await deployments.fixture(['collection_fixtures']);
@@ -61,19 +64,19 @@ describe('SyntheticCollectionManager', async function () {
       // Verify NFT
       await router.verifyNFT(NFT, tokenId);
 
-      const amount = 1000000000000000000000;
+      const amount = parseAmount('1000');
 
       const fundingTokenAddress = await manager.fundingTokenAddress();
       const fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
 
-      await jot.mint(owner.address, amount * 10000);
-      await jot.approve(managerAddress, amount * 10000);
-      await fundingToken.mint(owner.address, amount * 10000);
-      await fundingToken.approve(managerAddress, amount * 10000);
+      await jot.mint(owner.address, parseAmount('100000'));
+      await jot.approve(managerAddress, parseAmount('100000'));
+      await fundingToken.mint(owner.address, parseAmount('100000'));
+      await fundingToken.approve(managerAddress, parseAmount('100000'));
 
-      await manager.depositJots(tokenId, amount * 10);
+      await manager.depositJots(tokenId, parseAmount('50000'));
 
-      await manager.increaseSellingSupply(tokenId, amount * 10);
+      await manager.increaseSellingSupply(tokenId, parseAmount('10000'));
 
       await manager.buyJotTokens(tokenId, amount);
 
