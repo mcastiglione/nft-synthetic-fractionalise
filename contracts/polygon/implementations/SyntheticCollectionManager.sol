@@ -104,9 +104,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 randomResult
     );
 
-    event TokenVerified(
-        uint256 tokenId
-    );
+    event TokenVerified(uint256 tokenId);
 
     constructor(
         address randomConsumerAddress,
@@ -353,7 +351,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         if (amountLeft < buyAmount) {
             buyAmount = amountLeft;
         }
-        uint256 amount = (buyAmount * token.fractionPrices)/10**18;
+        uint256 amount = (buyAmount * token.fractionPrices) / 10**18;
         // Can't sell zero tokens
         require(amount != 0, "No tokens left!");
 
@@ -567,14 +565,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         require(!token.verified, "Token already verified");
 
-        //PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(
-        //    originalCollectionAddress,
-        //    tokenId,
-        //    nonces[token.originalTokenID]
-        //);
+        PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(
+            originalCollectionAddress,
+            tokenId,
+            nonces[token.originalTokenID]
+        );
 
-        //tokens[tokenId].verifying = true;
-        tokens[tokenId].verified = true;
+        tokens[tokenId].verifying = true;
     }
 
     function processSuccessfulVerify(uint256 tokenId, bool verified) external onlyRole(VALIDATOR_ORACLE) {

@@ -4,12 +4,16 @@ pragma solidity ^0.8.4;
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../implementations/SyntheticCollectionManager.sol";
+import "../../libraries/Stringify.sol";
 import "./OracleStructs.sol";
 
 /**
  * @dev the ownership will be transferred after deployment to the router contract
  */
 contract PolygonValidatorOracle is ChainlinkClient, Ownable {
+    using Stringify for uint256;
+    using Stringify for address;
+
     /**
      * @dev oracle configuration parameters
      */
@@ -69,12 +73,12 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
             string(
                 abi.encodePacked(
                     apiURL,
-                    "?collection=",
-                    ethereumCollection,
+                    "?collection=0x",
+                    ethereumCollection.toString(),
                     "&tokenId=",
-                    uint2str(tokenId),
+                    tokenId.toString(),
                     "&nonce=",
-                    uint2str(nonce)
+                    nonce.toString()
                 )
             )
         );
@@ -132,27 +136,5 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         assembly {
             result := mload(add(source, 32))
         }
-    }
-
-    function uint2str(uint256 _i) private pure returns (string memory _uintAsString) {
-        if (_i == 0) {
-            return "0";
-        }
-        uint256 j = _i;
-        uint256 len;
-        while (j != 0) {
-            len++;
-            j /= 10;
-        }
-        bytes memory bstr = new bytes(len);
-        uint256 k = len;
-        while (_i != 0) {
-            k = k - 1;
-            uint8 temp = (48 + uint8(_i - (_i / 10) * 10));
-            bytes1 b1 = bytes1(temp);
-            bstr[k] = b1;
-            _i /= 10;
-        }
-        return string(bstr);
     }
 }
