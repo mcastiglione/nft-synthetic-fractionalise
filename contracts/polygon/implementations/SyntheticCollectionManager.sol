@@ -376,6 +376,15 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         tokens[tokenId].ownerSupply += amount;
     }
 
+    function withdrawJots(uint256 tokenId, uint256 amount) public {
+        ISyntheticNFT nft = ISyntheticNFT(erc721address);
+        address nftOwner = nft.ownerOf(tokenId);
+        require(nftOwner == msg.sender, "you are not the owner of the NFT!");
+        require(amount <= tokens[tokenId].ownerSupply, "Not enough balance");
+        IJot(jotAddress).transfer(msg.sender, amount);
+        tokens[tokenId].ownerSupply -= amount;
+    }
+
     /**
      * @notice increase selling supply for a given NFT
      * caller must be the owner of the NFT
