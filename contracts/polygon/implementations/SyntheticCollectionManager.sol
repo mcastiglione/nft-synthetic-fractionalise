@@ -106,7 +106,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     event TokenVerified(
         uint256 tokenId
-    )
+    );
 
     constructor(
         address randomConsumerAddress,

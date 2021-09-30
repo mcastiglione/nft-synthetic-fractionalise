@@ -97,6 +97,8 @@ describe('SyntheticCollectionManager', async function () {
       const afterBalance = (await manager.tokens(tokenId)).ownerSupply.toNumber();
 
       expect(afterBalance).to.be.equal(beforeBalance + amount);
+      await expect(manager.depositJots(tokenId, amount ** 5))
+      .to.revertedWith('ERC20: transfer amount exceeds balance');
     });
 
     it('should fail if NFT is not the owner', async () => {
@@ -106,7 +108,5 @@ describe('SyntheticCollectionManager', async function () {
         'you are not the owner of the NFT!'
       );
     });
-
-    it('should fail if it exceeds the Jot Supply limit');
   });
 });
