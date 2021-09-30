@@ -57,11 +57,11 @@ describe('SyntheticCollectionManager', async function () {
   });
 
   describe('Add Liquidity to Pool', async function () {
-    it('should fail if NFT is not registered ', async () => {
+    it('Verify that liquidity is added to the pool', async () => {
       // Verify NFT
       await router.verifyNFT(NFT, tokenId);
 
-      const amount = 1000;
+      const amount = 1000000000000000000000;
 
       const fundingTokenAddress = await manager.fundingTokenAddress();
       const fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
@@ -104,9 +104,8 @@ describe('SyntheticCollectionManager', async function () {
     it('should fail if NFT is not the owner', async () => {
       const amount = 1000;
 
-      await expect(manager.connect(address1).depositJots(tokenId, amount)).to.revertedWith(
-        'you are not the owner of the NFT!'
-      );
+      await expect(manager.connect(address1).depositJots(tokenId, amount))
+      .to.revertedWith('you are not the owner of the NFT!');
     });
   });
 });
