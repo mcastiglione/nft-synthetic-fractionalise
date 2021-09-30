@@ -104,9 +104,8 @@ describe('SyntheticCollectionManager', async function () {
     it('should fail if NFT is not the owner', async () => {
       const amount = 1000;
 
-      await expect(manager.connect(address1).depositJots(tokenId, amount)).to.revertedWith(
-        'you are not the owner of the NFT!'
-      );
+      await expect(manager.connect(address1).depositJots(tokenId, amount))
+      .to.revertedWith('you are not the owner of the NFT!');
     });
   });
 });
