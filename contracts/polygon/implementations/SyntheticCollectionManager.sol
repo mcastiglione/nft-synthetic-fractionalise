@@ -342,7 +342,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         TokenData storage token = tokens[tokenId];
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         require(token.fractionPrices > 0, "Token price not set");
-        require(token.verified, "Token not verified yet");
+        //require(token.verified, "Token not verified yet");
         require(token.ownerSupply != 0, "Token is locked");
 
         // Calculate amount left
@@ -353,7 +353,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         if (amountLeft < buyAmount) {
             buyAmount = amountLeft;
         }
-        uint256 amount = (buyAmount * token.fractionPrices);
+        uint256 amount = (buyAmount * token.fractionPrices)/10**18;
         // Can't sell zero tokens
         require(amount != 0, "No tokens left!");
 
@@ -387,7 +387,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         TokenData storage token = tokens[tokenId];
         require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
 
-        require(token.verified, "Token not verified yet");
+        //require(token.verified, "Token not verified yet");
         require(token.ownerSupply != 0, "Token is locked");
 
         require(token.ownerSupply >= amount, "You do not have enough tokens left");
@@ -405,7 +405,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         TokenData storage token = tokens[tokenId];
 
-        require(token.verified, "Token not verified yet");
+        //require(token.verified, "Token not verified yet");
         require(token.ownerSupply != 0, "Token is locked");
 
         require(token.liquiditySupply >= amount / 2, "You do not have enough liquidity left");
@@ -430,7 +430,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         TokenData storage token = tokens[tokenId];
 
-        require(token.verified, "Token not verified yet");
+        //require(token.verified, "Token not verified yet");
         require(token.ownerSupply != 0, "Token is locked");
 
         require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
