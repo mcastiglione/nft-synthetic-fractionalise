@@ -1,6 +1,7 @@
 const { expect } = require('chai');
 const { networkConfig } = require('../../helper-hardhat-config');
 const { getEventArgs } = require('../unit/helpers/events');
+const SyntheticCollectionManager = artifacts.require('SyntheticCollectionManager');
 
 const ORIGINAL_COLLECTION_ADDRESS = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
 
@@ -31,7 +32,9 @@ skip.if(network.name != 'mumbai').describe('PolygonValidatorOracle', async () =>
         syntheticTokenId = 0;
       }
 
-      let collection = await ethers.getContractAt('SyntheticCollectionManager', collectionAddress);
+      let collection = await SyntheticCollectionManager.at(collectionAddress);
+
+      console.log(isRegisterd, this.router.address, collectionAddress);
 
       // call to verify (oracle is also called)
       await collection.verify(syntheticTokenId);
