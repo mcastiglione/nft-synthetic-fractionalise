@@ -47,7 +47,7 @@ contract PolygonValidatorOracleMock is ChainlinkClient, Ownable {
         uint256 tokenId
     ) public {
         if (verified) {
-            SyntheticCollectionManager(syntheticCollection).processSuccessfulVerify(
+            SyntheticCollectionManager(syntheticCollection).processVerifyResponse(
                 requestId,
                 VerifyRequest({
                     tokenId: tokenId,

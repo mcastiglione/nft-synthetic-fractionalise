@@ -103,7 +103,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 randomResult
     );
 
-    event ValidatorResponseReceived(
+    event VerifyResponseReceived(
         bytes32 indexed requestId,
         address originalCollection,
         address syntheticCollection,
@@ -609,7 +609,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         tokens[tokenId].verifying = true;
     }
 
-    function processSuccessfulVerify(
+    function processVerifyResponse(
         bytes32 requestId,
         VerifyRequest memory requestData,
         bool verified
@@ -619,7 +619,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         }
         tokens[requestData.tokenId].verifying = false;
 
-        emit ValidatorResponseReceived(
+        emit VerifyResponseReceived(
             requestId,
             requestData.originalCollection,
             requestData.syntheticCollection,
