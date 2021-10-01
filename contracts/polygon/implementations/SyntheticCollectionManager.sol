@@ -89,8 +89,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     address public jotPool;
 
-    address private _usdtAddress;
-
     event CoinFlipped(
         bytes32 indexed requestId,
         address indexed player,
@@ -108,12 +106,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     constructor(
         address randomConsumerAddress,
-        address validatorAddress,
-        address usdtAddress
+        address validatorAddress
     ) {
         _randomConsumerAddress = randomConsumerAddress;
         _validatorAddress = validatorAddress;
-        _usdtAddress = usdtAddress;
     }
 
     function initialize(
@@ -672,7 +668,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
         address[] memory path = new address[](2);
         path[0] = jotAddress;
-        path[1] = _usdtAddress;
+        path[1] = fundingTokenAddress;
 
         tokens[tokenId].ownerSupply -= amount;
         if (tokens[tokenId].ownerSupply == 0) {

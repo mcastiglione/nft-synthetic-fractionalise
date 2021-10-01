@@ -13,7 +13,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await deploy('SyntheticCollectionManager', {
     from: deployer,
     log: true,
-    args: [randomConsumer.address, validator.address, networkConfig[chainId].usdtTokenAddress],
+    args: [randomConsumer.address, validator.address],
   });
 };
 
