@@ -600,13 +600,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         require(!token.verified, "Token already verified");
 
+        tokens[tokenId].verifying = true;
+
         PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(
             originalCollectionAddress,
             tokenId,
             nonces[token.originalTokenID]
         );
-
-        tokens[tokenId].verifying = true;
     }
 
     function processVerifyResponse(
