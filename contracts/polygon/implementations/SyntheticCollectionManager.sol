@@ -199,7 +199,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice Get the owner of the NFT
      */
-    function getSyntheticNFTOwner(uint256 tokenId) private view returns (address) {
+    function getSyntheticNFTOwner(uint256 tokenId) public view returns (address) {
         //TODO: get owner from Oracle
         return IERC721(erc721address).ownerOf(tokenId);
     }
