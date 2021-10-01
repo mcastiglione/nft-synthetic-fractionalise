@@ -288,7 +288,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             liquiditySold: 0,
             fractionPrices: priceFraction,
             lastFlipTime: 0,
-            liquidityToken: 0,
+            liquidityTokenBalance: 0,
             verified: false,
             verifying: false
         });
@@ -480,7 +480,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             tokens[tokenId].liquiditySold -= amountB;
             tokens[tokenId].sellingSupply -= amountA;
             tokens[tokenId].soldSupply -= amountB;
-            tokens[tokenId].liquidityToken += liquidity;
+            tokens[tokenId].liquidityTokenBalance += liquidity;
         }
     }
 
@@ -491,12 +491,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address tokenOwner = ISyntheticNFT(erc721address).ownerOf(tokenId);
         require(msg.sender == tokenOwner, "You are not the owner");
 
-        uint256 availableAmount = tokens[tokenId].liquidityToken;
+        uint256 availableAmount = tokens[tokenId].liquidityTokenBalance;
         require(amount <= availableAmount, "Not enough liquidity available");
 
         IUniswapV2Pair pair = IUniswapV2Pair(poolAddress()); 
         
         pair.transfer(msg.sender, amount);
+
+        tokens[tokenId].liquidityTokenBalance -= amount;
     }
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {

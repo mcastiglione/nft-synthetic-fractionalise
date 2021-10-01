@@ -10,7 +10,7 @@ struct TokenData {
     uint256 liquiditySold;
     uint256 fractionPrices;
     uint256 lastFlipTime;
-    uint256 liquidityToken;
+    uint256 liquidityTokenBalance;
     bool verified;
     bool verifying;
 
