@@ -10,7 +10,6 @@ import "../chainlink/OracleStructs.sol";
  * @dev the ownership will be transferred after deployment to the router contract
  */
 contract PolygonValidatorOracleMock is ChainlinkClient, Ownable {
-    mapping(bytes32 => VerifyRequest) private _verifyRequests;
     mapping(address => bool) private _whitelistedCollections;
 
     event ResponseReceived(
@@ -48,7 +47,15 @@ contract PolygonValidatorOracleMock is ChainlinkClient, Ownable {
         uint256 tokenId
     ) public {
         if (verified) {
-            SyntheticCollectionManager(syntheticCollection).processSuccessfulVerify(tokenId, true);
+            SyntheticCollectionManager(syntheticCollection).processSuccessfulVerify(
+                requestId,
+                VerifyRequest({
+                    tokenId: tokenId,
+                    originalCollection: originalCollection,
+                    syntheticCollection: syntheticCollection
+                }),
+                true
+            );
         }
 
         emit ResponseReceived(requestId, originalCollection, syntheticCollection, tokenId, verified);
