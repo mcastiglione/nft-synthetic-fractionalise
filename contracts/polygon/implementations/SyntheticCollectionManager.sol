@@ -89,8 +89,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     address public jotPool;
 
-    address private _usdtAddress;
-
     event CoinFlipped(
         bytes32 indexed requestId,
         address indexed player,
@@ -106,14 +104,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     event TokenVerified(uint256 tokenId);
 
-    constructor(
-        address randomConsumerAddress,
-        address validatorAddress,
-        address usdtAddress
-    ) {
+    constructor(address randomConsumerAddress, address validatorAddress) {
         _randomConsumerAddress = randomConsumerAddress;
         _validatorAddress = validatorAddress;
-        _usdtAddress = usdtAddress;
     }
 
     function initialize(
@@ -186,7 +179,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address caller
     ) public onlyRole(ROUTER) {
         // Token must be registered
-        require(ISyntheticNFT(erc721address).exists(syntheticID), "token not registered!");
+        require(ISyntheticNFT(erc721address).exists(syntheticID), "Token not registered!");
         require(tokens[syntheticID].ownerSupply != 0, "Token is locked");
 
         // Caller must be token owner
@@ -206,7 +199,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice Get the owner of the NFT
      */
-    function getSyntheticNFTOwner(uint256 tokenId) private view returns (address) {
+    function getSyntheticNFTOwner(uint256 tokenId) public view returns (address) {
         //TODO: get owner from Oracle
         return IERC721(erc721address).ownerOf(tokenId);
     }
@@ -487,15 +480,15 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice Claim Liquidity Tokens
      */
-    function claimLiquidityTokens(uint256 tokenId, uint256 amount) public {        
+    function claimLiquidityTokens(uint256 tokenId, uint256 amount) public {
         address tokenOwner = ISyntheticNFT(erc721address).ownerOf(tokenId);
         require(msg.sender == tokenOwner, "You are not the owner");
 
         uint256 availableAmount = tokens[tokenId].liquidityTokenBalance;
         require(amount <= availableAmount, "Not enough liquidity available");
 
-        IUniswapV2Pair pair = IUniswapV2Pair(poolAddress()); 
-        
+        IUniswapV2Pair pair = IUniswapV2Pair(poolAddress());
+
         pair.transfer(msg.sender, amount);
 
         tokens[tokenId].liquidityTokenBalance -= amount;
@@ -679,7 +672,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
         address[] memory path = new address[](2);
         path[0] = jotAddress;
-        path[1] = _usdtAddress;
+        path[1] = fundingTokenAddress;
 
         tokens[tokenId].ownerSupply -= amount;
         if (tokens[tokenId].ownerSupply == 0) {
