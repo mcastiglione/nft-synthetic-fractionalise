@@ -3,7 +3,7 @@ const { networkConfig } = require('../../helper-hardhat-config');
 const { getEventArgs } = require('../unit/helpers/events');
 const SyntheticCollectionManager = artifacts.require('SyntheticCollectionManager');
 
-const ORIGINAL_COLLECTION_ADDRESS = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
+const ORIGINAL_COLLECTION_ADDRESS = '0x32cee14ffcc796bbd99d26b013231cf758e2ade8';
 
 skip.if(network.name != 'mumbai').describe('PolygonValidatorOracle', async () => {
   describe('token verification', async () => {
