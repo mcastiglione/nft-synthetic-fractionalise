@@ -170,11 +170,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _originalToSynthetic[originalID] = newSyntheticID;
 
         // Empty previous id
-        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, false, false);
+        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, 0, false, false);
 
         // Fill new ID
         uint256 tokenSupply = ProtocolConstants.JOT_SUPPLY;
-        tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, false, false);
+        tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, 0, false, false);
     }
 
     /**
@@ -288,6 +288,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             liquiditySold: 0,
             fractionPrices: priceFraction,
             lastFlipTime: 0,
+            liquidityToken: 0,
             verified: false,
             verifying: false
         });
@@ -479,7 +480,23 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             tokens[tokenId].liquiditySold -= amountB;
             tokens[tokenId].sellingSupply -= amountA;
             tokens[tokenId].soldSupply -= amountB;
+            tokens[tokenId].liquidityToken += liquidity;
         }
+    }
+
+    /**
+     * @notice Claim Liquidity Tokens
+     */
+    function claimLiquidityTokens(uint256 token, uint256 amount) public {        
+        address tokenOwner = ISyntheticNFT(erc721address).ownerOf(tokenId);
+        require(msg.sender == tokenOwner, "You are not the owner");
+
+        uint256 availableAmount = tokens[tokenId].liquidityToken;
+        require(amount <= availableAmount, "Not enough liquidity available");
+
+        IUniswapV2Pair pair = IUniswapV2Pair(poolAddress()); 
+        
+        pair.transfer(msg.sender, amount);
     }
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {

@@ -122,11 +122,9 @@ describe('SyntheticCollectionManager', async function () {
       const new_balance = await manager.getOwnerSupply(tokenId);
 
       const jotBalance = (await jot.balanceOf(owner.address)).toString()
-      
 
       assert.equal(new_balance, balance -1);
       assert.equal(jotBalance, '1');
-      
 
     });
   });
