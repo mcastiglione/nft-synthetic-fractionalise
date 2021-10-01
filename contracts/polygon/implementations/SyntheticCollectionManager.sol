@@ -206,7 +206,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice Get the owner of the NFT
      */
-    function getSyntheticNFTOwner(uint256 tokenId) private view returns (address) {
+    function getSyntheticNFTOwner(uint256 tokenId) public view returns (address) {
         //TODO: get owner from Oracle
         return IERC721(erc721address).ownerOf(tokenId);
     }
@@ -499,6 +499,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         pair.transfer(msg.sender, amount);
 
         tokens[tokenId].liquidityTokenBalance -= amount;
+    }
+
+    /**
+     * @notice returns the accrued reward by QuickSwap pool LP for a given fractionalization
+     */
+    function getAccruedReward(uint256 tokenId) public view returns (uint256) {
+        return tokens[tokenId].liquidityTokenBalance;
     }
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {
