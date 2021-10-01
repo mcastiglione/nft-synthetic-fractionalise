@@ -27,14 +27,6 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
     mapping(bytes32 => VerifyRequest) private _verifyRequests;
     mapping(address => bool) private _whitelistedCollections;
 
-    event ResponseReceived(
-        bytes32 indexed requestId,
-        address originalCollection,
-        address syntheticCollection,
-        uint256 tokenId,
-        bool verified
-    );
-
     constructor(APIOracleInfo memory _oracleInfo) {
         linkToken = _oracleInfo.linkToken;
         chainlinkNode = _oracleInfo.chainlinkNode;
@@ -104,15 +96,8 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
 
         // only call the synthetic collection contract if is locked
         SyntheticCollectionManager(requestData.syntheticCollection).processSuccessfulVerify(
-            requestData.tokenId,
-            verified
-        );
-
-        emit ResponseReceived(
             requestId,
-            requestData.originalCollection,
-            requestData.syntheticCollection,
-            requestData.tokenId,
+            requestData,
             verified
         );
     }

@@ -12,6 +12,7 @@ import "../extensions/IERC20ManagedAccounts.sol";
 import "../auctions/AuctionsManager.sol";
 import "../chainlink/RandomNumberConsumer.sol";
 import "../chainlink/PolygonValidatorOracle.sol";
+import "../chainlink//OracleStructs.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
 import "../governance/ProtocolParameters.sol";
@@ -102,7 +103,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 randomResult
     );
 
-    event TokenVerified(uint256 tokenId);
+    event ValidatorResponseReceived(
+        bytes32 indexed requestId,
+        address originalCollection,
+        address syntheticCollection,
+        uint256 tokenId,
+        bool verified
+    );
 
     constructor(address randomConsumerAddress, address validatorAddress) {
         _randomConsumerAddress = randomConsumerAddress;
@@ -595,11 +602,23 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         tokens[tokenId].verifying = true;
     }
 
-    function processSuccessfulVerify(uint256 tokenId, bool verified) external onlyRole(VALIDATOR_ORACLE) {
-        tokens[tokenId].verified = verified;
-        tokens[tokenId].verifying = false;
+    function processSuccessfulVerify(
+        bytes32 requestId,
+        VerifyRequest memory requestData,
+        bool verified
+    ) external onlyRole(VALIDATOR_ORACLE) {
+        if (verified) {
+            tokens[requestData.tokenId].verified = true;
+        }
+        tokens[requestData.tokenId].verifying = false;
 
-        emit TokenVerified(tokenId);
+        emit ValidatorResponseReceived(
+            requestId,
+            requestData.originalCollection,
+            requestData.syntheticCollection,
+            requestData.tokenId,
+            verified
+        );
     }
 
     /**
