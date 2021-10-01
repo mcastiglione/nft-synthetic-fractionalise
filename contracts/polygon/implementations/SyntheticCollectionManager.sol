@@ -501,6 +501,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         tokens[tokenId].liquidityTokenBalance -= amount;
     }
 
+    /**
+     * @notice returns the accrued reward by QuickSwap pool LP for a given fractionalization
+     */
+    function getAccruedReward(uint256 tokenId) public view returns (uint256) {
+        return tokens[tokenId].liquidityTokenBalance;
+    }
+
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {
         return
             ISyntheticNFT(erc721address).exists(tokenId) &&

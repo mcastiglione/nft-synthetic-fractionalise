@@ -40,8 +40,10 @@ describe('SyntheticProtocolRouter', async function () {
     await expect(tx).to.emit(router, 'TokenRegistered');
     let args = await getEventArgs(tx, 'TokenRegistered', router);
 
-    const response = await router.verifyNFT(NFT, args.syntheticTokenId);
-    assert.ok(response);
+    await router.verifyNFT(NFT, args.syntheticTokenId);
+
+    const verified = await router.isNFTVerified(NFT, args.syntheticTokenId);
+    assert.equal(verified, true);
   });
 
   it('Verifiy it is created “LToken”, “PToken” and “PerpetualFutures” when initialised a new collection', async () => {
