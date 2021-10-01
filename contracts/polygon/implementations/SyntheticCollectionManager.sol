@@ -104,7 +104,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 randomResult
     );
 
-    event VerificationRequested(bytes32 indexed requestId, address player, uint256 tokenId);
+    event VerificationRequested(bytes32 indexed requestId, address from, uint256 tokenId);
 
     event VerifyResponseReceived(
         bytes32 indexed requestId,
