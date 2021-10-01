@@ -487,7 +487,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice Claim Liquidity Tokens
      */
-    function claimLiquidityTokens(uint256 token, uint256 amount) public {        
+    function claimLiquidityTokens(uint256 tokenId, uint256 amount) public {        
         address tokenOwner = ISyntheticNFT(erc721address).ownerOf(tokenId);
         require(msg.sender == tokenOwner, "You are not the owner");
 
