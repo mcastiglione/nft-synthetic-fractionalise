@@ -76,14 +76,14 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         );
         Chainlink.add(request, "path", "locked");
 
-        // Send the request
-        requestId = sendChainlinkRequestTo(chainlinkNode, request, nodeFee);
-
         _verifyRequests[requestId] = VerifyRequest({
             tokenId: tokenId,
             originalCollection: ethereumCollection,
             syntheticCollection: msg.sender
         });
+
+        // Send the request
+        requestId = sendChainlinkRequestTo(chainlinkNode, request, nodeFee);
     }
 
     /**

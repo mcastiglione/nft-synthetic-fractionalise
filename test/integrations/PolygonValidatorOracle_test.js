@@ -34,10 +34,10 @@ skip.if(network.name != 'mumbai').describe('PolygonValidatorOracle', async () =>
 
       let collection = await SyntheticCollectionManager.at(collectionAddress);
 
-      console.log(isRegisterd, this.router.address, collectionAddress);
-
       // call to verify (oracle is also called)
-      await collection.verify(syntheticTokenId);
+      let tx = await collection.verify(syntheticTokenId);
+
+      console.log(tx);
     });
   });
 });

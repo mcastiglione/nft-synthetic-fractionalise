@@ -96,12 +96,15 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 indexed tokenId,
         uint256 prediction
     );
+
     event FlipProcessed(
         bytes32 indexed requestId,
         uint256 indexed tokenId,
         uint256 prediction,
         uint256 randomResult
     );
+
+    event VerificationRequested(bytes32 indexed requestId, address player, uint256 tokenId);
 
     event VerifyResponseReceived(
         bytes32 indexed requestId,
@@ -382,8 +385,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address nftOwner = nft.ownerOf(tokenId);
         require(nftOwner == msg.sender, "you are not the owner of the NFT!");
         require(amount <= tokens[tokenId].ownerSupply, "Not enough balance");
-        IJot(jotAddress).transfer(msg.sender, amount);
         tokens[tokenId].ownerSupply -= amount;
+        IJot(jotAddress).transfer(msg.sender, amount);
     }
 
     /**
@@ -496,9 +499,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         IUniswapV2Pair pair = IUniswapV2Pair(poolAddress());
 
-        pair.transfer(msg.sender, amount);
-
         tokens[tokenId].liquidityTokenBalance -= amount;
+
+        pair.transfer(msg.sender, amount);
     }
 
     /**
@@ -602,11 +605,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         tokens[tokenId].verifying = true;
 
-        PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(
+        bytes32 requestId = PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(
             originalCollectionAddress,
             tokenId,
             nonces[token.originalTokenID]
         );
+
+        emit VerificationRequested(requestId, msg.sender, tokenId);
     }
 
     function processVerifyResponse(
