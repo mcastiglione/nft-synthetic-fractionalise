@@ -26,6 +26,9 @@ describe('RandomNumberConsumer', async function () {
     let tokenRegistered = await getEventArgs(tx, 'TokenRegistered', this.router);
 
     let collection = await ethers.getContractAt('SyntheticCollectionManager', args.collectionManagerAddress);
+
+    await collection.verify(tokenRegistered.syntheticTokenId);
+
     let jot = await ethers.getContractAt('Jot', args.jotAddress);
 
     // jot pool should have balance in jots for the flipping game to work

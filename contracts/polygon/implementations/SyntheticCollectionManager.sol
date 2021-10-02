@@ -190,7 +190,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     ) public onlyRole(ROUTER) {
         // Token must be registered
         require(ISyntheticNFT(erc721address).exists(syntheticID), "Token not registered!");
-        require(tokens[syntheticID].ownerSupply != 0, "Token is locked");
+        require(!lockedNFT(syntheticID), "Token is locked!");
 
         // Caller must be token owner
         address tokenOwner = IERC721(erc721address).ownerOf(syntheticID);
@@ -344,8 +344,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         TokenData storage token = tokens[tokenId];
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
         require(token.fractionPrices > 0, "Token price not set");
-        //require(token.verified, "Token not verified yet");
-        require(token.ownerSupply != 0, "Token is locked");
+        require(!lockedNFT(tokenId), "Token is locked!");
 
         // Calculate amount left
         uint256 amountLeft = token.sellingSupply - token.soldSupply;
@@ -398,8 +397,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         TokenData storage token = tokens[tokenId];
         require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
 
-        //require(token.verified, "Token not verified yet");
-        require(token.ownerSupply != 0, "Token is locked");
+        require(!lockedNFT(tokenId), "Token is locked!");
 
         require(token.ownerSupply >= amount, "You do not have enough tokens left");
         token.ownerSupply -= amount;
@@ -416,8 +414,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         TokenData storage token = tokens[tokenId];
 
-        //require(token.verified, "Token not verified yet");
-        require(token.ownerSupply != 0, "Token is locked");
+        require(!lockedNFT(tokenId), "Token is locked!");
 
         require(token.liquiditySupply >= amount / 2, "You do not have enough liquidity left");
         require(token.sellingSupply >= amount / 2, "You do not have enough selling supply left");
@@ -441,8 +438,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         TokenData storage token = tokens[tokenId];
 
-        //require(token.verified, "Token not verified yet");
-        require(token.ownerSupply != 0, "Token is locked");
+        require(!lockedNFT(tokenId), "Token is locked!");
 
         require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
         token.fractionPrices = newFractionPrice;
@@ -523,7 +519,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         TokenData storage token = tokens[tokenId];
 
         require(isAllowedToFlip(tokenId), "Flip is not allowed yet");
-        require(token.ownerSupply != 0, "Token is locked");
+        require(!lockedNFT(tokenId), "Token is locked!");
 
         token.lastFlipTime = block.timestamp; // solhint-disable-line
 
