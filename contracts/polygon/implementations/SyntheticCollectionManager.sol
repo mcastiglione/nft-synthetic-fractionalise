@@ -296,12 +296,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             verifying: false
         });
 
+        tokens[syntheticID] = data;
+
         // lock the nft and make it auctionable
         if (supplyToKeep == 0) {
             AuctionsManager(_auctionsManagerAddress).whitelistNFT(syntheticID);
         }
-
-        tokens[syntheticID] = data;
 
         tokenCounter.increment();
 

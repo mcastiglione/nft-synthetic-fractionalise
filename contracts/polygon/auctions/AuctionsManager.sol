@@ -67,6 +67,10 @@ contract AuctionsManager is AccessControl, Initializable {
         return _recoverableTillDate[msg.sender][nftId_];
     }
 
+    function isRecoverableTillCollection(address collection, uint256 nftId_) public view returns (uint256) {
+        // solhint-disable-next-line
+        return _recoverableTillDate[collection][nftId_];
+    }
 
     /**
      * @dev we need to pass the jobSupply here to work well even when the governance
