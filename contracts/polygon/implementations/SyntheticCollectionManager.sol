@@ -296,6 +296,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             verifying: false
         });
 
+        // lock the nft and make it auctionable
+        if (supplyToKeep == 0) {
+            AuctionsManager(_auctionsManagerAddress).whitelistNFT(syntheticID);
+        }
+
         tokens[syntheticID] = data;
 
         tokenCounter.increment();
@@ -386,6 +391,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(amount <= tokens[tokenId].ownerSupply, "Not enough balance");
         tokens[tokenId].ownerSupply -= amount;
         IJot(jotAddress).transfer(msg.sender, amount);
+        if (tokens[tokenId].ownerSupply == 0) {
+            AuctionsManager(_auctionsManagerAddress).whitelistNFT(tokenId);
+        }
     }
 
     /**
@@ -403,6 +411,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         token.ownerSupply -= amount;
         token.sellingSupply += amount / 2;
         token.liquiditySupply += amount / 2;
+
+        // lock the nft and make it auctionable
+        if (token.ownerSupply == 0) {
+            AuctionsManager(_auctionsManagerAddress).whitelistNFT(tokenId);
+        }
     }
 
     /**
@@ -422,6 +435,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         token.ownerSupply += amount;
         token.sellingSupply -= amount / 2;
         token.liquiditySupply -= amount / 2;
+
     }
 
     function lockedNFT(uint256 tokenId) public view returns (bool) {
