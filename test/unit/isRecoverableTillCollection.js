@@ -43,7 +43,7 @@ describe('isRecoverableTillCollection', async function () {
       // Verify NFT
       await router.verifyNFT(NFT, tokenId);
 
-      let isRecoverableTill = await AuctionsManager.isRecoverableTillCollection(managerAddress, tokenId);
+      let isRecoverableTill = await AuctionsManager.isRecoverableTill(managerAddress, tokenId);
 
       assert.ok(isRecoverableTill);
 
