@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../implementations/Enums.sol";
+
 struct APIOracleInfo {
     address linkToken;
     address chainlinkNode;
@@ -19,6 +21,7 @@ struct VerifyRequest {
     address originalCollection;
     address syntheticCollection;
     uint256 tokenId;
+    State previousState;
 }
 
 struct ChangeRequest {
