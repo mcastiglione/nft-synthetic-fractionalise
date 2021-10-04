@@ -107,15 +107,15 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
      * @dev call to verify if a token is locked in ethereum vault (for changes),
      * this method can be called only from the collection manager contract
      * @param ethereumCollection the collection address in ethereum
-     * @param syntheticId the id of the nft in the synthetic collection
-     * @param originalId the id of the nft in the original collection
+     * @param from the id of the nft in the synthetic collection to change from
+     * @param to the id of the nft in the synthetic collection to change to
      * @param nonce the nonce
      * @return requestId the id of the request to the Chainlink oracle
      */
     function changeTokenInCollection(
         address ethereumCollection,
-        uint256 syntheticId,
-        uint256 originalId,
+        uint256 from,
+        uint256 to,
         uint256 nonce
     ) external returns (bytes32 requestId) {
         require(_whitelistedCollections[msg.sender], "Invalid requester");
@@ -136,7 +136,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
                     "?collection=0x",
                     ethereumCollection.toString(),
                     "&tokenId=",
-                    syntheticId.toString(),
+                    to.toString(),
                     "&nonce=",
                     nonce.toString()
                 )
@@ -147,11 +147,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         // Send the request
         requestId = sendChainlinkRequestTo(chainlinkNode, request, nodeFee);
 
-        _changeRequests[requestId] = ChangeRequest({
-            syntheticId: syntheticId,
-            originalId: originalId,
-            syntheticCollection: msg.sender
-        });
+        _changeRequests[requestId] = ChangeRequest({from: from, to: to, syntheticCollection: msg.sender});
     }
 
     /**
@@ -163,7 +159,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         public
         recordChainlinkFulfillment(requestId)
     {
-        VerifyRequest memory requestData = _verifyRequests[requestId];
+        ChangeRequest memory requestData = _changeRequests[requestId];
 
         // only call the synthetic collection contract if is locked
         SyntheticCollectionManager(requestData.syntheticCollection).processChangeResponse(

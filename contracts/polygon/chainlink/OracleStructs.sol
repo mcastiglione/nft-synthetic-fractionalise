@@ -23,6 +23,6 @@ struct VerifyRequest {
 
 struct ChangeRequest {
     address syntheticCollection;
-    uint256 syntheticId;
-    uint256 originalId;
+    uint256 from;
+    uint256 to;
 }

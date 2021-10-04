@@ -106,6 +106,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     event VerificationRequested(bytes32 indexed requestId, address from, uint256 tokenId);
 
+    event ChangeRequested(bytes32 indexed requestId, uint256 fromToken, uint256 toToken);
+
     event VerifyResponseReceived(
         bytes32 indexed requestId,
         address originalCollection,
@@ -113,6 +115,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 tokenId,
         bool verified
     );
+
+    event ChangeResponseReceived(bytes32 indexed requestId, uint256 from, uint256 to, bool accepted);
 
     constructor(address randomConsumerAddress, address validatorAddress) {
         _randomConsumerAddress = randomConsumerAddress;
@@ -646,7 +650,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // Caller must be tokens owner
         address ownerOfFrom = IERC721(erc721address).ownerOf(from);
         address ownerOfTo = IERC721(erc721address).ownerOf(to);
-        require(ownerOfFrom == ownerOfTo == caller, "You are not the owner of the NFTs!");
+
+        if (ownerOfFrom != ownerOfTo || ownerOfTo != caller) {
+            revert("Should own both NFTs");
+        }
 
         // set verifying to avoid metadata changes
         toToken.verifying = true;
@@ -658,7 +665,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             nonces[toToken.originalTokenID]
         );
 
-        emit VerificationRequested(requestId, msg.sender, to);
+        emit ChangeRequested(requestId, from, to);
     }
 
     function processChangeResponse(
@@ -667,37 +674,23 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         bool verified
     ) external onlyRole(VALIDATOR_ORACLE) {
         if (verified) {
-            string memory metadata = ISyntheticNFT(erc721address).tokenURI(requestData.syntheticId);
-            address owner = ISyntheticNFT(erc721address).ownerOf(requestData.syntheticId);
-
-            TokenData storage data = tokens[requestData.syntheticId];
+            TokenData storage data = tokens[requestData.from];
 
             // clean original to synthetic mapping
             _originalToSynthetic[data.originalTokenID] = 0;
 
             // burn synthetic NFT
-            ISyntheticNFT(erc721address).safeBurn(requestData.syntheticId);
+            ISyntheticNFT(erc721address).safeBurn(requestData.from);
 
-            // get new synthetic ID
-            uint256 newSyntheticID = tokenCounter.current();
+            // copy data (even verified status)
+            tokens[requestData.to] = data;
 
-            // empty previous id
-            data = TokenData(0, 0, 0, 0, 0, 0, 0, 0, 0, false, false);
-
-            // fill new ID
-            uint256 tokenSupply = ProtocolConstants.JOT_SUPPLY;
-            tokens[newSyntheticID] = TokenData(originalId, tokenSupply, 0, 0, 0, 0, 0, 0, 0, false, false);
+            delete tokens[requestData.from];
         }
 
-        tokens[requestData.tokenId].verifying = false;
+        tokens[requestData.to].verifying = false;
 
-        emit VerifyResponseReceived(
-            requestId,
-            requestData.originalCollection,
-            requestData.syntheticCollection,
-            requestData.tokenId,
-            verified
-        );
+        emit ChangeResponseReceived(requestId, requestData.from, requestData.to, verified);
     }
 
     /**
