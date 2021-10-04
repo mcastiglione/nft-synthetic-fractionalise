@@ -24,11 +24,15 @@ describe('SyntheticCollectionManager', async function () {
     const args = await getEventArgs(tx, 'TokenRegistered', router);
     tokenId = args.syntheticTokenId;
 
+    await expect(tx).to.emit(router, 'CollectionManagerRegistered');
+    const cmr = await getEventArgs(tx, 'CollectionManagerRegistered', router);
+
     managerAddress = await router.getCollectionManagerAddress(NFT);
     manager = await ethers.getContractAt('SyntheticCollectionManager', managerAddress);
 
     jotAddress = await router.getJotsAddress(NFT);
     jot = await ethers.getContractAt('JotMock', jotAddress);
+
   });
 
   describe('flip the coin game', async function () {
@@ -95,6 +99,8 @@ describe('SyntheticCollectionManager', async function () {
       // to which it is deposited to validate that the balance increases after the deposit
       const beforeBalance = (await manager.tokens(tokenId)).ownerSupply.toNumber();
 
+      await router.verifyNFT(NFT, tokenId);
+
       await manager.depositJots(tokenId, amount);
 
       const afterBalance = (await manager.tokens(tokenId)).ownerSupply.toNumber();
@@ -116,6 +122,8 @@ describe('SyntheticCollectionManager', async function () {
     it('check withdrawJots', async () => {
 
       const balance = await manager.getOwnerSupply(tokenId);
+      
+      await router.verifyNFT(NFT, tokenId);
 
       await manager.withdrawJots(tokenId, 1);
 
@@ -126,6 +134,37 @@ describe('SyntheticCollectionManager', async function () {
       assert.equal(new_balance, balance -1);
       assert.equal(jotBalance, '1');
 
+    });
+  });
+
+  describe('changeNFT', async function () {
+    it('Call with other than router', async () => {
+      await expect(manager.change(0,0, address1.address)).to.be.reverted;
+    });
+    
+    it('Call with non existent token', async () => {
+      await expect(router.changeNFT(NFT, 100, 100)).to.be.revertedWith('NFT not minted');
+    });
+
+    it('Call with locked token', async () => {
+
+      const lockedToken = await router.registerNFT(NFT, 200, 0, 5, 'My Collection', 'MYC', '');
+      await expect(lockedToken).to.emit(router, 'TokenRegistered');
+      const lockedTokenArgs = await getEventArgs(lockedToken, 'TokenRegistered', router);
+      lockedTokenId = lockedTokenArgs.syntheticTokenId;
+
+      await expect(router.changeNFT(NFT, lockedTokenId, lockedTokenId+1)).to.be.revertedWith('Token is locked!');
+
+    });
+
+    it('Call router othen than token owner', async () => {
+      await router.verifyNFT(NFT, tokenId);
+      await expect(router.connect(address1).changeNFT(NFT, tokenId, tokenId +1)).to.be.revertedWith('You are not the owner of the NFT!');
+    });
+
+    it('Correct call', async () => {
+      await router.verifyNFT(NFT, tokenId);
+      await router.changeNFT(NFT, tokenId, nftID+1);
     });
   });
 
