@@ -63,7 +63,6 @@ contract AuctionsManager is AccessControl, Initializable {
     }
 
     function isRecoverableTill(address manager, uint256 nftId_) public view returns (uint256) {
-        // solhint-disable-next-line
         return _recoverableTillDate[manager][nftId_];
     }
 

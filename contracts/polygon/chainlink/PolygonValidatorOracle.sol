@@ -25,6 +25,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
     address public linkToken;
 
     mapping(bytes32 => VerifyRequest) private _verifyRequests;
+    mapping(bytes32 => ChangeRequest) private _changeRequests;
     mapping(address => bool) private _whitelistedCollections;
 
     constructor(APIOracleInfo memory _oracleInfo) {
@@ -41,7 +42,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
      * @dev call to verify if a token is locked in ethereum vault,
      * this method can be called only from the collection manager contract
      * @param ethereumCollection the collection address in ethereum
-     * @param tokenId the id of the nft in the collection
+     * @param tokenId the id of the nft in the synthetic collection
      * @param nonce the nonce
      * @return requestId the id of the request to the Chainlink oracle
      */
@@ -96,6 +97,76 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
 
         // only call the synthetic collection contract if is locked
         SyntheticCollectionManager(requestData.syntheticCollection).processVerifyResponse(
+            requestId,
+            requestData,
+            verified
+        );
+    }
+
+    /**
+     * @dev call to verify if a token is locked in ethereum vault (for changes),
+     * this method can be called only from the collection manager contract
+     * @param ethereumCollection the collection address in ethereum
+     * @param syntheticId the id of the nft in the synthetic collection
+     * @param originalId the id of the nft in the original collection
+     * @param nonce the nonce
+     * @return requestId the id of the request to the Chainlink oracle
+     */
+    function changeTokenInCollection(
+        address ethereumCollection,
+        uint256 syntheticId,
+        uint256 originalId,
+        uint256 nonce
+    ) external returns (bytes32 requestId) {
+        require(_whitelistedCollections[msg.sender], "Invalid requester");
+
+        Chainlink.Request memory request = buildChainlinkRequest(
+            jobId,
+            address(this),
+            this.processResponseForChange.selector
+        );
+
+        // set the request params
+        Chainlink.add(
+            request,
+            "get",
+            string(
+                abi.encodePacked(
+                    apiURL,
+                    "?collection=0x",
+                    ethereumCollection.toString(),
+                    "&tokenId=",
+                    syntheticId.toString(),
+                    "&nonce=",
+                    nonce.toString()
+                )
+            )
+        );
+        Chainlink.add(request, "path", "locked");
+
+        // Send the request
+        requestId = sendChainlinkRequestTo(chainlinkNode, request, nodeFee);
+
+        _changeRequests[requestId] = ChangeRequest({
+            syntheticId: syntheticId,
+            originalId: originalId,
+            syntheticCollection: msg.sender
+        });
+    }
+
+    /**
+     * @dev function to process the oracle response (only callable from oracle)
+     * @param requestId the id of the request to the Chainlink oracle
+     * @param verified wether the nft is locked or not on ethereum
+     */
+    function processResponseForChange(bytes32 requestId, bool verified)
+        public
+        recordChainlinkFulfillment(requestId)
+    {
+        VerifyRequest memory requestData = _verifyRequests[requestId];
+
+        // only call the synthetic collection contract if is locked
+        SyntheticCollectionManager(requestData.syntheticCollection).processChangeResponse(
             requestId,
             requestData,
             verified
