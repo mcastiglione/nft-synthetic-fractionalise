@@ -137,35 +137,4 @@ describe('SyntheticCollectionManager', async function () {
     });
   });
 
-  describe('changeNFT', async function () {
-    it('Call with other than router', async () => {
-      await expect(manager.change(0,0, address1.address)).to.be.reverted;
-    });
-    
-    it('Call with non existent token', async () => {
-      await expect(router.changeNFT(NFT, 100, 100)).to.be.revertedWith('NFT not minted');
-    });
-
-    it('Call with locked token', async () => {
-
-      const lockedToken = await router.registerNFT(NFT, 200, 0, 5, 'My Collection', 'MYC', '');
-      await expect(lockedToken).to.emit(router, 'TokenRegistered');
-      const lockedTokenArgs = await getEventArgs(lockedToken, 'TokenRegistered', router);
-      lockedTokenId = lockedTokenArgs.syntheticTokenId;
-
-      await expect(router.changeNFT(NFT, lockedTokenId, lockedTokenId+1)).to.be.revertedWith('Token is locked!');
-
-    });
-
-    it('Call router othen than token owner', async () => {
-      await router.verifyNFT(NFT, tokenId);
-      await expect(router.connect(address1).changeNFT(NFT, tokenId, tokenId +1)).to.be.revertedWith('You are not the owner of the NFT!');
-    });
-
-    it('Correct call', async () => {
-      await router.verifyNFT(NFT, tokenId);
-      await router.changeNFT(NFT, tokenId, nftID+1);
-    });
-  });
-
 });

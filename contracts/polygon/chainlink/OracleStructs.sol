@@ -20,3 +20,9 @@ struct VerifyRequest {
     address syntheticCollection;
     uint256 tokenId;
 }
+
+struct ChangeRequest {
+    address syntheticCollection;
+    uint256 from;
+    uint256 to;
+}
