@@ -38,7 +38,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @dev ERC20 totalSupply (governance) parameter
      * TODO: get from governance
      */
-    uint256 private _jotsSupply;
+    uint256 public jotsSupply;
 
     /**
      * @dev mapping the request id with the flip input data
@@ -147,7 +147,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         protocol = ProtocolParameters(protocol_);
         jotPool = jotPool_;
         _swapAddress = swapAddress;
-        _jotsSupply = ProtocolConstants.JOT_SUPPLY;
+        jotsSupply = ProtocolConstants.JOT_SUPPLY;
         fundingTokenAddress = fundingTokenAddress_;
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -228,10 +228,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         generateSyntheticNFT(nftOwner, syntheticID, metadata);
 
-        Jot(jotAddress).mint(address(this), _jotsSupply);
+        Jot(jotAddress).mint(address(this), jotsSupply);
 
-        uint256 sellingSupply = (_jotsSupply - supplyToKeep) / 2;
-        uint256 liquiditySupply = (_jotsSupply - supplyToKeep) / 2;
+        uint256 sellingSupply = (jotsSupply - supplyToKeep) / 2;
+        uint256 liquiditySupply = (jotsSupply - supplyToKeep) / 2;
 
         TokenData memory data = TokenData({
             originalTokenID: tokenId,
@@ -264,8 +264,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function buyJotTokens(uint256 tokenId, uint256 buyAmount) public {
         TokenData storage token = tokens[tokenId];
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
-        require(token.fractionPrices > 0, "Token price not set");
         require(!lockedNFT(tokenId), "Token is locked!");
+        require(buyAmount > 0, "Buy amount can't be zero!");
 
         // Calculate amount left
         uint256 amountLeft = token.sellingSupply - token.soldSupply;
@@ -291,6 +291,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function depositJots(uint256 tokenId, uint256 amount) public {
+        require(amount > 0, "Amount can't be zero!");
         ISyntheticNFT nft = ISyntheticNFT(erc721address);
         address nftOwner = nft.ownerOf(tokenId);
         require(nftOwner == msg.sender, "you are not the owner of the NFT!");
