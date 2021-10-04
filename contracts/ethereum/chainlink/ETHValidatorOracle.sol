@@ -17,6 +17,7 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
      */
     string public token;
     string public apiURL;
+    string public apiURLForChanges;
     address public chainlinkNode;
     bytes32 public jobId;
     uint256 public nodeFee;
@@ -25,8 +26,16 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
     address private _vaultManagerAddress;
 
     mapping(bytes32 => VerifyRequest) private _verifyRequests;
+    mapping(bytes32 => ChangeRequest) private _changeRequests;
 
     event ResponseReceived(bytes32 indexed requestId, address collection, uint256 tokenId, address newOwner);
+    event ChangeResponseReceived(
+        bytes32 indexed requestId,
+        address collection,
+        uint256 tokenFrom,
+        uint256 tokenTo,
+        bool response
+    );
 
     constructor(APIOracleInfo memory _oracleInfo) {
         linkToken = _oracleInfo.linkToken;
@@ -34,6 +43,7 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
         jobId = stringToBytes32(_oracleInfo.jobId);
         nodeFee = (_oracleInfo.nodeFee * LINK_DIVISIBILITY) / 1000;
         apiURL = "https://nft-validator-hwk7x.ondigitalocean.app/iswithdrawable";
+        apiURLForChanges = "https://nft-validator-hwk7x.ondigitalocean.app/ischangeable";
 
         setChainlinkToken(linkToken);
     }
@@ -90,6 +100,62 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
     }
 
     /**
+     * @dev call to verify if a token is changable in the synthetic collection,
+     * this method can be called only from the nft vault contract
+     * @param collection the collection address
+     * @param tokenFrom the id of the nft in the collection to change from
+     * @param tokenTo the id of the nft in the collection to change to
+     * @param caller the caller
+     * @param nonce the nonce
+     * @return requestId the id of the request to the Chainlink oracle
+     */
+    function verifyTokenIsChangeable(
+        address collection,
+        uint256 tokenFrom,
+        uint256 tokenTo,
+        address caller,
+        uint256 nonce
+    ) external returns (bytes32 requestId) {
+        Chainlink.Request memory request = buildChainlinkRequest(
+            jobId,
+            address(this),
+            this.processResponseForChange.selector
+        );
+
+        // set the request params
+        Chainlink.add(
+            request,
+            "get",
+            string(
+                abi.encodePacked(
+                    apiURLForChanges,
+                    "?collection=0x",
+                    collection.toString(),
+                    "&tokenFrom=",
+                    tokenFrom.toString(),
+                    "&tokenTo=",
+                    tokenTo.toString(),
+                    "&caller=",
+                    caller.toString(),
+                    "&nonce=",
+                    nonce.toString()
+                )
+            )
+        );
+        Chainlink.add(request, "path", "is_changeable");
+
+        // Send the request
+        requestId = sendChainlinkRequestTo(chainlinkNode, request, nodeFee);
+
+        _changeRequests[requestId] = ChangeRequest({
+            tokenFrom: tokenFrom,
+            collection: collection,
+            tokenTo: tokenTo,
+            caller: caller
+        });
+    }
+
+    /**
      * @dev function to process the oracle response (only callable from oracle)
      * @param requestId the id of the request to the Chainlink oracle
      * @param newOwner_ the address who can retrieve the nft (if 0 assumes is not withdrawable)
@@ -111,6 +177,36 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
         }
 
         emit ResponseReceived(requestId, requestData.collection, requestData.tokenId, newOwner);
+    }
+
+    /**
+     * @dev function to process the oracle response (only callable from oracle)
+     * @param requestId the id of the request to the Chainlink oracle
+     * @param changeable the response telling us if this tokens are changeable
+     */
+    function processResponseForChange(bytes32 requestId, bool changeable)
+        public
+        recordChainlinkFulfillment(requestId)
+    {
+        ChangeRequest memory requestData = _changeRequests[requestId];
+
+        // only call the synthetic collection contract if is locked
+        if (changeable) {
+            NFTVaultManager(_vaultManagerAddress).changeNFTs(
+                requestData.collection,
+                requestData.tokenFrom,
+                requestData.tokenTo,
+                requestData.caller
+            );
+        }
+
+        emit ChangeResponseReceived(
+            requestId,
+            requestData.collection,
+            requestData.tokenFrom,
+            requestData.tokenTo,
+            changeable
+        );
     }
 
     function stringToBytes32(string memory source) private pure returns (bytes32 result) {

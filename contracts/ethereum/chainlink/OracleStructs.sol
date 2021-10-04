@@ -12,3 +12,10 @@ struct VerifyRequest {
     address collection;
     uint256 tokenId;
 }
+
+struct ChangeRequest {
+    address collection;
+    uint256 tokenFrom;
+    uint256 tokenTo;
+    address caller;
+}

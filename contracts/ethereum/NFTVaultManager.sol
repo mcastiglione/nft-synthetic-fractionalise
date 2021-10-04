@@ -10,7 +10,6 @@ contract NFTVaultManager is AccessControl {
     bytes32 public constant MANAGER = keccak256("MANAGER");
     bytes32 public constant VALIDATOR_ORACLE = keccak256("VALIDATOR_ORACLE");
 
-
     /**
      * @dev map to check if a holder has a token registered over an approved collection
      *
@@ -24,6 +23,12 @@ contract NFTVaultManager is AccessControl {
     mapping(address => mapping(uint256 => uint256)) public nonces;
 
     /**
+     * @dev nonce to count the changes of an original collection token id
+     *      in order to avoid double change (with the second one keeping the synthetic playing)
+     */
+    mapping(address => mapping(uint256 => uint256)) public changeNonces;
+
+    /**
      * @dev tokens in this map can be retrieved by the owner (address returned)
      */
     mapping(address => mapping(uint256 => address)) public pendingWithdraws;
@@ -31,6 +36,8 @@ contract NFTVaultManager is AccessControl {
     address private _validatorOracleAddress;
 
     event UnlockRequested(address collection, uint256 tokenId);
+    event ChangeRequested(address collection, uint256 tokenFrom, uint256 tokenTo);
+    event ChangeApproved(address collection, uint256 tokenFrom, uint256 tokenTo);
     event NFTUnlocked(address collection, uint256 tokenId, address newOwner);
 
     constructor(address validatorOracleAddress_) {
@@ -72,6 +79,47 @@ contract NFTVaultManager is AccessControl {
         emit NFTUnlocked(collection_, tokenId_, newOwner);
     }
 
+    function requestChange(
+        address collection_,
+        uint256 tokenFrom_,
+        uint256 tokenTo_
+    ) external {
+        require(_holdings[collection_][tokenFrom_] != address(0), "Token not locked");
+        require(_holdings[collection_][tokenTo_] == address(0), "Token already locked");
+
+        // get the token
+        IERC721(collection_).transferFrom(msg.sender, address(this), tokenTo_);
+
+        ETHValidatorOracle(_validatorOracleAddress).verifyTokenIsChangeable(
+            collection_,
+            tokenFrom_,
+            tokenTo_,
+            msg.sender,
+            changeNonces[collection_][tokenFrom_]
+        );
+
+        emit ChangeRequested(collection_, tokenFrom_, tokenTo_);
+    }
+
+    function changeNFTs(
+        address collection_,
+        uint256 tokenFrom_,
+        uint256 tokenTo_,
+        address owner_
+    ) external onlyRole(VALIDATOR_ORACLE) {
+        // release the space
+        _holdings[collection_][tokenFrom_] = address(0);
+        _holdings[collection_][tokenTo_] = owner_;
+
+        // increment the nonce
+        changeNonces[collection_][tokenFrom_] += 1;
+
+        // transfer the token
+        IERC721(collection_).transferFrom(address(this), owner_, tokenFrom_);
+
+        emit ChangeApproved(collection_, tokenFrom_, tokenTo_);
+    }
+
     /**
      * @notice check if the vault holds a token
      */
@@ -92,5 +140,4 @@ contract NFTVaultManager is AccessControl {
         // transfer the token
         IERC721(collection_).transferFrom(address(this), msg.sender, tokenId_);
     }
-
 }
