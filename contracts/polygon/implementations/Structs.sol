@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import "./Enums.sol";
+
 struct TokenData {
     uint256 originalTokenID;
     uint256 ownerSupply;
@@ -11,9 +13,7 @@ struct TokenData {
     uint256 fractionPrices;
     uint256 lastFlipTime;
     uint256 liquidityTokenBalance;
-    bool verified;
-    bool verifying;
-
+    State state;
 }
 
 struct Flip {

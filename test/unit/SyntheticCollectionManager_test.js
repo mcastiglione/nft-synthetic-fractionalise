@@ -63,6 +63,47 @@ describe('SyntheticCollectionManager', async function () {
     });
   });
 
+  describe('CHECKING for 10*18 division on BACKEND in buyJotTokens, *** DO NOT MODIFY, DO NOT DELETE  THIS TEST***', async () => {
+    it('check', async () => {
+      await router.verifyNFT(NFT, tokenId);
+      const amount = parseAmount('1');
+      const fundingTokenAddress = await manager.fundingTokenAddress();
+      const fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
+      await jot.mint(owner.address, parseAmount('100000'));
+      await jot.approve(managerAddress, parseAmount('100000'));
+      await fundingToken.mint(owner.address, parseAmount('100000'));
+      await fundingToken.approve(managerAddress, parseAmount('100000'));
+      await manager.depositJots(tokenId, parseAmount('50000'));
+      await manager.increaseSellingSupply(tokenId, parseAmount('10000'));
+      await manager.buyJotTokens(tokenId, amount);
+      const liquiditySold = await manager.getliquiditySold(tokenId)
+      expect(liquiditySold).to.be.equal(5);
+    });
+  });
+
+  describe('reassignNFT', async () => {
+    it('Testing reassignNFT via auctionManagerMock', async () => {
+
+      const [newOwner] = await getUnnamedAccounts();
+
+      const tx = await router.registerNFT(NFT, nftID, 0, 5, 'My Collection', 'MYC', '');
+      await expect(tx).to.emit(router, 'TokenRegistered');
+      const args = await getEventArgs(tx, 'TokenRegistered', router);
+      tokenId = args.syntheticTokenId;
+
+      const auctionsManagerAddress = await manager.auctionsManagerAddress();
+      const auctionsManager = await ethers.getContractAt('AuctionsManager', auctionsManagerAddress);
+      const verified = await manager.isVerified(tokenId)
+      await manager.verify(tokenId)
+
+      const reassign = await auctionsManager.reassignNFT(managerAddress, tokenId, newOwner);
+      await expect(reassign).to.emit(manager, 'TokenReassigned');
+      const eventArgsTokenReassigned = await getEventArgs(reassign, 'TokenReassigned', manager);
+
+      expect(await manager.getSyntheticNFTOwner(eventArgsTokenReassigned.tokenID)).to.be.equal(newOwner);
+    });
+  });
+
   describe('Add Liquidity to Pool', async function () {
     it('Verify that liquidity is added to the pool', async () => {
       // Verify NFT

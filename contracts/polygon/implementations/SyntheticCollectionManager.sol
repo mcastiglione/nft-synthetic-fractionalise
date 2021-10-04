@@ -15,10 +15,11 @@ import "../chainlink/PolygonValidatorOracle.sol";
 import "../chainlink//OracleStructs.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
+import "../libraries/ProtocolConstants.sol";
 import "../governance/ProtocolParameters.sol";
 import "./Jot.sol";
 import "./Structs.sol";
-import "../libraries/ProtocolConstants.sol";
+import "./Enums.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
@@ -31,7 +32,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     address private immutable _randomConsumerAddress;
     address private immutable _validatorAddress;
-    address private _auctionsManagerAddress;
+    address public auctionsManagerAddress;
 
     /**
      * @dev ERC20 totalSupply (governance) parameter
@@ -118,6 +119,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     event ChangeResponseReceived(bytes32 indexed requestId, uint256 from, uint256 to, bool accepted);
 
+    event TokenReassigned(
+        uint256 tokenID,
+        address newOwner
+    );
+
     constructor(address randomConsumerAddress, address validatorAddress) {
         _randomConsumerAddress = randomConsumerAddress;
         _validatorAddress = validatorAddress;
@@ -127,7 +133,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address _jotAddress,
         address originalCollectionAddress_,
         address _erc721address,
-        address auctionManagerAddress,
+        address auctionManagerAddress_,
         address protocol_,
         address fundingTokenAddress_,
         address jotPool_,
@@ -137,7 +143,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         erc721address = _erc721address;
         originalCollectionAddress = originalCollectionAddress_;
         syntheticProtocolRouterAddress = msg.sender;
-        _auctionsManagerAddress = auctionManagerAddress;
+        auctionsManagerAddress = auctionManagerAddress_;
         protocol = ProtocolParameters(protocol_);
         jotPool = jotPool_;
         _swapAddress = swapAddress;
@@ -146,7 +152,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ROUTER, msg.sender);
-        _setupRole(AUCTION_MANAGER, auctionManagerAddress);
+        _setupRole(AUCTION_MANAGER, auctionManagerAddress_);
     }
 
     function reassignNFT(uint256 nftId_, address newOwner_) external onlyRole(AUCTION_MANAGER) {
@@ -173,11 +179,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _originalToSynthetic[originalID] = newSyntheticID;
 
         // Empty previous id
-        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, 0, false, false);
+        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, 0, State.NEW);
 
         // Fill new ID
         uint256 tokenSupply = ProtocolConstants.JOT_SUPPLY;
-        tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, 0, false, false);
+        tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, 0, State.NEW);
+        
+        emit TokenReassigned(newSyntheticID, newOwner_);
+
     }
 
     /**
@@ -234,15 +243,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             fractionPrices: priceFraction,
             lastFlipTime: 0,
             liquidityTokenBalance: 0,
-            verified: false,
-            verifying: false
+            state: State.NEW
         });
 
         tokens[syntheticID] = data;
 
         // lock the nft and make it auctionable
         if (supplyToKeep == 0) {
-            AuctionsManager(_auctionsManagerAddress).whitelistNFT(syntheticID);
+            AuctionsManager(auctionsManagerAddress).whitelistNFT(syntheticID);
         }
 
         tokenCounter.increment();
@@ -302,7 +310,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         tokens[tokenId].ownerSupply -= amount;
         IJot(jotAddress).transfer(msg.sender, amount);
         if (tokens[tokenId].ownerSupply == 0) {
-            AuctionsManager(_auctionsManagerAddress).whitelistNFT(tokenId);
+            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId);
         }
     }
 
@@ -324,7 +332,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // lock the nft and make it auctionable
         if (token.ownerSupply == 0) {
-            AuctionsManager(_auctionsManagerAddress).whitelistNFT(tokenId);
+            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId);
         }
     }
 
@@ -475,14 +483,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // lock the nft and make it auctionable
         if (token.ownerSupply == 0) {
-            AuctionsManager(_auctionsManagerAddress).whitelistNFT(flip.tokenId);
+            AuctionsManager(auctionsManagerAddress).whitelistNFT(flip.tokenId);
         }
 
         emit FlipProcessed(requestId, flip.tokenId, flip.prediction, randomNumber);
     }
 
     function recoverToken(uint256 tokenId) external {
-        require(AuctionsManager(_auctionsManagerAddress).isRecoverable(tokenId), "Token is not recoverable");
+        require(AuctionsManager(auctionsManagerAddress).isRecoverable(tokenId), "Token is not recoverable");
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
 
         // reverts on failure
@@ -490,7 +498,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         tokens[tokenId].ownerSupply = ProtocolConstants.JOT_SUPPLY;
 
-        AuctionsManager(_auctionsManagerAddress).blacklistNFT(tokenId);
+        AuctionsManager(auctionsManagerAddress).blacklistNFT(tokenId);
     }
 
     /**
@@ -501,9 +509,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function verify(uint256 tokenId) external {
         TokenData storage token = tokens[tokenId];
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
-        require(!token.verified, "Token already verified");
+        require(token.state != State.VERIFIED, "Token already verified");
 
-        token.verifying = true;
+        token.state = State.VERIFYING;
 
         bytes32 requestId = PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(
             originalCollectionAddress,
@@ -522,10 +530,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         TokenData storage token = tokens[requestData.tokenId];
 
         if (verified) {
-            token.verified = true;
+            token.state = State.VERIFIED;
+        } else {
+            token.state = State.NEW;
         }
-
-        token.verifying = false;
 
         emit VerifyResponseReceived(
             requestId,
@@ -554,10 +562,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(ISyntheticNFT(erc721address).exists(to), "Token not registered");
 
         // Shouldnt be verified (to token)
-        require(!toToken.verified, "Token already verified (to)");
+        require(toToken.state != State.VERIFIED, "Token already verified (to)");
 
         // Should be verified (from token)
-        require(fromToken.verified, "Token not verified (from)");
+        require(fromToken.state == State.VERIFIED, "Token not verified (from)");
 
         // Caller must be tokens owner
         address ownerOfFrom = IERC721(erc721address).ownerOf(from);
@@ -568,7 +576,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         }
 
         // set verifying to avoid metadata changes
-        toToken.verifying = true;
+        toToken.state = State.VERIFYING;
 
         bytes32 requestId = PolygonValidatorOracle(_validatorAddress).changeTokenInCollection(
             originalCollectionAddress,
@@ -600,7 +608,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             delete tokens[requestData.from];
         }
 
-        tokens[requestData.to].verifying = false;
+        tokens[requestData.to].state = State.NEW;
 
         emit ChangeResponseReceived(requestId, requestData.from, requestData.to, verified);
     }
@@ -637,8 +645,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function setMetadata(uint256 tokenId, string memory metadata) public {
         TokenData storage token = tokens[tokenId];
-        require(!token.verified, "Can't change metadata after verify");
-        require(!token.verifying, "Can't change metadata while verifying");
+        require(token.state != State.VERIFIED, "Can't change metadata after verify");
+        require(token.state != State.VERIFYING, "Can't change metadata while verifying");
 
         address tokenOwner = IERC721(erc721address).ownerOf(tokenId);
         require(msg.sender == tokenOwner, "You are not the owner of the NFT!");
@@ -654,7 +662,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         tokens[tokenId].ownerSupply -= amount;
         if (tokens[tokenId].ownerSupply == 0) {
-            AuctionsManager(_auctionsManagerAddress).whitelistNFT(tokenId);
+            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId);
         }
 
         uniswapV2Router.swapExactTokensForTokens(
@@ -673,7 +681,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function isVerified(uint256 tokenId) public view returns (bool) {
         require(ISyntheticNFT(erc721address).exists(tokenId), "NFT not minted");
-        return tokens[tokenId].verified;
+        return (tokens[tokenId].state == State.VERIFIED);
     }
 
     function getOriginalID(uint256 tokenId) public view returns (uint256) {
@@ -753,7 +761,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function lockedNFT(uint256 tokenId) public view returns (bool) {
         TokenData storage token = tokens[tokenId];
-        return !token.verified || token.ownerSupply == 0;
+        return !isVerified(tokenId) || token.ownerSupply == 0;
     }
 
     /**
@@ -770,4 +778,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             IERC20(jotAddress).balanceOf(jotPool) > protocol.flippingAmount() &&
             isSyntheticNFTFractionalised(tokenId);
     }
+
+        function getliquiditySold(uint256 tokenId) public view returns (uint256) {
+        return tokens[tokenId].liquiditySold;
+    }
+
 }
