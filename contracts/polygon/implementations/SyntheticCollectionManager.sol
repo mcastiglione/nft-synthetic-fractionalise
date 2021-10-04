@@ -32,7 +32,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     address private immutable _randomConsumerAddress;
     address private immutable _validatorAddress;
-    address private _auctionsManagerAddress;
+    address public auctionsManagerAddress;
 
     /**
      * @dev ERC20 totalSupply (governance) parameter
@@ -47,6 +47,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     mapping(uint256 => uint256) private _originalToSynthetic;
 
+    address private _swapAddress;
+
     Counters.Counter public tokenCounter;
 
     /**
@@ -55,8 +57,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     address public syntheticProtocolRouterAddress;
 
     ProtocolParameters public protocol;
-
-    address private _swapAddress;
 
     /**
      * @notice address of the original collection
@@ -122,6 +122,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         bool verified
     );
 
+    event TokenReassigned(uint256 tokenID, address newOwner);
+
     constructor(address randomConsumerAddress, address validatorAddress) {
         _randomConsumerAddress = randomConsumerAddress;
         _validatorAddress = validatorAddress;
@@ -131,7 +133,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address _jotAddress,
         address originalCollectionAddress_,
         address _erc721address,
-        address auctionManagerAddress,
+        address auctionManagerAddress_,
         address protocol_,
         address fundingTokenAddress_,
         address jotPool_,
@@ -141,7 +143,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         erc721address = _erc721address;
         originalCollectionAddress = originalCollectionAddress_;
         syntheticProtocolRouterAddress = msg.sender;
-        _auctionsManagerAddress = auctionManagerAddress;
+        auctionsManagerAddress = auctionManagerAddress_;
         protocol = ProtocolParameters(protocol_);
         jotPool = jotPool_;
         _swapAddress = swapAddress;
@@ -150,13 +152,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ROUTER, msg.sender);
-        _setupRole(AUCTION_MANAGER, auctionManagerAddress);
+        _setupRole(AUCTION_MANAGER, auctionManagerAddress_);
     }
 
-    /**
-     * @dev we need to pass the jobSupply here to work well even when the governance
-     *      changes this protocol parameter in the middle of the auction
-     */
     function reassignNFT(uint256 nftId_, address newOwner_) external onlyRole(AUCTION_MANAGER) {
         string memory metadata = ISyntheticNFT(erc721address).tokenURI(nftId_);
 
@@ -186,38 +184,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // Fill new ID
         uint256 tokenSupply = ProtocolConstants.JOT_SUPPLY;
         tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, 0, State.NEW);
-    }
 
-    /**
-     * @notice Get the owner of the NFT
-     */
-    function getSyntheticNFTOwner(uint256 tokenId) public view returns (address) {
-        //TODO: get owner from Oracle
-        return IERC721(erc721address).ownerOf(tokenId);
-    }
-
-    /**
-     * @notice returns the Quickswap pool address
-     */
-    function poolAddress() public view returns (address) {
-        //TODO: check if pool is initiated
-        return IJot(jotAddress).uniswapV2Pair();
-    }
-
-    /**
-     * @notice public function. Checks if an NFT has
-     * been already fractionalized
-     */
-    function isSyntheticNFTCreated(uint256 tokenId) public view returns (bool) {
-        return _originalToSynthetic[tokenId] != 0;
-    }
-
-    /**
-     * @notice public function. Checks if an NFT has
-     * been already fractionalised.
-     */
-    function isSyntheticNFTFractionalised(uint256 tokenId) public view returns (bool) {
-        return tokens[tokenId].originalTokenID != 0;
+        emit TokenReassigned(newSyntheticID, newOwner_);
     }
 
     /**
@@ -281,46 +249,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // lock the nft and make it auctionable
         if (supplyToKeep == 0) {
-            AuctionsManager(_auctionsManagerAddress).whitelistNFT(syntheticID);
+            AuctionsManager(auctionsManagerAddress).whitelistNFT(syntheticID);
         }
 
         tokenCounter.increment();
 
         return syntheticID;
-    }
-
-    function getOwnerSupply(uint256 tokenId) public view returns (uint256) {
-        return tokens[tokenId].ownerSupply;
-    }
-
-    function getSellingSupply(uint256 tokenId) public view returns (uint256) {
-        return tokens[tokenId].sellingSupply;
-    }
-
-    function getSoldSupply(uint256 tokenId) public view returns (uint256) {
-        return tokens[tokenId].soldSupply;
-    }
-
-    function getJotFractionPrice(uint256 tokenId) public view returns (uint256) {
-        return tokens[tokenId].fractionPrices;
-    }
-
-    function getJotAmountLeft(uint256 tokenId) public view returns (uint256) {
-        TokenData storage token = tokens[tokenId];
-        return token.sellingSupply - token.soldSupply;
-    }
-
-    function getSalePrice(uint256 tokenId, uint256 buyAmount) public view returns (uint256) {
-        uint256 amount = (buyAmount * tokens[tokenId].fractionPrices);
-        return amount;
-    }
-
-    function getFundingTokenAllowance() public view returns (uint256) {
-        return IERC20(fundingTokenAddress).allowance(msg.sender, address(this));
-    }
-
-    function getContractJotsBalance() public view returns (uint256) {
-        return IJot(jotAddress).balanceOf(address(this));
     }
 
     /**
@@ -359,6 +293,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         ISyntheticNFT nft = ISyntheticNFT(erc721address);
         address nftOwner = nft.ownerOf(tokenId);
         require(nftOwner == msg.sender, "you are not the owner of the NFT!");
+        require(!lockedNFT(tokenId), "Token is locked!");
         uint256 result = tokens[tokenId].ownerSupply + amount;
         require(result <= ProtocolConstants.JOT_SUPPLY, "You can't deposit more than the Jot Supply limit");
         IJot(jotAddress).transferFrom(msg.sender, address(this), amount);
@@ -369,11 +304,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         ISyntheticNFT nft = ISyntheticNFT(erc721address);
         address nftOwner = nft.ownerOf(tokenId);
         require(nftOwner == msg.sender, "you are not the owner of the NFT!");
+        require(!lockedNFT(tokenId), "Token is locked!");
         require(amount <= tokens[tokenId].ownerSupply, "Not enough balance");
         tokens[tokenId].ownerSupply -= amount;
         IJot(jotAddress).transfer(msg.sender, amount);
         if (tokens[tokenId].ownerSupply == 0) {
-            AuctionsManager(_auctionsManagerAddress).whitelistNFT(tokenId);
+            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId);
         }
     }
 
@@ -395,7 +331,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // lock the nft and make it auctionable
         if (token.ownerSupply == 0) {
-            AuctionsManager(_auctionsManagerAddress).whitelistNFT(tokenId);
+            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId);
         }
     }
 
@@ -416,11 +352,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         token.ownerSupply += amount;
         token.sellingSupply -= amount / 2;
         token.liquiditySupply -= amount / 2;
-    }
-
-    function lockedNFT(uint256 tokenId) public view returns (bool) {
-        TokenData storage token = tokens[tokenId];
-        return token.state != State.VERIFIED || token.ownerSupply == 0;
     }
 
     /**
@@ -494,21 +425,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         pair.transfer(msg.sender, amount);
     }
 
-    /**
-     * @notice returns the accrued reward by QuickSwap pool LP for a given fractionalization
-     */
-    function getAccruedReward(uint256 tokenId) public view returns (uint256) {
-        return tokens[tokenId].liquidityTokenBalance;
-    }
-
-    function isAllowedToFlip(uint256 tokenId) public view returns (bool) {
-        return
-            ISyntheticNFT(erc721address).exists(tokenId) &&
-            block.timestamp - tokens[tokenId].lastFlipTime >= protocol.flippingInterval() && // solhint-disable-line
-            IERC20(jotAddress).balanceOf(jotPool) > protocol.flippingAmount() &&
-            isSyntheticNFTFractionalised(tokenId);
-    }
-
     function flipJot(uint256 tokenId, uint64 prediction) external {
         TokenData storage token = tokens[tokenId];
 
@@ -566,14 +482,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // lock the nft and make it auctionable
         if (token.ownerSupply == 0) {
-            AuctionsManager(_auctionsManagerAddress).whitelistNFT(flip.tokenId);
+            AuctionsManager(auctionsManagerAddress).whitelistNFT(flip.tokenId);
         }
 
         emit FlipProcessed(requestId, flip.tokenId, flip.prediction, randomNumber);
     }
 
     function recoverToken(uint256 tokenId) external {
-        require(AuctionsManager(_auctionsManagerAddress).isRecoverable(tokenId), "Token is not recoverable");
+        require(AuctionsManager(auctionsManagerAddress).isRecoverable(tokenId), "Token is not recoverable");
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
 
         // reverts on failure
@@ -581,7 +497,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         tokens[tokenId].ownerSupply = ProtocolConstants.JOT_SUPPLY;
 
-        AuctionsManager(_auctionsManagerAddress).blacklistNFT(tokenId);
+        AuctionsManager(auctionsManagerAddress).blacklistNFT(tokenId);
     }
 
     /**
@@ -689,24 +605,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         tokenCounter.decrement();
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
-
-    function isVerified(uint256 tokenId) public view returns (bool) {
-        require(ISyntheticNFT(erc721address).exists(tokenId), "NFT not minted");
-        return tokens[tokenId].state == State.VERIFIED;
-    }
-
-    function getOriginalID(uint256 tokenId) public view returns (uint256) {
-        require(ISyntheticNFT(erc721address).exists(tokenId), "NFT not minted");
-        return tokens[tokenId].originalTokenID;
-    }
-
-    function getTokenURI(uint256 tokenId) public view returns (string memory) {
-        return ISyntheticNFT(erc721address).tokenURI(tokenId);
-    }
-
     function setMetadata(uint256 tokenId, string memory metadata) public {
         TokenData storage token = tokens[tokenId];
         require(token.state != State.VERIFIED, "Can't change metadata after verify");
@@ -726,7 +624,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         tokens[tokenId].ownerSupply -= amount;
         if (tokens[tokenId].ownerSupply == 0) {
-            AuctionsManager(_auctionsManagerAddress).whitelistNFT(tokenId);
+            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId);
         }
 
         uniswapV2Router.swapExactTokensForTokens(
@@ -737,5 +635,113 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             // solhint-disable-next-line
             block.timestamp
         );
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+
+    function isVerified(uint256 tokenId) public view returns (bool) {
+        require(ISyntheticNFT(erc721address).exists(tokenId), "NFT not minted");
+        return (tokens[tokenId].state == State.VERIFIED);
+    }
+
+    function getOriginalID(uint256 tokenId) public view returns (uint256) {
+        require(ISyntheticNFT(erc721address).exists(tokenId), "NFT not minted");
+        return tokens[tokenId].originalTokenID;
+    }
+
+    function getTokenURI(uint256 tokenId) public view returns (string memory) {
+        return ISyntheticNFT(erc721address).tokenURI(tokenId);
+    }
+
+    /**
+     * @notice Get the owner of the NFT
+     */
+    function getSyntheticNFTOwner(uint256 tokenId) public view returns (address) {
+        //TODO: get owner from Oracle
+        return IERC721(erc721address).ownerOf(tokenId);
+    }
+
+    /**
+     * @notice returns the Quickswap pool address
+     */
+    function poolAddress() public view returns (address) {
+        //TODO: check if pool is initiated
+        return IJot(jotAddress).uniswapV2Pair();
+    }
+
+    /**
+     * @notice public function. Checks if an NFT has
+     * been already fractionalized
+     */
+    function isSyntheticNFTCreated(uint256 tokenId) public view returns (bool) {
+        return _originalToSynthetic[tokenId] != 0;
+    }
+
+    /**
+     * @notice public function. Checks if an NFT has
+     * been already fractionalised.
+     */
+    function isSyntheticNFTFractionalised(uint256 tokenId) public view returns (bool) {
+        return tokens[tokenId].originalTokenID != 0;
+    }
+
+    function getOwnerSupply(uint256 tokenId) public view returns (uint256) {
+        return tokens[tokenId].ownerSupply;
+    }
+
+    function getSellingSupply(uint256 tokenId) public view returns (uint256) {
+        return tokens[tokenId].sellingSupply;
+    }
+
+    function getSoldSupply(uint256 tokenId) public view returns (uint256) {
+        return tokens[tokenId].soldSupply;
+    }
+
+    function getJotFractionPrice(uint256 tokenId) public view returns (uint256) {
+        return tokens[tokenId].fractionPrices;
+    }
+
+    function getJotAmountLeft(uint256 tokenId) public view returns (uint256) {
+        TokenData storage token = tokens[tokenId];
+        return token.sellingSupply - token.soldSupply;
+    }
+
+    function getSalePrice(uint256 tokenId, uint256 buyAmount) public view returns (uint256) {
+        uint256 amount = (buyAmount * tokens[tokenId].fractionPrices);
+        return amount;
+    }
+
+    function getFundingTokenAllowance() public view returns (uint256) {
+        return IERC20(fundingTokenAddress).allowance(msg.sender, address(this));
+    }
+
+    function getContractJotsBalance() public view returns (uint256) {
+        return IJot(jotAddress).balanceOf(address(this));
+    }
+
+    function lockedNFT(uint256 tokenId) public view returns (bool) {
+        TokenData storage token = tokens[tokenId];
+        return !isVerified(tokenId) || token.ownerSupply == 0;
+    }
+
+    /**
+     * @notice returns the accrued reward by QuickSwap pool LP for a given fractionalization
+     */
+    function getAccruedReward(uint256 tokenId) public view returns (uint256) {
+        return tokens[tokenId].liquidityTokenBalance;
+    }
+
+    function isAllowedToFlip(uint256 tokenId) public view returns (bool) {
+        return
+            ISyntheticNFT(erc721address).exists(tokenId) &&
+            block.timestamp - tokens[tokenId].lastFlipTime >= protocol.flippingInterval() && // solhint-disable-line
+            IERC20(jotAddress).balanceOf(jotPool) > protocol.flippingAmount() &&
+            isSyntheticNFTFractionalised(tokenId);
+    }
+
+    function getliquiditySold(uint256 tokenId) public view returns (uint256) {
+        return tokens[tokenId].liquiditySold;
     }
 }
