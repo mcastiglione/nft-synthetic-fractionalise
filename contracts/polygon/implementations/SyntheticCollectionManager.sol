@@ -38,7 +38,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @dev ERC20 totalSupply (governance) parameter
      * TODO: get from governance
      */
-    uint256 private _jotsSupply;
+    uint256 public jotsSupply;
 
     /**
      * @dev mapping the request id with the flip input data
@@ -82,6 +82,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @dev the nonce to avoid double verification (quantity of exits for original token id)
      */
     mapping(uint256 => uint256) public nonces;
+
+    /**
+     * @dev nonce to count the changes of an original collection token id
+     *      in order to avoid double change (with the second one keeping the synthetic playing)
+     */
+    mapping(uint256 => uint256) public changeNonces;
+
     mapping(uint256 => mapping(uint256 => address)) public ownersByNonce;
 
     /**
@@ -107,8 +114,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     event VerificationRequested(bytes32 indexed requestId, address from, uint256 tokenId);
 
-    event ChangeRequested(bytes32 indexed requestId, uint256 fromToken, uint256 toToken);
-
     event VerifyResponseReceived(
         bytes32 indexed requestId,
         address originalCollection,
@@ -117,12 +122,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         bool verified
     );
 
-    event ChangeResponseReceived(bytes32 indexed requestId, uint256 from, uint256 to, bool accepted);
-
-    event TokenReassigned(
-        uint256 tokenID,
-        address newOwner
-    );
+    event TokenReassigned(uint256 tokenID, address newOwner);
 
     constructor(address randomConsumerAddress, address validatorAddress) {
         _randomConsumerAddress = randomConsumerAddress;
@@ -147,7 +147,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         protocol = ProtocolParameters(protocol_);
         jotPool = jotPool_;
         _swapAddress = swapAddress;
-        _jotsSupply = ProtocolConstants.JOT_SUPPLY;
+        jotsSupply = ProtocolConstants.JOT_SUPPLY;
         fundingTokenAddress = fundingTokenAddress_;
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -184,9 +184,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // Fill new ID
         uint256 tokenSupply = ProtocolConstants.JOT_SUPPLY;
         tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, 0, State.NEW);
-        
-        emit TokenReassigned(newSyntheticID, newOwner_);
 
+        emit TokenReassigned(newSyntheticID, newOwner_);
     }
 
     /**
@@ -228,10 +227,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         generateSyntheticNFT(nftOwner, syntheticID, metadata);
 
-        Jot(jotAddress).mint(address(this), _jotsSupply);
+        Jot(jotAddress).mint(address(this), jotsSupply);
 
-        uint256 sellingSupply = (_jotsSupply - supplyToKeep) / 2;
-        uint256 liquiditySupply = (_jotsSupply - supplyToKeep) / 2;
+        uint256 sellingSupply = (jotsSupply - supplyToKeep) / 2;
+        uint256 liquiditySupply = (jotsSupply - supplyToKeep) / 2;
 
         TokenData memory data = TokenData({
             originalTokenID: tokenId,
@@ -264,8 +263,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function buyJotTokens(uint256 tokenId, uint256 buyAmount) public {
         TokenData storage token = tokens[tokenId];
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
-        require(token.fractionPrices > 0, "Token price not set");
         require(!lockedNFT(tokenId), "Token is locked!");
+        require(buyAmount > 0, "Buy amount can't be zero!");
 
         // Calculate amount left
         uint256 amountLeft = token.sellingSupply - token.soldSupply;
@@ -291,6 +290,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function depositJots(uint256 tokenId, uint256 amount) public {
+        require(amount > 0, "Amount can't be zero!");
         ISyntheticNFT nft = ISyntheticNFT(erc721address);
         address nftOwner = nft.ownerOf(tokenId);
         require(nftOwner == msg.sender, "you are not the owner of the NFT!");
@@ -516,6 +516,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         bytes32 requestId = PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(
             originalCollectionAddress,
             tokenId,
+            uint256(token.state),
             nonces[token.originalTokenID]
         );
 
@@ -532,7 +533,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         if (verified) {
             token.state = State.VERIFIED;
         } else {
-            token.state = State.NEW;
+            token.state = requestData.previousState;
         }
 
         emit VerifyResponseReceived(
@@ -548,69 +549,29 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice change an NFT for another one of the same collection
      */
     function change(
-        uint256 from,
-        uint256 to,
+        uint256 syntheticId,
+        uint256 newOriginalId,
+        string memory metadata,
         address caller
     ) public onlyRole(ROUTER) {
-        TokenData storage fromToken = tokens[from];
-        TokenData storage toToken = tokens[to];
+        TokenData storage token = tokens[syntheticId];
 
         // only can change tokens with supply
-        require(fromToken.ownerSupply > 0, "Can't be changed");
+        require(token.ownerSupply > 0, "Can't be changed");
 
-        // Token must be registered
-        require(ISyntheticNFT(erc721address).exists(to), "Token not registered");
+        // should be verified
+        require(token.state == State.VERIFIED, "Token not verified ");
 
-        // Shouldnt be verified (to token)
-        require(toToken.state != State.VERIFIED, "Token already verified (to)");
+        // caller must be tokens owner
+        require(IERC721(erc721address).ownerOf(syntheticId) == caller, "Should own both NFTs");
 
-        // Should be verified (from token)
-        require(fromToken.state == State.VERIFIED, "Token not verified (from)");
+        // increment the nonce for change
+        changeNonces[token.originalTokenID] += 1;
 
-        // Caller must be tokens owner
-        address ownerOfFrom = IERC721(erc721address).ownerOf(from);
-        address ownerOfTo = IERC721(erc721address).ownerOf(to);
+        token.state = State.CHANGING;
+        token.originalTokenID = newOriginalId;
 
-        if (ownerOfFrom != ownerOfTo || ownerOfTo != caller) {
-            revert("Should own both NFTs");
-        }
-
-        // set verifying to avoid metadata changes
-        toToken.state = State.VERIFYING;
-
-        bytes32 requestId = PolygonValidatorOracle(_validatorAddress).changeTokenInCollection(
-            originalCollectionAddress,
-            from,
-            to,
-            nonces[toToken.originalTokenID]
-        );
-
-        emit ChangeRequested(requestId, from, to);
-    }
-
-    function processChangeResponse(
-        bytes32 requestId,
-        ChangeRequest memory requestData,
-        bool verified
-    ) external onlyRole(VALIDATOR_ORACLE) {
-        if (verified) {
-            TokenData storage data = tokens[requestData.from];
-
-            // clean original to synthetic mapping
-            _originalToSynthetic[data.originalTokenID] = 0;
-
-            // burn synthetic NFT
-            ISyntheticNFT(erc721address).safeBurn(requestData.from);
-
-            // copy data (even verified status)
-            tokens[requestData.to] = data;
-
-            delete tokens[requestData.from];
-        }
-
-        tokens[requestData.to].state = State.NEW;
-
-        emit ChangeResponseReceived(requestId, requestData.from, requestData.to, verified);
+        ISyntheticNFT(erc721address).setMetadata(syntheticId, metadata);
     }
 
     /**
@@ -619,6 +580,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function exitProtocol(uint256 tokenId) external {
         TokenData storage token = tokens[tokenId];
         uint256 ownerSupply = token.ownerSupply;
+        require(token.state == State.VERIFIED, "Only verified tokens");
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
         require(ownerSupply >= ProtocolConstants.JOT_SUPPLY, "Insufficient jot supply in the token");
 
@@ -628,6 +590,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         nonces[token.originalTokenID] = currentNonce + 1;
 
         // free space and get refunds
+        delete _originalToSynthetic[token.originalTokenID];
         delete tokens[tokenId];
 
         // burn the jots and the nft
@@ -779,8 +742,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             isSyntheticNFTFractionalised(tokenId);
     }
 
-        function getliquiditySold(uint256 tokenId) public view returns (uint256) {
+    function getliquiditySold(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].liquiditySold;
     }
-
 }
