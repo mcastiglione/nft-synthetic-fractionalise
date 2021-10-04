@@ -56,4 +56,66 @@ describe('SyntheticProtocolRouter', async function () {
     assert.ok(ptoken);
     assert.ok(perpetualPoolAddress);
   });
+
+  it('check isSyntheticCollectionRegistered before registering a collection', async () => {
+    await router.isSyntheticCollectionRegistered(NFT);
+    //await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
+    //const uniswapV2Pair = await router.getCollectionUniswapPair(NFT);
+    //assert.ok(uniswapV2Pair);
+  });
+
+  it('Register an NFT and then check isSyntheticCollectionRegistered', async () => {
+    await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
+    const response = await router.isSyntheticCollectionRegistered(NFT);
+    assert.ok(response);
+  });
+
+  it('Check isSyntheticNFTCreated before registering an NFT', async () => {
+    await expect(router.isSyntheticNFTCreated(NFT, nftID)).to.be.revertedWith('Collection not registered');
+    //await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
+    //const uniswapV2Pair = await router.getCollectionUniswapPair(NFT);
+    //assert.ok(uniswapV2Pair);
+  });
+
+  it('Register an NFT and then check isSyntheticNFTCreated', async () => {
+    const tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
+
+    await expect(tx).to.emit(router, 'TokenRegistered');
+    const args = await getEventArgs(tx, 'TokenRegistered', router);
+    tokenId = args.syntheticTokenId;
+
+    const response = await router.isSyntheticNFTCreated(NFT, tokenId);
+    assert.ok(response);
+  });
+
+  it('Check isNFTVerified of a non-registered NFT', async () => {
+    await router.registerNFT(NFT, nftID + 1, 10, 5, 'My Collection', 'MYC', '');
+    await expect(router.isNFTVerified(NFT, nftID)).to.be.revertedWith('NFT not registered');
+  });
+
+  it('Check isNFTVerified of a non-verified NFT', async () => {
+    const tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
+
+    await expect(tx).to.emit(router, 'TokenRegistered');
+    const args = await getEventArgs(tx, 'TokenRegistered', router);
+    tokenId = args.syntheticTokenId;
+
+    const response = await router.isNFTVerified(NFT, tokenId);
+
+    assert.equal(response, false);
+  });
+
+  it('Check isNFTVerified of a verified NFT', async () => {
+    const tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
+
+    await expect(tx).to.emit(router, 'TokenRegistered');
+    const args = await getEventArgs(tx, 'TokenRegistered', router);
+    tokenId = args.syntheticTokenId;
+
+    await router.verifyNFT(NFT, tokenId);
+    const response = await router.isNFTVerified(NFT, tokenId);
+    
+    assert.ok(response);
+  });
+
 });
