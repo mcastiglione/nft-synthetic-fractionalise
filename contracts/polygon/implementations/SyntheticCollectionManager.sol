@@ -668,7 +668,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @dev burn a token
      */
-    function safeBurn(uint256 tokenId) public onlyRole(ROUTER) {
+    function safeBurn(uint256 tokenId) private {
         ISyntheticNFT(erc721address).safeBurn(tokenId);
         tokenCounter.decrement();
     }
