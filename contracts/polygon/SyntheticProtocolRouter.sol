@@ -305,15 +305,12 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
      */
     function changeNFT(
         address collection,
-        uint256 syntheticID,
-        uint256 newOriginalTokenID
+        uint256 fromSyntheticID,
+        uint256 toSyntheticID
     ) public {
         address collectionManager = getCollectionManagerAddress(collection);
         SyntheticCollectionManager manager = SyntheticCollectionManager(collectionManager);
-        uint256 originalTokenID = manager.getOriginalID(syntheticID);
-        manager.change(syntheticID, newOriginalTokenID, msg.sender);
-
-        emit TokenChanged(collection, syntheticID, originalTokenID, newOriginalTokenID);
+        manager.change(fromSyntheticID, toSyntheticID, msg.sender);
     }
 
     /**

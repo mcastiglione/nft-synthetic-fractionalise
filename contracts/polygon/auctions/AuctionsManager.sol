@@ -65,10 +65,6 @@ contract AuctionsManager is AccessControl, Initializable {
         return _recoverableTillDate[manager][nftId_];
     }
 
-    /**
-     * @dev we need to pass the jobSupply here to work well even when the governance
-     *      changes this protocol parameter in the middle of the auction
-     */
     function reassignNFT(
         address collection_,
         uint256 nftId_,
