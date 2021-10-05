@@ -16,6 +16,7 @@ struct SyntheticCollection {
     address lTokenAddress;
     address pTokenAddress;
     address perpetualPoolLiteAddress;
+    address poolInfo;
 }
 
 struct ProtocolParametersContracts {
