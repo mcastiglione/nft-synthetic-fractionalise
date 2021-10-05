@@ -21,3 +21,9 @@ struct Flip {
     uint64 prediction;
     address player;
 }
+
+struct ChangeNonce {
+    uint256 nonce;
+    uint256 newTokenId;
+    address owner;
+}

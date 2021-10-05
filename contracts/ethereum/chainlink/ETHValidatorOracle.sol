@@ -20,6 +20,7 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
     string public apiURLForChanges;
     address public chainlinkNode;
     bytes32 public jobId;
+    bytes32 public booleanJobId;
     uint256 public nodeFee;
     address public linkToken;
 
@@ -41,6 +42,7 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
         linkToken = _oracleInfo.linkToken;
         chainlinkNode = _oracleInfo.chainlinkNode;
         jobId = stringToBytes32(_oracleInfo.jobId);
+        booleanJobId = stringToBytes32(_oracleInfo.booleanJobId);
         nodeFee = (_oracleInfo.nodeFee * LINK_DIVISIBILITY) / 1000;
         apiURL = "https://nft-validator-hwk7x.ondigitalocean.app/iswithdrawable";
         apiURLForChanges = "https://nft-validator-hwk7x.ondigitalocean.app/ischangeable";
@@ -117,7 +119,7 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
         uint256 nonce
     ) external returns (bytes32 requestId) {
         Chainlink.Request memory request = buildChainlinkRequest(
-            jobId,
+            booleanJobId,
             address(this),
             this.processResponseForChange.selector
         );

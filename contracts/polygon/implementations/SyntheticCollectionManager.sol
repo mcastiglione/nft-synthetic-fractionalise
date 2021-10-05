@@ -87,7 +87,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @dev nonce to count the changes of an original collection token id
      *      in order to avoid double change (with the second one keeping the synthetic playing)
      */
-    mapping(uint256 => uint256) public changeNonces;
+    mapping(uint256 => ChangeNonce) public changeNonces;
 
     mapping(uint256 => mapping(uint256 => address)) public ownersByNonce;
 
@@ -559,13 +559,16 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(token.ownerSupply > 0, "Can't be changed");
 
         // should be verified
-        require(token.state == State.VERIFIED, "Token not verified ");
+        require(token.state == State.VERIFIED, "Token not verified");
 
         // caller must be tokens owner
-        require(IERC721(erc721address).ownerOf(syntheticId) == caller, "Should own both NFTs");
+        require(IERC721(erc721address).ownerOf(syntheticId) == caller, "Should own NFT");
 
-        // increment the nonce for change
-        changeNonces[token.originalTokenID] += 1;
+        // updates the nonce for change
+        ChangeNonce storage cn = changeNonces[token.originalTokenID];
+        cn.nonce += 1;
+        cn.newTokenId = newOriginalId;
+        cn.owner = caller;
 
         token.state = State.CHANGING;
         token.originalTokenID = newOriginalId;

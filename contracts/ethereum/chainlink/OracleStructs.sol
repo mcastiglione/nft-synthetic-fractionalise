@@ -5,6 +5,7 @@ struct APIOracleInfo {
     address linkToken;
     address chainlinkNode;
     string jobId;
+    string booleanJobId;
     uint256 nodeFee;
 }
 
