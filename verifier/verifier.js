@@ -16,7 +16,7 @@
    let from = ethers.BigNumber.from('1' + '0'.repeat(left));
    let to = ethers.BigNumber.from('1' + '0'.repeat(right));
    return ethers.BigNumber.from(value).mul(to).div(from);
- }
+ } 
  
  function neg(value) {
    return value.mul(-1);
@@ -35,7 +35,9 @@
  let perpetual_address = "0x2070FD2bCae936C6f1123f94551e79F8B4EC5C68";
  let pool_info = "0x50193CeE72729B1ABB35042A1E485cdAb1Ca2960";
  
- 
+ let symbolOracle = "";
+
+
  async function main() {
    //const config = getConfigFromNetwork(hre.network.name);
  
@@ -43,20 +45,24 @@
    [deployer] = await ethers.getSigners();
    console.log('Deployer address: ', deployer.address);
  
-   const defaultProtocolParameters = {
-     minPoolMarginRatio: one(),
-     minInitialMarginRatio: one(1, 1),
-     minMaintenanceMarginRatio: one(5, 2),
-     minLiquidationReward: one(10),
-     maxLiquidationReward: one(1000),
-     liquidationCutRatio: one(5, 1),
-     protocolFeeCollectRatio: one(2, 1),
-     symbolOracleAddress: ZERO_ADDRESS,
-     symbolMultiplier: 1,
-     symbolFeeRatio: 1,
-     symbolFundingRateCoefficient: 1,
-     oracleDelay: 6000,
-   };
+   const mainParams = {
+    minPoolMarginRatio: one(),
+    minInitialMarginRatio: one(1, 1),
+    minMaintenanceMarginRatio: one(5, 2),
+    minLiquidationReward: one(10),
+    maxLiquidationReward: one(1000),
+    liquidationCutRatio: one(5, 1),
+    protocolFeeCollectRatio: one(2, 1),
+  };
+
+  const defaultProtocolParameters = {
+    mainParams,
+    futuresOracleAddress: symbolOracle,
+    futuresMultiplier: 1,
+    futuresFeeRatio: 1,
+    futuresFundingRateCoefficient: 1,
+    oracleDelay: 6000,
+  };
  
    // // verify test usdt
    // console.log('Verifying usdt...');

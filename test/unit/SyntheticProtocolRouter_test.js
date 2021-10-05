@@ -59,9 +59,6 @@ describe('SyntheticProtocolRouter', async function () {
 
   it('check isSyntheticCollectionRegistered before registering a collection', async () => {
     await router.isSyntheticCollectionRegistered(NFT);
-    //await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
-    //const uniswapV2Pair = await router.getCollectionUniswapPair(NFT);
-    //assert.ok(uniswapV2Pair);
   });
 
   it('Register an NFT and then check isSyntheticCollectionRegistered', async () => {
@@ -72,9 +69,6 @@ describe('SyntheticProtocolRouter', async function () {
 
   it('Check isSyntheticNFTCreated before registering an NFT', async () => {
     await expect(router.isSyntheticNFTCreated(NFT, nftID)).to.be.revertedWith('Collection not registered');
-    //await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
-    //const uniswapV2Pair = await router.getCollectionUniswapPair(NFT);
-    //assert.ok(uniswapV2Pair);
   });
 
   it('Register an NFT and then check isSyntheticNFTCreated', async () => {
