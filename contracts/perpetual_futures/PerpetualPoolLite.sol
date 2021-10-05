@@ -27,7 +27,7 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
     address private  _protocolFeeCollector;
     address private  _underlyingAddress;
     address private  _protocolAddress;
-    FuturesProtocolParameters private _protocolParameters;
+    FuturesProtocolParameters private immutable _protocolParameters;
 
     int256 private _liquidity;
 
