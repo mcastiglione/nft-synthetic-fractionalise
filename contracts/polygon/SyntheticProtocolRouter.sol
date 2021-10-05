@@ -77,7 +77,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address auctionAddress,
         address lTokenLite_,
         address pTokenLite_,
-        address perpetualPoolLiteAddress_
+        address perpetualPoolLiteAddress_,
+        address poolInfo
     );
 
     event TokenRegistered(
@@ -229,7 +230,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 originalSymbol: originalSymbol,
                 lTokenAddress: futuresData.lTokenLite_,
                 pTokenAddress: futuresData.pTokenLite_,
-                perpetualPoolLiteAddress: futuresData.perpetualPoolLiteAddress_
+                perpetualPoolLiteAddress: futuresData.perpetualPoolLiteAddress_,
+                poolInfo: futuresData.poolInfo_
             });
 
             _collectionIdToAddress[protocolVaults.current()] = collectionAddress;
@@ -245,7 +247,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 _auctionManager,
                 futuresData.lTokenLite_,
                 futuresData.pTokenLite_,
-                futuresData.perpetualPoolLiteAddress_
+                futuresData.perpetualPoolLiteAddress_,
+                futuresData.poolInfo_
             );
 
             protocolVaults.increment();
