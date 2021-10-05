@@ -13,7 +13,7 @@ contract SymbolOracleOffChain is IOracleWithUpdate, Initializable {
     uint256 public timestamp;
     uint256 public price;
 
-    address private _deployer;
+    address private immutable _deployer;
 
     constructor(address signatory_) {
         signatory = signatory_;

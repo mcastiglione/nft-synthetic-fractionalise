@@ -166,8 +166,8 @@ describe('SyntheticCollectionManager', async function () {
       await jot.approve(managerAddress, parseAmount('100000'));
       await fundingToken.mint(owner.address, parseAmount('100000'));
       await fundingToken.approve(managerAddress, parseAmount('100000'));
-      await manager.depositJots(tokenId, parseAmount('50000'));
-      await manager.increaseSellingSupply(tokenId, parseAmount('10000'));
+      await manager.depositJots(tokenId, parseAmount('1000'));
+      await manager.increaseSellingSupply(tokenId, parseAmount('1000'));
       await manager.buyJotTokens(tokenId, amount);
       const liquiditySold = await manager.getliquiditySold(tokenId);
       expect(liquiditySold).to.be.equal(5);
@@ -212,9 +212,9 @@ describe('SyntheticCollectionManager', async function () {
       await fundingToken.mint(owner.address, parseAmount('100000'));
       await fundingToken.approve(managerAddress, parseAmount('100000'));
 
-      await manager.depositJots(tokenId, parseAmount('50000'));
+      await manager.depositJots(tokenId, parseAmount('1000'));
 
-      await manager.increaseSellingSupply(tokenId, parseAmount('10000'));
+      await manager.increaseSellingSupply(tokenId, parseAmount('1000'));
 
       await manager.buyJotTokens(tokenId, amount);
 

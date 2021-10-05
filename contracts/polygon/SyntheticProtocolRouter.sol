@@ -18,6 +18,7 @@ import "./governance/FuturesProtocolParameters.sol";
 import "../perpetual_futures/tokens/LTokenLite.sol";
 import "../perpetual_futures/tokens/PTokenLite.sol";
 import "../perpetual_futures/PerpetualPoolLite.sol";
+import "../perpetual_futures/PoolInfo.sol";
 import "./Interfaces.sol";
 
 contract SyntheticProtocolRouter is AccessControl, Ownable {
@@ -41,6 +42,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     address private _perpetualPoolLiteAddress;
     address private _lTokenLite;
     address private _pTokenLite;
+    address private _poolInfo;
 
     /**
      * @dev collections map.
@@ -113,6 +115,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         _lTokenLite = futuresParameters.lTokenLite_;
         _pTokenLite = futuresParameters.pTokenLite_;
         _perpetualPoolLiteAddress = futuresParameters.perpetualPoolLiteAddress_;
+        _poolInfo = futuresParameters.poolInfo_;
     }
 
     /**
@@ -294,10 +297,13 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             ]
         );
 
+        address poolInfo = Clones.clone(_poolInfo);
+        PoolInfo(poolInfo).initialize(nftFutureAddress);
+
         LTokenLite(lTokenAddress).setPool(nftFutureAddress);
         PTokenLite(pTokenAddress).setPool(nftFutureAddress);
 
-        return FuturesParametersContracts(lTokenAddress, pTokenAddress, nftFutureAddress);
+        return FuturesParametersContracts(lTokenAddress, pTokenAddress, nftFutureAddress, poolInfo);
     }
 
     /**

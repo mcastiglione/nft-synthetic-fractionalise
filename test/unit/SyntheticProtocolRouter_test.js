@@ -61,6 +61,21 @@ describe('SyntheticProtocolRouter', async function () {
     assert.ok(perpetualPoolAddress);
   });
 
+  it('Verify that PerpetualPoolLite is working correctly', async () => {
+    let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
+    
+    await expect(tx).to.emit(router, 'CollectionManagerRegistered');
+    let args = await getEventArgs(tx, 'CollectionManagerRegistered', router);
+    
+    const perpetualPoolAddress = args.perpetualPoolLiteAddress_;
+
+    let PerpetualPool = await ethers.getContractAt('PerpetualPoolLite', perpetualPoolAddress);
+
+    await PerpetualPool.getLiquidity();
+    await PerpetualPool.getSymbol();
+
+  });
+
   it('check isSyntheticCollectionRegistered before registering a collection', async () => {
     await router.isSyntheticCollectionRegistered(NFT);
   });

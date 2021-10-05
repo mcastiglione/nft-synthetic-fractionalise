@@ -17,6 +17,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let validator = await ethers.getContract('PolygonValidatorOracle');
 
   let pool = await ethers.getContract('PerpetualPoolLite');
+  let poolInfo = await ethers.getContract('PoolInfo');
   let addresses = await pool.getAddresses();
   let ltoken = addresses[1];
   let ptoken = addresses[2];
@@ -62,7 +63,12 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       funding.address, //constants.ZERO_ADDRESS,
       randomConsumer.address,
       validator.address,
-      { lTokenLite_: ltoken, pTokenLite_: ptoken, perpetualPoolLiteAddress_: pool.address },
+      {
+        lTokenLite_: ltoken,
+        pTokenLite_: ptoken,
+        perpetualPoolLiteAddress_: pool.address,
+        poolInfo_: poolInfo.address,
+      },
       { fractionalizeProtocol: protocol.address, futuresProtocol: futuresProtocol.address },
     ],
   });
@@ -93,7 +99,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
 module.exports.tags = ['collection_fixtures'];
 module.exports.dependencies = [
-  'pool',
+  'pool_info',
   'auctions_manager',
   'jot_mock_implementation',
   'jot_pool_implementation',

@@ -24,7 +24,7 @@ const networkConfig = {
     name: 'rinkeby',
     validatorChainlinkNode: '0xfF07C97631Ff3bAb5e5e5660Cdf47AdEd8D4d4Fd',
     validatorJobId: '2075d7d470ef47d68612abfa3f1a5bd9',
-    validatorBooleanJobId: '2075d7d470ef47d68612abfa3f1a5bd9',
+    validatorBooleanJobId: 'ba4aeaf24afe4294a5e73c8f292d4114',
     validatorNodeFee: web3.utils.toWei('0.1'),
     linkToken: '0x01be23585060835e02b77ef475b0cc51aa1e0709',
     vrfCoordinator: '0xb3dCcb4Cf7a26f6cf6B120Cf5A73875B7BBc655B',

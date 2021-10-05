@@ -14,12 +14,10 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let syntheticNFT = await ethers.getContract('SyntheticNFT');
   let protocol = await ethers.getContract('ProtocolParameters');
   let futuresProtocol = await ethers.getContract('FuturesProtocolParameters');
-  let lTokenLite = await ethers.getContract('LTokenLite');
-  let pTokenLite = await ethers.getContract('PTokenLite');
-  let perpetualPoolLite = await ethers.getContract('PerpetualPoolLite');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
   let validator = await ethers.getContract('PolygonValidatorOracle');
   let pool = await ethers.getContract('PerpetualPoolLite');
+  let poolInfo = await ethers.getContract('PoolInfo');
   let swapAddress;
 
   let addresses = await pool.getAddresses();
@@ -67,7 +65,12 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       funding.address,
       randomConsumer.address,
       validator.address,
-      { lTokenLite_: ltoken, pTokenLite_: ptoken, perpetualPoolLiteAddress_: pool.address },
+      {
+        lTokenLite_: ltoken,
+        pTokenLite_: ptoken,
+        perpetualPoolLiteAddress_: pool.address,
+        poolInfo_: poolInfo.address,
+      },
       { fractionalizeProtocol: protocol.address, futuresProtocol: futuresProtocol.address },
     ],
   });
@@ -87,5 +90,5 @@ module.exports.dependencies = [
   'synthetic_manager_implementation',
   'protocol_parameters',
   'futures_protocol_parameters',
-  'pool',
+  'pool_info',
 ];

@@ -9,9 +9,9 @@ contract PoolInfo is Initializable {
     using SafeMath for int256;
 
     int256 private constant ONE = 10**18;
-    address public immutable poolAddress;
+    address public poolAddress;
 
-    constructor(address _poolAddress) {
+    function initialize(address _poolAddress) external initializer {
         poolAddress = _poolAddress;
     }
 

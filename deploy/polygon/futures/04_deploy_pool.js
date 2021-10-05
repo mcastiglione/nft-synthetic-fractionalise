@@ -1,7 +1,7 @@
 const { constants } = require('@openzeppelin/test-helpers');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
-  const { deploy, log } = deployments;
+  const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
   // get previously deployed contracts
@@ -19,14 +19,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const pool = await deploy('PerpetualPoolLite', {
     from: deployer,
     log: true,
-    args: [
-      [
-        futuresParameters.address,
-        symbolOracleOffChain.address
-      ],
-    ],
+    args: [[futuresParameters.address, symbolOracleOffChain.address]],
   });
-
 };
 
 module.exports.tags = ['pool'];
