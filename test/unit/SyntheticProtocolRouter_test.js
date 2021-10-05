@@ -47,10 +47,14 @@ describe('SyntheticProtocolRouter', async function () {
   });
 
   it('Verifiy it is created “LToken”, “PToken” and “PerpetualFutures” when initialised a new collection', async () => {
-    await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
-    const ltoken = await router.getCollectionlTokenAddress(NFT);
-    const ptoken = await router.getCollectionpTokenAddress(NFT);
-    const perpetualPoolAddress = await router.getCollectionPerpetualPoolAddress(NFT);
+    let tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
+    
+    await expect(tx).to.emit(router, 'CollectionManagerRegistered');
+    let args = await getEventArgs(tx, 'CollectionManagerRegistered', router);
+    
+    const ltoken = args.lTokenLite_;
+    const ptoken = args.pTokenLite_;
+    const perpetualPoolAddress = args.perpetualPoolLiteAddress_;
 
     assert.ok(ltoken);
     assert.ok(ptoken);
