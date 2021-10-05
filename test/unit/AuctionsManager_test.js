@@ -33,6 +33,10 @@ describe('AuctionsManager', async function () {
 
     let syntheticCollectionAddress = args.collectionManagerAddress;
 
+    let collectionContract = await ethers.getContractAt('SyntheticCollectionManager', syntheticCollectionAddress);
+
+    await collectionContract.verify(0);
+
     let jot = await ethers.getContractAt('Jot', args.jotAddress);
     await jot.mint(deployer, web3.utils.toWei('1000000'));
     await jot.approve(this.auctionsManager.address, web3.utils.toWei('100000'));
