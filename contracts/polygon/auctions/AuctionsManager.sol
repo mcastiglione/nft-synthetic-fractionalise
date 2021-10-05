@@ -56,7 +56,7 @@ contract AuctionsManager is AccessControl, Initializable {
         _whitelistedTokens[msg.sender][nftId_] = false;
     }
 
-    function isRecoverable(uint256 nftId_) public view returns (bool) {
+    function isRecoverable(uint256 nftId_) public view onlyRole(COLLECTION_MANAGER) returns (bool) {
         return (_whitelistedTokens[msg.sender][nftId_] &&
             _recoverableTillDate[msg.sender][nftId_] >= block.timestamp); // solhint-disable-line
     }
@@ -79,7 +79,7 @@ contract AuctionsManager is AccessControl, Initializable {
         uint256 openingBid_
     ) external {
         require(_whitelistedTokens[collection_][nftId_], "Token can't be auctioned");
-        require(_recoverableTillDate[msg.sender][nftId_] < block.timestamp, "Token is yet recoverable"); //solhint-disable-line
+        require(_recoverableTillDate[collection_][nftId_] < block.timestamp, "Token is yet recoverable"); //solhint-disable-line
         require(openingBid_ >= ProtocolConstants.JOT_SUPPLY, "Opening bid too low");
 
         // blacklist the nft to avoid start a new auction
