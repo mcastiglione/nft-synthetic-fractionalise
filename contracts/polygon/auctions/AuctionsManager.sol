@@ -85,15 +85,16 @@ contract AuctionsManager is AccessControl, Initializable {
         // blacklist the nft to avoid start a new auction
         _whitelistedTokens[collection_][nftId_] = false;
 
-        address jotToken = router.getJotsAddress(collection_);
+        address originalCollection = SyntheticCollectionManager(collection_).originalCollectionAddress();
+        address jotToken = router.getJotsAddress(originalCollection);
 
         // deploys a minimal proxy contract from privi nft auction implementation
         address auctionAddress = Clones.clone(_nftAuctionImplementation);
         NFTAuction(auctionAddress).initialize(
             nftId_,
             jotToken,
-            router.getJotPoolAddress(collection_),
-            router.getCollectionManagerAddress(collection_),
+            router.getJotPoolAddress(originalCollection),
+            router.getCollectionManagerAddress(originalCollection),
             openingBid_,
             protocol.auctionDuration(),
             msg.sender

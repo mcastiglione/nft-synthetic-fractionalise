@@ -1,6 +1,9 @@
 const AuctionsManager = artifacts.require('AuctionsManager');
+const NFTAuction = artifacts.require('NFTAuction');
+
 const { assert } = require('chai');
 const { getEventArgs } = require('./helpers/events');
+const { expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 
 describe('AuctionsManager', async function () {
   beforeEach(async () => {
@@ -17,7 +20,8 @@ describe('AuctionsManager', async function () {
     assert.ok(this.auctionsManager);
   });
 
-  it('should start an auction', async () => {
+  it('should start an auction successfully', async () => {
+    const { deployer } = await getNamedAccounts();
     let router = await ethers.getContract('SyntheticProtocolRouter');
     let collection = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
 
@@ -29,49 +33,20 @@ describe('AuctionsManager', async function () {
 
     let syntheticCollectionAddress = args.collectionManagerAddress;
 
-    await collection.verify(tokenRegistered.syntheticTokenId);
-
     let jot = await ethers.getContractAt('Jot', args.jotAddress);
+    await jot.mint(deployer, web3.utils.toWei('1000000'));
+    await jot.approve(this.auctionsManager.address, web3.utils.toWei('100000'));
 
-    // jot pool should have balance in jots for the flipping game to work
-    await jot.mint(args.jotPoolAddress, '100000000000000000000');
+    let startAuctionTx = await this.auctionsManager.startAuction(
+      syntheticCollectionAddress,
+      0,
+      web3.utils.toWei('100000')
+    );
 
-    [deployer, player] = await ethers.getSigners();
+    let log = await expectEvent(startAuctionTx, 'AuctionStarted', {});
 
-    // the random oracle mock always return 1 (so this predict fails)
-    let flipTx = await collection.connect(player).flipJot(tokenRegistered.syntheticTokenId, 0);
+    let auction = await NFTAuction.at(log.args.auctionContract);
 
-    let requestId = ethers.utils.id('requestId');
-
-    // check the events (in production this events will be emitted by different transactions)
-    await expect(flipTx)
-      .to.emit(collection, 'CoinFlipped')
-      .withArgs(requestId, player.address, tokenRegistered.syntheticTokenId, 0);
-
-    await expect(flipTx)
-      .to.emit(collection, 'FlipProcessed')
-      .withArgs(requestId, tokenRegistered.syntheticTokenId, 0, 1);
+    await expectRevert(auction.endAuction(), 'Auction not yet ende');
   });
-
-  // it('return true for tokens in vault', async () => {
-  //   let tokenId = 1;
-  //   [tokenOwner] = await ethers.getSigners();
-
-  //   // mint the mock token and approve it to the vault
-  //   await this.collection.safeMint(tokenOwner.address);
-  //   await this.collection.connect(tokenOwner).approve(this.vaultManager.address, tokenId);
-
-  //   // the owner locks the nft in the vault
-  //   await this.vaultManager.connect(tokenOwner).lockNFT(this.collection.address, tokenId);
-
-  //   // check if the token is in vault
-  //   let tokenInVault = await this.vaultManager.isTokenInVault(this.collection.address, tokenId);
-  //   assert.isTrue(tokenInVault, 'Token should be in vault');
-  // });
-
-  // it('return false for non aproved collection', async () => {
-  //   let tokenId = 1;
-
-  //   assert.isFalse(await this.vaultManager.isTokenInVault(this.collection.address, tokenId));
-  // });
 });

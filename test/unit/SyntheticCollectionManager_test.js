@@ -2,15 +2,10 @@ const { ethers } = require('hardhat');
 const { assert, expect } = require('chai');
 const { getEventArgs } = require('./helpers/events');
 
-<<<<<<< HEAD
 describe('SyntheticCollectionManager', async function () {
-=======
-describe('SyntheticCollectionManager', async () => {
-
->>>>>>> bc5562e3213db2881a4d338b2a47a420c04982f5
   const parseAmount = (amount) => ethers.utils.parseEther(amount);
   const parseReverse = (amount) => ethers.utils.formatEther(amount);
-  
+
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
     await deployments.fixture(['collection_fixtures']);
@@ -37,14 +32,9 @@ describe('SyntheticCollectionManager', async () => {
 
     jotAddress = await router.getJotsAddress(NFT);
     jot = await ethers.getContractAt('JotMock', jotAddress);
-<<<<<<< HEAD
-=======
 
     fundingTokenAddress = await manager.fundingTokenAddress();
     fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
-
-
->>>>>>> bc5562e3213db2881a4d338b2a47a420c04982f5
   });
 
   describe('flip the coin game', async () => {
@@ -66,12 +56,11 @@ describe('SyntheticCollectionManager', async () => {
     });
   });
 
-
   describe('buyJotTokens', async () => {
     it('should fail if NFT is locked ', async () => {
       await expect(manager.buyJotTokens(tokenId, 1)).to.be.revertedWith('Token is locked!');
     });
-    
+
     it('should fail if NFT is not registered ', async () => {
       await expect(manager.buyJotTokens(100, 1)).to.be.revertedWith('Token not registered');
     });
@@ -81,9 +70,9 @@ describe('SyntheticCollectionManager', async () => {
     });
     it('should fail if amount is not approved in funding token', async () => {
       await router.verifyNFT(NFT, tokenId);
-      await expect(
-        manager.buyJotTokens(tokenId, parseAmount('1'))
-      ).to.be.revertedWith('ERC20: transfer amount exceeds allowance');
+      await expect(manager.buyJotTokens(tokenId, parseAmount('1'))).to.be.revertedWith(
+        'ERC20: transfer amount exceeds allowance'
+      );
     });
     it('if all previous conditions are met, should be ok', async () => {
       await router.verifyNFT(NFT, tokenId);
@@ -97,9 +86,11 @@ describe('SyntheticCollectionManager', async () => {
   describe('depositJots', async () => {
     it('Non existent token ID', async () => {
       const tokenCounter = (await manager.tokenCounter()).toNumber();
-      await expect(manager.depositJots(tokenCounter + 1, 300)).to.be.revertedWith('ERC721: owner query for nonexistent token');
+      await expect(manager.depositJots(tokenCounter + 1, 300)).to.be.revertedWith(
+        'ERC721: owner query for nonexistent token'
+      );
     });
-    
+
     it('Amount is zero', async () => {
       await router.verifyNFT(NFT, tokenId);
       await expect(manager.depositJots(tokenId, 0)).to.be.revertedWith("Amount can't be zero!");
@@ -107,51 +98,45 @@ describe('SyntheticCollectionManager', async () => {
 
     it('Caller is not token owner', async () => {
       await router.verifyNFT(NFT, tokenId);
-      await expect(
-        manager.connect(address1).depositJots(tokenId, 10)
-      ).to.be.revertedWith('you are not the owner of the NFT!');
+      await expect(manager.connect(address1).depositJots(tokenId, 10)).to.be.revertedWith(
+        'you are not the owner of the NFT!'
+      );
     });
 
     it('Token is not verified', async () => {
-      await expect(
-      manager.depositJots(tokenId, 10)
-      ).to.be.revertedWith('Token is locked!');
+      await expect(manager.depositJots(tokenId, 10)).to.be.revertedWith('Token is locked!');
     });
 
     it('Deposit more than Jot Supply Limit', async () => {
       const JOT_SUPPLY = await manager.jotsSupply();
       const value = parseInt(parseReverse(JOT_SUPPLY)) + 10;
       const newValue = parseAmount(value.toString());
-      
+
       await router.verifyNFT(NFT, tokenId);
 
-      await expect(
-        manager.depositJots(tokenId, newValue)
-      ).to.be.revertedWith("You can't deposit more than the Jot Supply limit");
-      
+      await expect(manager.depositJots(tokenId, newValue)).to.be.revertedWith(
+        "You can't deposit more than the Jot Supply limit"
+      );
     });
 
     it('if all previous conditions are met, should be ok', async () => {
       const amount = 10;
-      await jot.mint(owner.address, amount)
+      await jot.mint(owner.address, amount);
       await jot.approve(manager.address, amount);
 
       await router.verifyNFT(NFT, tokenId);
 
       await manager.depositJots(tokenId, amount);
-
     });
 
     it('Deposit more than allowance', async () => {
       const amount = 10;
-      await jot.mint(owner.address, amount)
+      await jot.mint(owner.address, amount);
       await jot.approve(manager.address, amount);
 
       await router.verifyNFT(NFT, tokenId);
 
-      await expect(manager.depositJots(tokenId, 5000))
-      .to.revertedWith('ERC20: transfer amount exceeds balance');
-
+      await expect(manager.depositJots(tokenId, 5000)).to.revertedWith('ERC20: transfer amount exceeds balance');
     });
 
     it('Verify that the SyntheticCollectionManager balance increases correctly', async () => {
@@ -170,7 +155,6 @@ describe('SyntheticCollectionManager', async () => {
       const afterBalance = (await manager.tokens(tokenId)).ownerSupply.toNumber();
 
       expect(afterBalance).to.be.equal(beforeBalance + amount);
-
     });
   });
 
@@ -239,40 +223,7 @@ describe('SyntheticCollectionManager', async () => {
     });
   });
 
-<<<<<<< HEAD
-  describe('depositJots', async function () {
-    it('Verify that the SyntheticCollectionManager balance increases correctly', async () => {
-      const amount = 1000;
-      await jot.mint(owner.address, amount);
-      await jot.approve(managerAddress, amount);
-
-      // Store the balance of the SyntheticCollectionManager
-      // to which it is deposited to validate that the balance increases after the deposit
-      const beforeBalance = (await manager.tokens(tokenId)).ownerSupply.toNumber();
-
-      await router.verifyNFT(NFT, tokenId);
-
-      await manager.depositJots(tokenId, amount);
-
-      const afterBalance = (await manager.tokens(tokenId)).ownerSupply.toNumber();
-
-      expect(afterBalance).to.be.equal(beforeBalance + amount);
-      await expect(manager.depositJots(tokenId, 5000)).to.revertedWith('ERC20: transfer amount exceeds balance');
-    });
-
-    it('should fail if NFT is not the owner', async () => {
-      const amount = parseAmount('1000');
-
-      await expect(manager.connect(address1).depositJots(tokenId, amount)).to.revertedWith(
-        'you are not the owner of the NFT!'
-      );
-    });
-  });
-
-  describe('withdrawJots', async function () {
-=======
   describe('withdrawJots', async () => {
->>>>>>> bc5562e3213db2881a4d338b2a47a420c04982f5
     it('check withdrawJots', async () => {
       const balance = await manager.getOwnerSupply(tokenId);
 
