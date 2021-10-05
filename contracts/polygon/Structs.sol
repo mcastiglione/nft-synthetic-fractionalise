@@ -24,7 +24,8 @@ struct ProtocolParametersContracts {
 }
 
 struct FuturesParametersContracts {
-        address lTokenLite_;
-        address pTokenLite_;
-        address perpetualPoolLiteAddress_;
+    address lTokenLite_;
+    address pTokenLite_;
+    address perpetualPoolLiteAddress_;
+    address poolInfo_;
 }
