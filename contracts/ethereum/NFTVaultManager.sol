@@ -59,6 +59,7 @@ contract NFTVaultManager is AccessControl {
 
     function requestUnlock(address collection_, uint256 tokenId_) external {
         require(_holdings[collection_][tokenId_] != address(0), "Token not locked");
+        require(pendingWithdraws[collection_][tokenId_] == address(0), "Already withdrawable");
 
         ETHValidatorOracle(_validatorOracleAddress).verifyTokenIsWithdrawable(
             collection_,
@@ -86,6 +87,7 @@ contract NFTVaultManager is AccessControl {
     ) external {
         require(_holdings[collection_][tokenFrom_] != address(0), "Token not locked");
         require(_holdings[collection_][tokenTo_] == address(0), "Token already locked");
+        require(pendingWithdraws[collection_][tokenFrom_] == address(0), "Withdrawable token");
 
         // get the token
         IERC721(collection_).transferFrom(msg.sender, address(this), tokenTo_);
@@ -130,6 +132,9 @@ contract NFTVaultManager is AccessControl {
 
     function withdraw(address collection_, uint256 tokenId_) external {
         require(pendingWithdraws[collection_][tokenId_] == msg.sender, "You can not withdraw this token");
+
+        // remove pending withdrawal
+        pendingWithdraws[collection_][tokenId_] = address(0);
 
         // release the space
         _holdings[collection_][tokenId_] = address(0);
