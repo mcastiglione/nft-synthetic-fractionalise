@@ -36,7 +36,7 @@ skip.if(network.name != 'rinkeby').describe('ETHValidatorOracle', async () => {
 
       // request the unlock by calling the oracle
       let tx = await this.vault.requestUnlock(this.collection.address, tokenId);
-      await expectEvent(tx, 'UnlockRequested', { collection: this.collection.address, tokenId });
+      await expectEvent(tx, 'UnlockRequested', { collection: this.collection.address, tokenId: String(tokenId) });
     });
   });
 });
