@@ -51,6 +51,6 @@ describe('AuctionsManager', async function () {
 
     let auction = await NFTAuction.at(log.args.auctionContract);
 
-    await expectRevert(auction.endAuction(), 'Auction not yet ende');
+    await expectRevert(auction.endAuction(), 'Auction not yet ended');
   });
 });

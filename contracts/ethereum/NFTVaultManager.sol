@@ -131,7 +131,7 @@ contract NFTVaultManager is AccessControl {
     }
 
     function withdraw(address collection_, uint256 tokenId_) external {
-        require(pendingWithdraws[collection_][tokenId_] == msg.sender, "You can not withdraw this token");
+        require(pendingWithdraws[collection_][tokenId_] == msg.sender, "You can't withdraw this token");
 
         // remove pending withdrawal
         pendingWithdraws[collection_][tokenId_] = address(0);
