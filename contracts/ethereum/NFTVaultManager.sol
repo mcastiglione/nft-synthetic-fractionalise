@@ -101,7 +101,7 @@ contract NFTVaultManager is AccessControl {
         require(_holdings[collection_][tokenFrom_] != address(0), "Token not locked");
         require(_holdings[collection_][tokenTo_] == address(0), "Token already locked");
         require(pendingWithdraws[collection_][tokenFrom_] == address(0), "Withdrawable token");
-        require(pendingChanges[collection_][tokenFrom_].tokenTo == tokenTo_, "Change already approved");
+        require(pendingChanges[collection_][tokenFrom_].tokenTo == 0, "Change already approved");
 
         ETHValidatorOracle(_validatorOracleAddress).verifyTokenIsChangeable(
             collection_,
