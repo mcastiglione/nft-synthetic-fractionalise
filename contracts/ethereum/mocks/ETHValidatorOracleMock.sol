@@ -6,11 +6,16 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../chainlink/OracleStructs.sol";
 import "../NFTVaultManager.sol";
+import "hardhat/console.sol";
 
 contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
     address private _vaultManagerAddress;
 
     mapping(bytes32 => VerifyRequest) private _verifyRequests;
+    mapping(bytes32 => ChangeRequest) private _changeRequests;
+
+    uint256 public verifyResponse;
+    bool public changeResponse;
 
     event ResponseReceived(bytes32 indexed requestId, address collection, uint256 tokenId, address newOwner);
 
@@ -20,6 +25,14 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
     function initialize(address _vault) external initializer onlyOwner {
         _vaultManagerAddress = _vault;
         renounceOwnership();
+    }
+
+    function setVerifyResponse(uint256 response) external {
+        verifyResponse = response;
+    }
+
+    function setChangeResponse(bool response) external {
+        changeResponse = response;
     }
 
     /**
@@ -33,8 +46,29 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
         uint256
     ) external returns (bytes32 requestId) {
         requestId = keccak256(abi.encodePacked("requestId"));
+
         _verifyRequests[requestId] = VerifyRequest({tokenId: tokenId, collection: collection});
-        processResponseMock(requestId, 0);
+
+        processResponseMock(requestId, verifyResponse);
+    }
+
+    function verifyTokenIsChangeable(
+        address collection,
+        uint256 tokenFrom,
+        uint256 tokenTo,
+        address caller,
+        uint256
+    ) external returns (bytes32 requestId) {
+        requestId = keccak256(abi.encodePacked("requestId"));
+
+        _changeRequests[requestId] = ChangeRequest({
+            tokenFrom: tokenFrom,
+            collection: collection,
+            tokenTo: tokenTo,
+            caller: caller
+        });
+
+        processChangeResponseMock(requestId, changeResponse);
     }
 
     /**
@@ -42,12 +76,11 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
      * @param requestId the id of the request to the Chainlink oracle
      * @param newOwner_ the address who can retrieve the nft (if 0 assumes is not withdrawable)
      */
-    function processResponseMock(bytes32 requestId, uint256 newOwner_)
-        public
-        recordChainlinkFulfillment(requestId)
-    {
+    function processResponseMock(bytes32 requestId, uint256 newOwner_) public {
         VerifyRequest memory requestData = _verifyRequests[requestId];
         address newOwner = address(uint160(newOwner_));
+
+        console.log("The address is %s", newOwner);
 
         // only call the synthetic collection contract if is locked
         if (newOwner != address(0)) {
@@ -59,5 +92,23 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
         }
 
         emit ResponseReceived(requestId, requestData.collection, requestData.tokenId, newOwner);
+    }
+
+    /**
+     * @dev function to process the oracle response (only callable from oracle)
+     * @param requestId the id of the request to the Chainlink oracle
+     * @param changeable if the tokens are changeable
+     */
+    function processChangeResponseMock(bytes32 requestId, bool changeable) public {
+        ChangeRequest memory requestData = _changeRequests[requestId];
+
+        NFTVaultManager(_vaultManagerAddress).processChange(
+            requestData.collection,
+            requestData.tokenFrom,
+            requestData.tokenTo,
+            requestData.caller,
+            changeable,
+            requestId
+        );
     }
 }
