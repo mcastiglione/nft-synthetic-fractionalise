@@ -30,13 +30,6 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
     mapping(bytes32 => ChangeRequest) private _changeRequests;
 
     event ResponseReceived(bytes32 indexed requestId, address collection, uint256 tokenId, address newOwner);
-    event ChangeResponseReceived(
-        bytes32 indexed requestId,
-        address collection,
-        uint256 tokenFrom,
-        uint256 tokenTo,
-        bool response
-    );
 
     constructor(APIOracleInfo memory _oracleInfo) {
         linkToken = _oracleInfo.linkToken;
@@ -192,22 +185,13 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
     {
         ChangeRequest memory requestData = _changeRequests[requestId];
 
-        // only call the synthetic collection contract if is locked
-        if (changeable) {
-            NFTVaultManager(_vaultManagerAddress).changeNFTs(
-                requestData.collection,
-                requestData.tokenFrom,
-                requestData.tokenTo,
-                requestData.caller
-            );
-        }
-
-        emit ChangeResponseReceived(
-            requestId,
+        NFTVaultManager(_vaultManagerAddress).processChange(
             requestData.collection,
             requestData.tokenFrom,
             requestData.tokenTo,
-            changeable
+            requestData.caller,
+            changeable,
+            requestId
         );
     }
 

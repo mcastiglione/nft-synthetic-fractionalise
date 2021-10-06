@@ -5,9 +5,9 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./chainlink/ETHValidatorOracle.sol";
+import "./Structs.sol";
 
 contract NFTVaultManager is AccessControl {
-    bytes32 public constant MANAGER = keccak256("MANAGER");
     bytes32 public constant VALIDATOR_ORACLE = keccak256("VALIDATOR_ORACLE");
 
     /**
@@ -33,18 +33,28 @@ contract NFTVaultManager is AccessControl {
      */
     mapping(address => mapping(uint256 => address)) public pendingWithdraws;
 
+    /**
+     * @dev tokens in this map can be changed
+     */
+    mapping(address => mapping(uint256 => PendingChange)) public pendingChanges;
+
     address private _validatorOracleAddress;
 
     event UnlockRequested(address collection, uint256 tokenId);
-    event ChangeRequested(address collection, uint256 tokenFrom, uint256 tokenTo);
-    event ChangeApproved(address collection, uint256 tokenFrom, uint256 tokenTo);
+    event ChangeApproveRequested(address collection, uint256 tokenFrom, uint256 tokenTo);
+    event ChangeResponseReceived(
+        bytes32 indexed requestId,
+        address collection,
+        uint256 tokenFrom,
+        uint256 tokenTo,
+        bool response
+    );
     event NFTUnlocked(address collection, uint256 tokenId, address newOwner);
 
     constructor(address validatorOracleAddress_) {
         _validatorOracleAddress = validatorOracleAddress_;
 
         _setupRole(VALIDATOR_ORACLE, validatorOracleAddress_);
-        _setupRole(MANAGER, msg.sender);
     }
 
     function lockNFT(address collection_, uint256 tokenId_) external {
@@ -75,9 +85,12 @@ contract NFTVaultManager is AccessControl {
         uint256 tokenId_,
         address newOwner
     ) external onlyRole(VALIDATOR_ORACLE) {
-        pendingWithdraws[collection_][tokenId_] = newOwner;
+        // this condition is necessary to avoid double check and unlocking an nft that was already withdrawed
+        if (_holdings[collection_][tokenId_] != address(0)) {
+            pendingWithdraws[collection_][tokenId_] = newOwner;
 
-        emit NFTUnlocked(collection_, tokenId_, newOwner);
+            emit NFTUnlocked(collection_, tokenId_, newOwner);
+        }
     }
 
     function requestChange(
@@ -88,9 +101,7 @@ contract NFTVaultManager is AccessControl {
         require(_holdings[collection_][tokenFrom_] != address(0), "Token not locked");
         require(_holdings[collection_][tokenTo_] == address(0), "Token already locked");
         require(pendingWithdraws[collection_][tokenFrom_] == address(0), "Withdrawable token");
-
-        // get the token
-        IERC721(collection_).transferFrom(msg.sender, address(this), tokenTo_);
+        require(pendingChanges[collection_][tokenFrom_].tokenTo == tokenTo_, "Change already approved");
 
         ETHValidatorOracle(_validatorOracleAddress).verifyTokenIsChangeable(
             collection_,
@@ -100,26 +111,27 @@ contract NFTVaultManager is AccessControl {
             changeNonces[collection_][tokenFrom_]
         );
 
-        emit ChangeRequested(collection_, tokenFrom_, tokenTo_);
+        emit ChangeApproveRequested(collection_, tokenFrom_, tokenTo_);
     }
 
-    function changeNFTs(
+    function processChange(
         address collection_,
         uint256 tokenFrom_,
         uint256 tokenTo_,
-        address owner_
+        address owner_,
+        bool changeable_,
+        bytes32 requestId_
     ) external onlyRole(VALIDATOR_ORACLE) {
-        // release the space
-        _holdings[collection_][tokenFrom_] = address(0);
-        _holdings[collection_][tokenTo_] = owner_;
+        // this condition is necessary to avoid double check and unlocking an nft that was already withdrawed
+        if (
+            _holdings[collection_][tokenFrom_] != address(0) && _holdings[collection_][tokenTo_] == address(0)
+        ) {
+            if (changeable_) {
+                pendingChanges[collection_][tokenFrom_] = PendingChange({owner: owner_, tokenTo: tokenTo_});
+            }
 
-        // increment the nonce
-        changeNonces[collection_][tokenFrom_] += 1;
-
-        // transfer the token
-        IERC721(collection_).transferFrom(address(this), owner_, tokenFrom_);
-
-        emit ChangeApproved(collection_, tokenFrom_, tokenTo_);
+            emit ChangeResponseReceived(requestId_, collection_, tokenFrom_, tokenTo_, changeable_);
+        }
     }
 
     /**
@@ -128,6 +140,28 @@ contract NFTVaultManager is AccessControl {
     function isTokenInVault(address collection_, uint256 tokenId_) external view returns (bool) {
         address previousOwner = _holdings[collection_][tokenId_];
         return previousOwner != address(0);
+    }
+
+    function change(
+        address collection_,
+        uint256 tokenFrom_,
+        uint256 tokenTo_
+    ) external {
+        PendingChange memory pendingChange = pendingChanges[collection_][tokenFrom_];
+        require(pendingChange.tokenTo == tokenTo_, "Unnaproved change");
+
+        // release the space
+        delete _holdings[collection_][tokenFrom_];
+        delete pendingChanges[collection_][tokenFrom_];
+
+        _holdings[collection_][tokenTo_] = pendingChange.owner;
+
+        // increment the nonce
+        changeNonces[collection_][tokenFrom_] += 1;
+
+        // transfer the tokens
+        IERC721(collection_).transferFrom(msg.sender, address(this), tokenTo_);
+        IERC721(collection_).transferFrom(address(this), pendingChange.owner, tokenFrom_);
     }
 
     function withdraw(address collection_, uint256 tokenId_) external {
