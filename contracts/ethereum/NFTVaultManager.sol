@@ -148,7 +148,8 @@ contract NFTVaultManager is AccessControl {
         uint256 tokenTo_
     ) external {
         PendingChange memory pendingChange = pendingChanges[collection_][tokenFrom_];
-        require(pendingChange.tokenTo == tokenTo_, "Unnaproved change");
+        require(pendingChange.tokenTo == tokenTo_, "Non approved change");
+        require(pendingChange.owner == msg.sender, "Only owner can change");
 
         // release the space
         delete _holdings[collection_][tokenFrom_];
@@ -161,11 +162,11 @@ contract NFTVaultManager is AccessControl {
 
         // transfer the tokens
         IERC721(collection_).transferFrom(msg.sender, address(this), tokenTo_);
-        IERC721(collection_).transferFrom(address(this), pendingChange.owner, tokenFrom_);
+        IERC721(collection_).transferFrom(address(this), msg.sender, tokenFrom_);
     }
 
     function withdraw(address collection_, uint256 tokenId_) external {
-        require(pendingWithdraws[collection_][tokenId_] == msg.sender, "You can't withdraw this token");
+        require(pendingWithdraws[collection_][tokenId_] == msg.sender, "Non approved withdraw");
 
         // remove pending withdrawal
         pendingWithdraws[collection_][tokenId_] = address(0);
