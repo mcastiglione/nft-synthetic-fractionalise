@@ -126,7 +126,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     event TokenReassigned(uint256 tokenID, address newOwner);
 
     event LiquidityAdded();
-    event LiquidityRemoved(uint256 jotAmount, uitn256 fundingAmount);
+    event LiquidityRemoved(uint256 jotAmount, uint256 fundingAmount);
 
     constructor(address randomConsumerAddress, address validatorAddress) {
         _randomConsumerAddress = randomConsumerAddress;
