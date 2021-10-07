@@ -169,10 +169,10 @@ contract NFTVaultManager is AccessControl {
         require(pendingWithdraws[collection_][tokenId_] == msg.sender, "Non approved withdraw");
 
         // remove pending withdrawal
-        pendingWithdraws[collection_][tokenId_] = address(0);
+        delete pendingWithdraws[collection_][tokenId_];
 
         // release the space
-        _holdings[collection_][tokenId_] = address(0);
+        delete _holdings[collection_][tokenId_];
 
         // increment the nonce
         nonces[collection_][tokenId_] += 1;
