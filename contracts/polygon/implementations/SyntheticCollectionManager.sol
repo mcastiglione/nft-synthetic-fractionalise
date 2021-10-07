@@ -186,7 +186,20 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // Fill new ID
         uint256 tokenSupply = ProtocolConstants.JOT_SUPPLY;
-        tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, 0, 0, 0, State.VERIFIED);
+        tokens[newSyntheticID] = TokenData(
+            originalID,
+            tokenSupply,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            State.VERIFIED
+        );
 
         emit TokenReassigned(newSyntheticID, newOwner_);
     }
@@ -419,9 +432,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice Remove liquidity from pool only callable by AuctionsManager
      */
-    function removeLiquidityFromPool(
-        uint256 tokenId, address caller
-    ) external onlyRole(AUCTION_MANAGER) {
+    function removeLiquidityFromPool(uint256 tokenId, address caller) external onlyRole(AUCTION_MANAGER) {
         _removeLiquidityFromPool(tokenId, caller);
     }
 
@@ -431,9 +442,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function _removeLiquidityFromPool(uint256 tokenId, address caller) internal {
         TokenData storage token = tokens[tokenId];
 
-        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(
-            Jot(jotAddress).uniswapV2Pair()
-        );
+        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(Jot(jotAddress).uniswapV2Pair());
 
         // Get added liquidity
         uint256 jotLiquidity = token.UniswapJotLiquidity;
@@ -474,7 +483,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             block.timestamp // solhint-disable-line
         );
 
-        // burn the jots 
+        // burn the jots
         Jot(jotAddress).burn(address(this), jotAmountExecuted);
         // transfer funding token balance to caller
         IERC20(fundingTokenAddress).transfer(caller, fundingAmountExecuted);
@@ -660,7 +669,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // increase nonce to avoid double verification
         uint256 currentNonce = nonces[token.originalTokenID];
-        ownersByNonce[tokenId][currentNonce] = msg.sender;
+        ownersByNonce[token.originalTokenID][currentNonce] = msg.sender;
         nonces[token.originalTokenID] = currentNonce + 1;
 
         //_removeLiquidityFromPool(tokenId, msg.sender);
@@ -671,7 +680,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // free space and get refunds
         delete _originalToSynthetic[token.originalTokenID];
         delete tokens[tokenId];
-
     }
 
     /**
