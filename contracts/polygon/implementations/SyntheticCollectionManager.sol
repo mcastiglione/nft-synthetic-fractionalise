@@ -674,12 +674,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         //_removeLiquidityFromPool(tokenId, msg.sender);
 
-        // Burn synthetic token
-        safeBurn(tokenId);
-
         // free space and get refunds
         delete _originalToSynthetic[token.originalTokenID];
         delete tokens[tokenId];
+
+        // Burn synthetic token
+        safeBurn(tokenId);
     }
 
     /**
