@@ -64,7 +64,6 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       collectionManager.address,
       syntheticNFT.address,
       auctionsManager.address,
-      "0x2cA48b8c2d574b282FDAB69545646983A94a3286",
       randomConsumer.address,
       validator.address,
       {
