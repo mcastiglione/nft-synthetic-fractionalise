@@ -17,11 +17,12 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let validator = await ethers.getContract('PolygonValidatorOracle');
   let pool = await ethers.getContract('PerpetualPoolLite');
   let poolInfo = await ethers.getContract('PoolInfo');
+  let lToken = await ethers.getContract('LTokenLite');
+  let pToken = await ethers.getContract('PTokenLite');
   let swapAddress;
 
-  let addresses = await pool.getAddresses();
-  let ltoken = addresses[1];
-  let ptoken = addresses[2];
+  console.log(lToken.address)
+  console.log(pToken.address)
 
   if (chainId == 1337 || chainId == 31337) {
     let UniswapPairMock = await deploy('UniswapPairMock', {
@@ -51,21 +52,24 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     perpetualPoolLiteAddress = PerpetualPoolLiteMock.address;
   }
 
+ 
+
   let router = await deploy('SyntheticProtocolRouter', {
     from: deployer,
     log: true,
     args: [
-      swapAddress,
+      "0x4CeBfcDA07A08B1C7169E5eb77AC117FF87EEae9",
       jot.address,
       jotPool.address,
       collectionManager.address,
       syntheticNFT.address,
       auctionsManager.address,
+      "0x2cA48b8c2d574b282FDAB69545646983A94a3286",
       randomConsumer.address,
       validator.address,
       {
-        lTokenLite_: ltoken,
-        pTokenLite_: ptoken,
+        lTokenLite_: lToken.address,
+        pTokenLite_: pToken.address,
         perpetualPoolLiteAddress_: pool.address,
         poolInfo_: poolInfo.address,
       },
@@ -87,6 +91,8 @@ module.exports.dependencies = [
   'jot_pool_implementation',
   'synthetic_manager_implementation',
   'protocol_parameters',
+  'ltoken',
+  'ptoken',
   'futures_protocol_parameters',
   'pool_info',
 ];
