@@ -23,11 +23,15 @@ contract ProtocolParameters is Ownable {
     // the period of grace to recover the nft after reaching 0 owner supply
     uint256 public recoveryThreshold;
 
+    // Address of the funding token for new manager
+    address public fundingTokenAddress;
+
     event FlippingIntervalUpdated(uint256 from, uint256 to);
     event FlippingRewardUpdated(uint256 from, uint256 to);
     event FlippingAmountUpdated(uint256 from, uint256 to);
     event AuctionDurationUpdated(uint256 from, uint256 to);
     event RecoveryThresholdUpdated(uint256 from, uint256 to);
+    event FundingTokenAddressUpdated(address from, address to);
 
     /**
      * @dev sets the default (initial) values of the parameters
@@ -38,18 +42,21 @@ contract ProtocolParameters is Ownable {
         uint256 flippingReward_,
         uint256 flippingAmount_,
         uint256 auctionDuration_,
-        address governanceContractAddress_
+        address governanceContractAddress_,
+        address fundingTokenAddress_
     ) {
         require(flippingReward_ > 0, "Invalid Reward");
         require(flippingAmount_ > 0, "Invalid Amount");
         require(flippingReward_ < flippingAmount_, "Reward should be lower than Amount");
         require(flippingInterval_ > 15 minutes, "Flipping Interval should be greater than 15 minutes");
         require(auctionDuration_ > 1 hours, "Auction duration should be greater than 1 hour");
+        require(fundingTokenAddress_ != address(0), "Funding token address can't be zero");
 
         flippingInterval = flippingInterval_;
         flippingReward = flippingReward_;
         flippingAmount = flippingAmount_;
         auctionDuration = auctionDuration_;
+        fundingTokenAddress = fundingTokenAddress_;
 
         // transfer ownership
         transferOwnership(governanceContractAddress_);
@@ -85,5 +92,11 @@ contract ProtocolParameters is Ownable {
         require(recoveryThreshold_ > 1 hours, "Recovery threshold should be greater than 1 hour");
         emit RecoveryThresholdUpdated(recoveryThreshold, recoveryThreshold_);
         recoveryThreshold = recoveryThreshold_;
+    }
+
+    function setFundingTokenAddress(address fundingTokenAddress_) external onlyOwner {
+        require(fundingTokenAddress_ != address(0), "Funding token address can't be zero");
+        emit FundingTokenAddressUpdated(fundingTokenAddress, fundingTokenAddress_);
+        fundingTokenAddress = fundingTokenAddress_;
     }
 }

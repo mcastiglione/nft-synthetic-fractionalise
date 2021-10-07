@@ -1,11 +1,22 @@
 const { time } = require('@openzeppelin/test-helpers');
+const { networkConfig } = require('../../helper-hardhat-config');
 
 module.exports = async ({ getNamedAccounts, deployments, network }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
   // get the previously deployed governance (actually the timelock controller)
-  let governance = await ethers.getContract('TimelockController');
+  const governance = await ethers.getContract('TimelockController');
+  let fundingTokenAddress;
+
+  if (network.tags.local) {
+    const jot = await ethers.getContract('Jot');
+
+    fundingTokenAddress = jot.address;
+  } else {
+    fundingTokenAddress = networkConfig[chainId].fundingTokenAddress;
+  }
+
 
   const defaultParameters = {
     flippingInterval: String(time.duration.minutes(20)),
@@ -23,9 +34,9 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
   await deploy('ProtocolParameters', {
     from: deployer,
     log: true,
-    args: [...Object.values(defaultParameters), owner],
+    args: [...Object.values(defaultParameters), owner, fundingTokenAddress],
   });
 };
 
 module.exports.tags = ['protocol_parameters'];
-module.exports.dependencies = ['governance', 'timelock_controller'];
+module.exports.dependencies = ['governance', 'timelock_controller', 'jot_implementation'];

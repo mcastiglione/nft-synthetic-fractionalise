@@ -641,7 +641,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             msg.sender,
             block.timestamp // solhint-disable-line
         );
-
     }
 
     /**

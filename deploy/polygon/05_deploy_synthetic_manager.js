@@ -7,8 +7,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const chainId = await getChainId();
 
   // get the previously deployed contracts
-  let randomConsumer = await ethers.getContract('RandomNumberConsumer');
-  let validator = await ethers.getContract('PolygonValidatorOracle');
+  const randomConsumer = await ethers.getContract('RandomNumberConsumer');
+  const validator = await ethers.getContract('PolygonValidatorOracle');
 
   await deploy('SyntheticCollectionManager', {
     from: deployer,

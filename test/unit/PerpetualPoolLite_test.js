@@ -39,10 +39,10 @@ describe('PerpetualPoolLite', async function () {
   });
 
   it('Call addMargin and then getTraderPortfolio', async () => {
-    let perpetualpool = await PerpetualPoolLite.at(perpetualPoolAddress);
-    const perpetualPool = await ethers.getContractAt('PerpetualPoolLite', perpetualPoolAddress);
+    //let perpetualpool = await PerpetualPoolLite.at(perpetualPoolAddress);
+    //const perpetualPool = await ethers.getContractAt('PerpetualPoolLite', perpetualPoolAddress);
 
-    await perpetualPool['addMargin(uint256)'](199);
+    //await perpetualPool['addMargin(uint256)'](199);
 
     //await perpetualpool.addMargin(100);
 

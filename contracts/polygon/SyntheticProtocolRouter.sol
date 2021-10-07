@@ -35,7 +35,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
     address private _protocol;
     address private _futuresProtocol;
-    address private _fundingTokenAddress;
     address private _randomConsumerAddress;
     address private _validatorAddress;
 
@@ -96,7 +95,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address collectionManager_,
         address syntheticNFT_,
         address auctionManager_,
-        address fundingTokenAddress_,
         address randomConsumerAddress_,
         address validatorAddress_,
         FuturesParametersContracts memory futuresParameters,
@@ -110,7 +108,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         _auctionManager = auctionManager_;
         _protocol = protocolParameters.fractionalizeProtocol;
         _futuresProtocol = protocolParameters.futuresProtocol;
-        _fundingTokenAddress = fundingTokenAddress_;
         _randomConsumerAddress = randomConsumerAddress_;
         _validatorAddress = validatorAddress_;
         _lTokenLite = futuresParameters.lTokenLite_;
@@ -149,14 +146,14 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 string(abi.encodePacked("Privi Jot ", originalName)),
                 string(abi.encodePacked("JOT_", originalSymbol)),
                 swapAddress,
-                _fundingTokenAddress
+                ProtocolParameters(_protocol).fundingTokenAddress()
             );
 
             // deploys a minimal proxy contract from the jotPool contract implementation
             address jotPoolAddress = Clones.clone(_jotPool);
             JotPool(jotPoolAddress).initialize(
                 jotAddress,
-                _fundingTokenAddress,
+                ProtocolParameters(_protocol).fundingTokenAddress(),
                 string(abi.encodePacked("Privi JotPool ", originalName)),
                 string(abi.encodePacked(" ", originalName))
             );
@@ -171,7 +168,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 syntheticNFTAddress,
                 _auctionManager,
                 _protocol,
-                _fundingTokenAddress,
                 jotPoolAddress,
                 swapAddress
             );
@@ -284,7 +280,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address nftFutureAddress = Clones.clone(_perpetualPoolLiteAddress);
         PerpetualPoolLite(nftFutureAddress).initialize(
             [
-                _fundingTokenAddress,
+                ProtocolParameters(_protocol).fundingTokenAddress(),
                 lTokenAddress,
                 pTokenAddress,
                 _jotPool, // TODO: change by liquidator address

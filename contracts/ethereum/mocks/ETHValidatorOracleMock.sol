@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../chainlink/OracleStructs.sol";
 import "../NFTVaultManager.sol";
-import "hardhat/console.sol";
 
 contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
     address private _vaultManagerAddress;
@@ -79,8 +78,6 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
     function processResponseMock(bytes32 requestId, uint256 newOwner_) public {
         VerifyRequest memory requestData = _verifyRequests[requestId];
         address newOwner = address(uint160(newOwner_));
-
-        console.log("The address is %s", newOwner);
 
         // only call the synthetic collection contract if is locked
         if (newOwner != address(0)) {

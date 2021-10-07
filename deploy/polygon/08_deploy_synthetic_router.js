@@ -7,7 +7,6 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
   // get the previously deployed contracts
   let jot = await ethers.getContract('Jot');
-  let funding = await ethers.getContract('Jot');
   let jotPool = await ethers.getContract('JotPool');
   let collectionManager = await ethers.getContract('SyntheticCollectionManager');
   let auctionsManager = await ethers.getContract('AuctionsManager');
@@ -62,7 +61,6 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       collectionManager.address,
       syntheticNFT.address,
       auctionsManager.address,
-      funding.address,
       randomConsumer.address,
       validator.address,
       {
