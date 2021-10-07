@@ -207,16 +207,10 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             RandomNumberConsumer(_randomConsumerAddress).whitelistCollection(collectionAddress);
             PolygonValidatorOracle(_validatorAddress).whitelistCollection(collectionAddress);
 
-            FuturesParametersContracts memory futuresParameters;
-            futuresParameters.lTokenLite_ = _lTokenLite;
-            futuresParameters.pTokenLite_ = _pTokenLite;
-            futuresParameters.perpetualPoolLiteAddress_ = _perpetualPoolLiteAddress;
-
             FuturesParametersContracts memory futuresData = deployFutures(
                 originalName,
                 originalSymbol,
-                collection,
-                futuresParameters
+                collection
             );
 
             _collections[collection] = SyntheticCollection({
@@ -272,8 +266,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     function deployFutures(
         string memory originalName,
         string memory originalSymbol,
-        address collection,
-        FuturesParametersContracts memory futuresParameters
+        address collection
     ) private returns (FuturesParametersContracts memory) {
         // Deploy futures
         address lTokenAddress = Clones.clone(_lTokenLite);
@@ -324,15 +317,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
         emit TokenChanged(collection, syntheticId, newOriginalId);
     }
-
-    /**
-     * @dev init Perpetual Pool Lite for a specific collection
-     */
-
-    // function initPerpetualPoolLite(uint256 collectionID, string memory name) internal view {
-    //     FuturesProtocolParameters futuresProtocol = FuturesProtocolParameters(_futuresProtocol);
-    //     address futuresOracleAddress = futuresProtocol.futuresOracleAddress();
-    // }
 
     /**
      * @notice checks whether a collection is registered or not

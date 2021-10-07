@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../extensions/IERC20ManagedAccounts.sol";
 import "../Interfaces.sol";
-import "hardhat/console.sol";
 
 contract JotMock is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
     bytes32 public constant ROUTER = keccak256("ROUTER");
@@ -62,6 +61,10 @@ contract JotMock is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
 
     function mint(address account, uint256 amount) public {
         _mint(account, amount);
+    }
+
+    function burn(address account, uint256 amount) public {
+        _burn(account, amount);
     }
 
     /**

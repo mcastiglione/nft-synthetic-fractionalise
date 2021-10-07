@@ -13,6 +13,8 @@ struct TokenData {
     uint256 fractionPrices;
     uint256 lastFlipTime;
     uint256 liquidityTokenBalance;
+    uint256 UniswapJotLiquidity;
+    uint256 UniswapFundingLiquidity;
     State state;
 }
 

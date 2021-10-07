@@ -36,7 +36,7 @@ describe('SyntheticCollectionManager', async function () {
     fundingTokenAddress = await manager.fundingTokenAddress();
     fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
   });
-
+/*
   describe('flip the coin game', async () => {
     describe('is allowed to flip getter', async () => {
       it('should be false if NFT is not fractionalized');
@@ -245,4 +245,67 @@ describe('SyntheticCollectionManager', async function () {
       assert.equal(jotBalance, '1');
     });
   });
+*/
+  describe('exitProtocol', async () => {
+    it('Not existent token', async () => {
+      await expect(
+        manager.exitProtocol(355)
+      ).to.be.revertedWith('ERC721: owner query for nonexistent token');
+    });
+
+    it('Not verified token', async () => {
+      await expect(
+        manager.exitProtocol(tokenId)
+      ).to.be.revertedWith('Only verified tokens');
+    });
+
+    it('Caller is not owner', async () => {
+      await router.verifyNFT(NFT, tokenId);
+      await expect(
+        manager.connect(address1).exitProtocol(tokenId)
+      ).to.be.revertedWith('Only owner allowed');
+    });
+
+    it('Insufficient jot supply', async () => {
+      await router.verifyNFT(NFT, tokenId);
+
+      await manager.withdrawJots(tokenId, 10);
+
+      await expect(
+        manager.exitProtocol(tokenId)
+      ).to.be.revertedWith('Insufficient jot supply in the token');
+
+    });
+
+    it('case ok', async () => {
+
+      const TX = await router.registerNFT(NFT, nftID, parseAmount('1'), 5, 'My Collection', 'MYC', '');
+      await expect(TX).to.emit(router, 'TokenRegistered');
+      const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+      tokenID = ARGS.syntheticTokenId;  
+
+      await router.verifyNFT(NFT, tokenID);
+
+      const balance = (await manager.getOwnerSupply(tokenID)).toString();
+
+      console.log(balance);
+
+      const amount = parseAmount('9999');
+
+      await jot.mint(owner.address, amount);
+
+      await jot.approve(manager.address, amount);
+      
+      await manager.depositJots(tokenID, amount);
+
+      const new_balance = (await manager.getOwnerSupply(tokenID)).toString();
+
+      console.log(new_balance);
+
+      await manager.exitProtocol(tokenID);
+
+      
+    });
+  });
+
 });

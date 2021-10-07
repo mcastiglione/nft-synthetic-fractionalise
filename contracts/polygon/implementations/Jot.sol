@@ -61,6 +61,10 @@ contract Jot is ERC20, IERC20ManagedAccounts, ERC20Burnable, AccessControl, Init
         _mint(account, amount);
     }
 
+    function burn(address account, uint256 amount) public onlyRole(MINTER) {
+        _burn(account, amount);
+    }
+
     /**
      * @dev allows to send funds from a managed account (infinite allowance)
      */
