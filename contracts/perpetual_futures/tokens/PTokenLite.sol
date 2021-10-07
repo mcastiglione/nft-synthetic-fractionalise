@@ -36,6 +36,9 @@ contract PTokenLite is IPTokenLite, PFERC721, Initializable {
     function initialize(string memory name_, string memory symbol_) external initializer {
         _name = name_;
         _symbol = symbol_;
+
+        _registerInterface(_INTERFACE_ID_ERC721);
+        _registerInterface(_INTERFACE_ID_ERC165);
     }
 
     function setPool(address newPool) public override {
