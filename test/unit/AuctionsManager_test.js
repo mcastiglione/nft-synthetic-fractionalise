@@ -1,56 +1,71 @@
-const AuctionsManager = artifacts.require('AuctionsManager');
-const NFTAuction = artifacts.require('NFTAuction');
+// const NFTAuction = artifacts.require('NFTAuction');
 
-const { assert } = require('chai');
+const {ethers, deployments, getNamedAccounts} = require('hardhat');
+const { assert, expect } = require('chai');
 const { getEventArgs } = require('./helpers/events');
-const { expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 
 describe('AuctionsManager', async function () {
+  const parseReverse = (amount) => ethers.utils.formatEther(amount);
+  const parseAmount = (amount) => ethers.utils.parseEther(amount);
+  
+  const getEvent = async (parameters, event, contract) => {
+    await expect(parameters).to.emit(contract, event);
+    const args = await getEventArgs(parameters, event, contract);
+    return args
+  }
+
   beforeEach(async () => {
+    NFT = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
+    nftID = 1;
     // Using fixture from hardhat-deploy
     await deployments.fixture(['auctions_manager_initialization']);
+    auctionsManager = await ethers.getContract('AuctionsManager'); 
+    nFTAuction = await ethers.getContract('NFTAuction'); 
 
-    let deployment = await deployments.get('AuctionsManager');
+    const router = await ethers.getContract('SyntheticProtocolRouter');
+    const registerNFT = await router.registerNFT(NFT, nftID, 0, 5, 'My Collection', 'MYC', '');
+    newNFTTokenid = (await getEvent(registerNFT, 'TokenRegistered', router)).syntheticTokenId.toString();
+    collectionManagerRegistered = await getEvent(registerNFT, 'CollectionManagerRegistered', router);
 
-    // get the truffle contract (better for reverts logging)
-    this.auctionsManager = await AuctionsManager.at(deployment.address);
+    managerAddress = await router.getCollectionManagerAddress(NFT);
+    manager = await ethers.getContractAt('SyntheticCollectionManager', managerAddress);   
   });
 
   it('should be deployed', async () => {
-    assert.ok(this.auctionsManager);
+    assert.ok(auctionsManager.address);
   });
 
-  it('should start an auction successfully', async () => {
+  it('Should start a new auction successfully', async () => {
     const { deployer } = await getNamedAccounts();
-    let router = await ethers.getContract('SyntheticProtocolRouter');
-    let collection = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
-
-    let tx = await router.registerNFT(collection, '1', 0, 5, 'My Collection', 'MYC', '');
-    await expect(tx).to.emit(router, 'CollectionManagerRegistered');
-
-    // use the helper to get event args
-    let args = await getEventArgs(tx, 'CollectionManagerRegistered', router);
-
-    let syntheticCollectionAddress = args.collectionManagerAddress;
-
-    let collectionContract = await ethers.getContractAt('SyntheticCollectionManager', syntheticCollectionAddress);
-
+    const amountMint = parseAmount('1000000').toString();
+    const amountApprove = parseAmount('100000').toString();
+    
+    const syntheticCollectionAddress = collectionManagerRegistered.collectionManagerAddress;
+    const collectionContract = await ethers.getContractAt('SyntheticCollectionManager', syntheticCollectionAddress);
+    const jot = await ethers.getContractAt('Jot', collectionManagerRegistered.jotAddress);
+    
     await collectionContract.verify(0);
-
-    let jot = await ethers.getContractAt('Jot', args.jotAddress);
-    await jot.mint(deployer, web3.utils.toWei('1000000'));
-    await jot.approve(this.auctionsManager.address, web3.utils.toWei('100000'));
-
-    let startAuctionTx = await this.auctionsManager.startAuction(
+    await jot.mint(deployer, amountMint);
+    await jot.approve(auctionsManager.address, amountApprove);
+    
+    const startAuction = await auctionsManager.startAuction(
       syntheticCollectionAddress,
-      0,
-      web3.utils.toWei('100000')
+      newNFTTokenid,
+      amountApprove
     );
 
-    let log = await expectEvent(startAuctionTx, 'AuctionStarted', {});
-
-    let auction = await NFTAuction.at(log.args.auctionContract);
-
-    await expectRevert(auction.endAuction(), 'Auction not yet ended');
+    auctionContract = (await getEvent(startAuction, 'AuctionStarted', auctionsManager)).auctionContract;
+    const auction = await ethers.getContractAt('NFTAuction', auctionContract); 
+    await expect(auction.endAuction()).to.be.revertedWith('Auction not yet ended');
   });
+
+  it ('New Testing over reassignNFT', async () => {
+    const [newOwner] = await getUnnamedAccounts();
+    const auctionsManagerAddress = await manager.auctionsManagerAddress();
+    const auctionsManager = await ethers.getContractAt('AuctionsManager', auctionsManagerAddress);
+    await manager.verify(newNFTTokenid)
+
+    const reassign = await auctionsManager.reassignNFT(managerAddress, newNFTTokenid, newOwner);
+
+  })
 });
