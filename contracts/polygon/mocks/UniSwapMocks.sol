@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 contract UniswapPairMock {
 
     constructor() {}
@@ -19,6 +21,28 @@ contract UniswapPairMock {
 
     function approve(address account, uint256 amount) external {
         
+    }
+
+    function executeAddLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        address caller
+    ) external {
+        IERC20(tokenA).transferFrom(caller, address(this), amountADesired);
+        IERC20(tokenB).transferFrom(caller, address(this), amountBDesired);
+    }
+
+    function executeRemoveLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        address caller
+    ) external {
+        IERC20(tokenA).transfer(caller, amountADesired);
+        IERC20(tokenB).transfer(caller, amountBDesired);
     }
 }
 

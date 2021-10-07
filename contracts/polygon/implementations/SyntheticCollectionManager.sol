@@ -125,6 +125,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     event TokenReassigned(uint256 tokenID, address newOwner);
 
+    event LiquidityAdded();
+    event LiquidityRemoved(uint256 jotAmount, uitn256 fundingAmount);
+
     constructor(address randomConsumerAddress, address validatorAddress) {
         _randomConsumerAddress = randomConsumerAddress;
         _validatorAddress = validatorAddress;
@@ -660,14 +663,15 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         ownersByNonce[tokenId][currentNonce] = msg.sender;
         nonces[token.originalTokenID] = currentNonce + 1;
 
-        // free space and get refunds
-        delete _originalToSynthetic[token.originalTokenID];
-        delete tokens[tokenId];
+        //_removeLiquidityFromPool(tokenId, msg.sender);
 
         // Burn synthetic token
         safeBurn(tokenId);
 
-        _removeLiquidityFromPool(tokenId, msg.sender);
+        // free space and get refunds
+        delete _originalToSynthetic[token.originalTokenID];
+        delete tokens[tokenId];
+
     }
 
     /**
