@@ -136,7 +136,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address _erc721address,
         address auctionManagerAddress_,
         address protocol_,
-        address fundingTokenAddress_,
         address jotPool_,
         address swapAddress
     ) external initializer {
@@ -149,7 +148,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         jotPool = jotPool_;
         _swapAddress = swapAddress;
         jotsSupply = ProtocolConstants.JOT_SUPPLY;
-        fundingTokenAddress = fundingTokenAddress_;
+        fundingTokenAddress = ProtocolParameters(protocol_).fundingTokenAddress();
+
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ROUTER, msg.sender);
