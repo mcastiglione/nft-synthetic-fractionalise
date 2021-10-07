@@ -54,7 +54,7 @@ const networkConfig = {
     maticToken: '0x101f4779090843bb394902a973D9bf1e37F00635',
     oracleAddress: '0xC5324aE5b70712F24602b5b2b13618356c44B965',
     perpetualPoolLiteAddress: '0xE409e138362Ea53125e46732f17d4E758c06dDEe',
-    fundingTokenAddress: '0x2ca48b8c2d574b282fdab69545646983a94a3286', 
+    fundingTokenAddress: '0x2cA48b8c2d574b282FDAB69545646983A94a3286', 
   },
   137: {
     name: 'polygon',

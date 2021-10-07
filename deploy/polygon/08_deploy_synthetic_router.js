@@ -21,9 +21,6 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let pToken = await ethers.getContract('PTokenLite');
   let swapAddress;
 
-  console.log(lToken.address)
-  console.log(pToken.address)
-
   if (chainId == 1337 || chainId == 31337) {
     let UniswapPairMock = await deploy('UniswapPairMock', {
       from: deployer,
@@ -52,19 +49,16 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     perpetualPoolLiteAddress = PerpetualPoolLiteMock.address;
   }
 
- 
-
   let router = await deploy('SyntheticProtocolRouter', {
     from: deployer,
     log: true,
     args: [
-      "0x4CeBfcDA07A08B1C7169E5eb77AC117FF87EEae9",
+      swapAddress,
       jot.address,
       jotPool.address,
       collectionManager.address,
       syntheticNFT.address,
       auctionsManager.address,
-      "0x2cA48b8c2d574b282FDAB69545646983A94a3286",
       randomConsumer.address,
       validator.address,
       {
