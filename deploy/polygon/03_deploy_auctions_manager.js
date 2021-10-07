@@ -5,11 +5,21 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   // get the previously deployed contracts
   const auction = await ethers.getContract('NFTAuction');
 
-  await deploy('AuctionsManager', {
-    from: deployer,
-    log: true,
-    args: [auction.address],
-  });
+  if (network.tags.local) {
+    await deploy('AuctionsManager', {
+      contract: 'AuctionsManagerMock',
+      from: deployer,
+      log: true,
+      args: [auction.address],
+    });
+  } else {
+    await deploy('AuctionsManager', {
+      from: deployer,
+      log: true,
+      args: [auction.address],
+    });
+  }
+
 };
 
 module.exports.tags = ['auctions_manager'];

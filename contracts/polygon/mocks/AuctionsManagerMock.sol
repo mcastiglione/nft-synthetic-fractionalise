@@ -56,7 +56,7 @@ contract AuctionsManagerMock is AccessControl, Initializable {
         _whitelistedTokens[msg.sender][nftId_] = false;
     }
 
-    function isRecoverable(uint256 nftId_) public view returns (bool) {
+    function isRecoverable(uint256 nftId_) public view onlyRole(COLLECTION_MANAGER) returns (bool) {
         return (_whitelistedTokens[msg.sender][nftId_] &&
             _recoverableTillDate[msg.sender][nftId_] >= block.timestamp); // solhint-disable-line
     }
@@ -79,22 +79,26 @@ contract AuctionsManagerMock is AccessControl, Initializable {
         uint256 openingBid_
     ) external {
         require(_whitelistedTokens[collection_][nftId_], "Token can't be auctioned");
-        require(_recoverableTillDate[msg.sender][nftId_] < block.timestamp, "Token is yet recoverable"); //solhint-disable-line
+        require(_recoverableTillDate[collection_][nftId_] < block.timestamp, "Token is yet recoverable"); //solhint-disable-line
         require(openingBid_ >= ProtocolConstants.JOT_SUPPLY, "Opening bid too low");
-        require(router.isSyntheticNFTCreated(collection_, nftId_), "Non registered token");
+        require(
+            SyntheticCollectionManager(collection_).isVerified(nftId_),
+            "The token should be first verified"
+        );
 
         // blacklist the nft to avoid start a new auction
         _whitelistedTokens[collection_][nftId_] = false;
 
-        address jotToken = router.getJotsAddress(collection_);
+        address originalCollection = SyntheticCollectionManager(collection_).originalCollectionAddress();
+        address jotToken = router.getJotsAddress(originalCollection);
 
         // deploys a minimal proxy contract from privi nft auction implementation
         address auctionAddress = Clones.clone(_nftAuctionImplementation);
         NFTAuction(auctionAddress).initialize(
             nftId_,
             jotToken,
-            router.getJotPoolAddress(collection_),
-            router.getCollectionManagerAddress(collection_),
+            router.getJotPoolAddress(originalCollection),
+            router.getCollectionManagerAddress(originalCollection),
             openingBid_,
             protocol.auctionDuration(),
             msg.sender

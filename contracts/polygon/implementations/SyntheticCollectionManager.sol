@@ -183,7 +183,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // Fill new ID
         uint256 tokenSupply = ProtocolConstants.JOT_SUPPLY;
-        tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, 0, State.NEW);
+        tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, 0, State.VERIFIED);
 
         emit TokenReassigned(newSyntheticID, newOwner_);
     }
