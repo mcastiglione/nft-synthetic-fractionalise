@@ -78,18 +78,21 @@ contract AuctionsManager is AccessControl, Initializable {
         uint256 nftId_,
         uint256 openingBid_
     ) external {
+
+        SyntheticCollectionManager manager = SyntheticCollectionManager(collection_);
+
         require(_whitelistedTokens[collection_][nftId_], "Token can't be auctioned");
         require(_recoverableTillDate[collection_][nftId_] < block.timestamp, "Token is yet recoverable"); //solhint-disable-line
         require(openingBid_ >= ProtocolConstants.JOT_SUPPLY, "Opening bid too low");
         require(
-            SyntheticCollectionManager(collection_).isVerified(nftId_),
+            manager.isVerified(nftId_),
             "The token should be first verified"
         );
 
         // blacklist the nft to avoid start a new auction
         _whitelistedTokens[collection_][nftId_] = false;
 
-        address originalCollection = SyntheticCollectionManager(collection_).originalCollectionAddress();
+        address originalCollection = manager.originalCollectionAddress();
         address jotToken = router.getJotsAddress(originalCollection);
 
         // deploys a minimal proxy contract from privi nft auction implementation
@@ -112,6 +115,8 @@ contract AuctionsManager is AccessControl, Initializable {
             IERC20(jotToken).transferFrom(msg.sender, auctionAddress, openingBid_),
             "Unable to transfer jots"
         );
+
+        manager.removeLiquidityFromPool(nftId_, msg.sender);
 
         emit AuctionStarted(collection_, nftId_, auctionAddress, openingBid_);
     }

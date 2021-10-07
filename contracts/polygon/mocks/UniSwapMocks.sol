@@ -16,6 +16,10 @@ contract UniswapPairMock {
         uint32 blockTimestampLast_ = 0;
         return (reserve0_, reserve1_, blockTimestampLast_);
     }
+
+    function approve(address account, uint256 amount) external {
+        
+    }
 }
 
 contract UniSwapFactoryMock {
