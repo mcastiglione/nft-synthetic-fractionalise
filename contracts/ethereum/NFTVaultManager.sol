@@ -40,8 +40,13 @@ contract NFTVaultManager is AccessControl {
 
     address private _validatorOracleAddress;
 
-    event UnlockRequested(address collection, uint256 tokenId);
-    event ChangeApproveRequested(address collection, uint256 tokenFrom, uint256 tokenTo);
+    event UnlockRequested(bytes32 indexed requestId, address collection, uint256 tokenId);
+    event ChangeApproveRequested(
+        bytes32 indexed requestId,
+        address collection,
+        uint256 tokenFrom,
+        uint256 tokenTo
+    );
     event ChangeResponseReceived(
         bytes32 indexed requestId,
         address collection,
@@ -76,13 +81,13 @@ contract NFTVaultManager is AccessControl {
         require(_holdings[collection_][tokenId_] != address(0), "Token not locked");
         require(pendingWithdraws[collection_][tokenId_] == address(0), "Already withdrawable");
 
-        ETHValidatorOracle(_validatorOracleAddress).verifyTokenIsWithdrawable(
+        bytes32 requestId = ETHValidatorOracle(_validatorOracleAddress).verifyTokenIsWithdrawable(
             collection_,
             tokenId_,
             nonces[collection_][tokenId_]
         );
 
-        emit UnlockRequested(collection_, tokenId_);
+        emit UnlockRequested(requestId, collection_, tokenId_);
     }
 
     function unlockNFT(
@@ -111,7 +116,7 @@ contract NFTVaultManager is AccessControl {
         require(pendingWithdraws[collection_][tokenFrom_] == address(0), "Withdrawable token");
         require(pendingChanges[collection_][tokenFrom_].tokenTo == 0, "Change already approved");
 
-        ETHValidatorOracle(_validatorOracleAddress).verifyTokenIsChangeable(
+        bytes32 requestId = ETHValidatorOracle(_validatorOracleAddress).verifyTokenIsChangeable(
             collection_,
             tokenFrom_,
             tokenTo_,
@@ -119,7 +124,7 @@ contract NFTVaultManager is AccessControl {
             changeNonces[collection_][tokenFrom_]
         );
 
-        emit ChangeApproveRequested(collection_, tokenFrom_, tokenTo_);
+        emit ChangeApproveRequested(requestId, collection_, tokenFrom_, tokenTo_);
     }
 
     function processChange(
