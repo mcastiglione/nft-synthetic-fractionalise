@@ -16,8 +16,6 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
     uint256 public verifyResponse;
     bool public changeResponse;
 
-    event ResponseReceived(bytes32 indexed requestId, address collection, uint256 tokenId, address newOwner);
-
     /**
      * @dev only owner can initialize, and the ownership is removed after that
      */
@@ -80,15 +78,12 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
         address newOwner = address(uint160(newOwner_));
 
         // only call the synthetic collection contract if is locked
-        if (newOwner != address(0)) {
-            NFTVaultManager(_vaultManagerAddress).unlockNFT(
-                requestData.collection,
-                requestData.tokenId,
-                newOwner
-            );
-        }
-
-        emit ResponseReceived(requestId, requestData.collection, requestData.tokenId, newOwner);
+        NFTVaultManager(_vaultManagerAddress).unlockNFT(
+            requestId,
+            requestData.collection,
+            requestData.tokenId,
+            newOwner
+        );
     }
 
     /**

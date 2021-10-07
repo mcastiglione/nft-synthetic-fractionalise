@@ -49,7 +49,12 @@ contract NFTVaultManager is AccessControl {
         uint256 tokenTo,
         bool response
     );
-    event NFTUnlocked(address collection, uint256 tokenId, address newOwner);
+    event WithdrawResponseReceived(
+        bytes32 indexed requestId,
+        address collection,
+        uint256 tokenId,
+        address newOwner
+    );
 
     constructor(address validatorOracleAddress_) {
         _validatorOracleAddress = validatorOracleAddress_;
@@ -81,15 +86,18 @@ contract NFTVaultManager is AccessControl {
     }
 
     function unlockNFT(
+        bytes32 requestId_,
         address collection_,
         uint256 tokenId_,
         address newOwner
     ) external onlyRole(VALIDATOR_ORACLE) {
         // this condition is necessary to avoid double check and unlocking an nft that was already withdrawed
         if (_holdings[collection_][tokenId_] != address(0)) {
-            pendingWithdraws[collection_][tokenId_] = newOwner;
+            if (newOwner != address(0)) {
+                pendingWithdraws[collection_][tokenId_] = newOwner;
+            }
 
-            emit NFTUnlocked(collection_, tokenId_, newOwner);
+            emit WithdrawResponseReceived(requestId_, collection_, tokenId_, newOwner);
         }
     }
 

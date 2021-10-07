@@ -84,12 +84,7 @@ describe('NFTVaultManager', async function (accounts) {
 
       // check the events
       await expectEvent(tx, 'UnlockRequested', { collection: this.collection.address, tokenId: String(tokenId) });
-      await expectEvent.inTransaction(tx.tx, oracle, 'ResponseReceived', { newOwner: deployer });
-      await expectEvent(tx, 'NFTUnlocked', {
-        collection: this.collection.address,
-        tokenId: String(tokenId),
-        newOwner: deployer,
-      });
+      await expectEvent(tx, 'WithdrawResponseReceived', { newOwner: deployer });
 
       tx = await this.vault.withdraw(this.collection.address, tokenId);
       await expectEvent.inTransaction(tx.tx, this.collection, 'Transfer', {});
@@ -100,7 +95,7 @@ describe('NFTVaultManager', async function (accounts) {
 
       // check the events
       await expectEvent(tx, 'UnlockRequested', { collection: this.collection.address, tokenId: String(tokenId) });
-      await expectEvent.inTransaction(tx.tx, oracle, 'ResponseReceived', { newOwner: constants.ZERO_ADDRESS });
+      await expectEvent(tx, 'WithdrawResponseReceived', { newOwner: constants.ZERO_ADDRESS });
 
       await expectRevert(this.vault.withdraw(this.collection.address, tokenId), 'Non approved withdraw');
     });
