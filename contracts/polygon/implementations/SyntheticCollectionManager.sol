@@ -150,7 +150,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         jotsSupply = ProtocolConstants.JOT_SUPPLY;
         fundingTokenAddress = ProtocolParameters(protocol_).fundingTokenAddress();
 
-
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ROUTER, msg.sender);
         _setupRole(AUCTION_MANAGER, auctionManagerAddress_);
@@ -415,6 +414,70 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
+     * @notice Remove liquidity from pool only callable by AuctionsManager
+     */
+    function removeLiquidityFromPool(
+        uint256 tokenId, address caller
+    ) external onlyRole(AUCTION_MANAGER) {
+        _removeLiquidityFromPool(tokenId, caller);
+    }
+
+    /**
+     * @dev remove liquidity from Pool
+     */
+    function _removeLiquidityFromPool(uint256 tokenId, address caller) internal {
+        TokenData storage token = tokens[tokenId];
+
+        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(
+            Jot(jotAddress).uniswapV2Pair()
+        );
+
+        // Get added liquidity
+        uint256 jotLiquidity = token.UniswapJotLiquidity;
+        uint256 fundingLiquidity = token.UniswapFundingLiquidity;
+        uint256 liquidityTokenBalance = token.liquidityTokenBalance;
+
+        // Approve liquidity transfer
+        uniswapV2Pair.approve(_swapAddress, liquidityTokenBalance);
+
+        // Pair reserves in Uniswap Pair
+        uint112 jotReserves;
+        uint112 fundingReserves;
+        uint32 blockTimestampLast;
+
+        (jotReserves, fundingReserves, blockTimestampLast) = uniswapV2Pair.getReserves();
+
+        // Handle low balance edge cases
+        if (jotLiquidity > jotReserves) {
+            jotLiquidity = jotReserves;
+        }
+        if (fundingLiquidity > fundingReserves) {
+            fundingLiquidity = fundingReserves;
+        }
+
+        IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
+
+        // Actual liquidity removed
+        uint256 jotAmountExecuted;
+        uint256 fundingAmountExecuted;
+
+        (jotAmountExecuted, fundingAmountExecuted) = uniswapV2Router.removeLiquidity(
+            jotAddress,
+            fundingTokenAddress,
+            liquidityTokenBalance,
+            jotLiquidity,
+            fundingLiquidity,
+            address(this),
+            block.timestamp // solhint-disable-line
+        );
+
+        // burn the jots 
+        Jot(jotAddress).burn(address(this), jotAmountExecuted);
+        // transfer funding token balance to caller
+        IERC20(fundingTokenAddress).transfer(caller, fundingAmountExecuted);
+    }
+
+    /**
      * @notice Claim Liquidity Tokens
      */
     function claimLiquidityTokens(uint256 tokenId, uint256 amount) public {
@@ -601,46 +664,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         delete _originalToSynthetic[token.originalTokenID];
         delete tokens[tokenId];
 
-        // burn the jots and the nft
-        Jot(jotAddress).burn(address(this), ownerSupply);
+        // Burn synthetic token
         safeBurn(tokenId);
 
-        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(
-            Jot(jotAddress).uniswapV2Pair()
-        );
-
-        uint256 jotLiquidity = token.UniswapJotLiquidity;
-        uint256 fundingLiquidity = token.UniswapFundingLiquidity;
-        uint256 liquidityTokenBalance = token.liquidityTokenBalance;
-
-        uint112 reserve0;
-        uint112 reserve1;
-        uint32 blockTimestampLast;
-
-        (reserve0, reserve1, blockTimestampLast) = uniswapV2Pair.getReserves();
-        
-        if (jotLiquidity > reserve0) {
-            jotLiquidity = reserve0;
-        }
-
-        if (fundingLiquidity > reserve1) {
-            fundingLiquidity = reserve1;
-        }
-
-        IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
-
-        uint256 amountA;
-        uint256 amountB;
-
-        (amountA, amountB) = uniswapV2Router.removeLiquidity(
-            jotAddress,
-            fundingTokenAddress,
-            liquidityTokenBalance,
-            jotLiquidity,
-            fundingLiquidity,
-            msg.sender,
-            block.timestamp // solhint-disable-line
-        );
+        _removeLiquidityFromPool(tokenId, msg.sender);
     }
 
     /**

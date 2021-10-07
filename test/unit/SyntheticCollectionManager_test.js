@@ -288,8 +288,6 @@ describe('SyntheticCollectionManager', async function () {
 
       const balance = (await manager.getOwnerSupply(tokenID)).toString();
 
-      console.log(balance);
-
       const amount = parseAmount('9999');
 
       await jot.mint(owner.address, amount);
@@ -300,10 +298,7 @@ describe('SyntheticCollectionManager', async function () {
 
       const new_balance = (await manager.getOwnerSupply(tokenID)).toString();
 
-      console.log(new_balance);
-
       await manager.exitProtocol(tokenID);
-
       
     });
   });
