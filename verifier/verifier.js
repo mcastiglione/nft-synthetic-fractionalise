@@ -4,48 +4,45 @@
  * after deployment addresses of contracts are saved in the everlasting-option.deploy.log
  * file under the logs folder for later consulting
  */
- const fs = require('fs');
- const BigNumber = require('bignumber.js');
- 
- // const file = fs.createWriteStream('./logs/everlasting-option.deploy.log', { flags: 'w' });
- // let logger = new console.Console(file, file);
- 
- const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
- // rescale
- function one(value = 1, left = 0, right = 18) {
-   let from = ethers.BigNumber.from('1' + '0'.repeat(left));
-   let to = ethers.BigNumber.from('1' + '0'.repeat(right));
-   return ethers.BigNumber.from(value).mul(to).div(from);
- } 
- 
- function neg(value) {
-   return value.mul(-1);
- }
- 
- 
- let usdt_address = "0x580d6ebC53BB4239f52C5E28a9c2bD037faB0089";
- 
- let protocol_params_address = "0x24d99BeeB3a803B0b9D8435aae82a578d7dD992D";
- let offchainOracle_address = "0x8385c95Eb77ceab24f8BB05b33Dc7602840C0Ba1";
- 
- let ltoken_address = "0x931Ffe02D2cDb0e5fF8ebC3e5D582E61e096984e";
- let ptoken_address = "0x1cc7D395eFD7dbF193Fa5101AC624f8C15c5e571";
- 
- 
- let perpetual_address = "0x2070FD2bCae936C6f1123f94551e79F8B4EC5C68";
- let pool_info = "0x50193CeE72729B1ABB35042A1E485cdAb1Ca2960";
- 
- let symbolOracle = "";
+const fs = require('fs');
+const BigNumber = require('bignumber.js');
 
+// const file = fs.createWriteStream('./logs/everlasting-option.deploy.log', { flags: 'w' });
+// let logger = new console.Console(file, file);
 
- async function main() {
-   //const config = getConfigFromNetwork(hre.network.name);
- 
-   // ! change the signatory before deploying to production
-   [deployer] = await ethers.getSigners();
-   console.log('Deployer address: ', deployer.address);
- 
-   const mainParams = {
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+// rescale
+function one(value = 1, left = 0, right = 18) {
+  let from = ethers.BigNumber.from('1' + '0'.repeat(left));
+  let to = ethers.BigNumber.from('1' + '0'.repeat(right));
+  return ethers.BigNumber.from(value).mul(to).div(from);
+}
+
+function neg(value) {
+  return value.mul(-1);
+}
+
+let usdt_address = '0x580d6ebC53BB4239f52C5E28a9c2bD037faB0089';
+
+let protocol_params_address = '0x24d99BeeB3a803B0b9D8435aae82a578d7dD992D';
+let offchainOracle_address = '0x8385c95Eb77ceab24f8BB05b33Dc7602840C0Ba1';
+
+let ltoken_address = '0x931Ffe02D2cDb0e5fF8ebC3e5D582E61e096984e';
+let ptoken_address = '0x1cc7D395eFD7dbF193Fa5101AC624f8C15c5e571';
+
+let perpetual_address = '0x2070FD2bCae936C6f1123f94551e79F8B4EC5C68';
+let pool_info = '0x50193CeE72729B1ABB35042A1E485cdAb1Ca2960';
+
+let symbolOracle = '';
+
+async function main() {
+  //const config = getConfigFromNetwork(hre.network.name);
+
+  // ! change the signatory before deploying to production
+  [deployer] = await ethers.getSigners();
+  console.log('Deployer address: ', deployer.address);
+
+  const mainParams = {
     minPoolMarginRatio: one(),
     minInitialMarginRatio: one(1, 1),
     minMaintenanceMarginRatio: one(5, 2),

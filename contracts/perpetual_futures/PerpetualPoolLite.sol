@@ -18,16 +18,16 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
 
     int256 private constant ONE = 10**18;
 
-    uint256 private  _decimals;
+    uint256 private _decimals;
 
-    address private  _bTokenAddress;
-    address private  _lTokenAddress;
-    address private  _pTokenAddress;
-    address private  _liquidatorQualifierAddress;
-    address private  _protocolFeeCollector;
-    address private  _underlyingAddress;
+    address private _bTokenAddress;
+    address private _lTokenAddress;
+    address private _pTokenAddress;
+    address private _liquidatorQualifierAddress;
+    address private _protocolFeeCollector;
+    address private _underlyingAddress;
     address private immutable _protocolAddress;
-    FuturesProtocolParameters immutable private _protocolParameters;
+    FuturesProtocolParameters private immutable _protocolParameters;
 
     int256 private _liquidity;
 
@@ -48,7 +48,6 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
     constructor(address[2] memory addresses) {
         _protocolAddress = addresses[0];
         _protocolParameters = FuturesProtocolParameters(addresses[0]);
-        _decimals = 18;
     }
 
     function initialize(address[6] memory addresses) external initializer {
@@ -58,6 +57,8 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
         _liquidatorQualifierAddress = addresses[3];
         _protocolFeeCollector = addresses[4];
         _underlyingAddress = addresses[5];
+
+        _decimals = 18;
     }
 
     function getSymbolPriceAndMultiplier() external view returns (int256 price, int256 multiplier) {
@@ -276,7 +277,7 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
 
     function _addMargin(address account, uint256 bAmount) internal _lock_ {
         bAmount = _transferIn(account, bAmount);
-        IPTokenLite pToken = IPTokenLite(_pTokenAddress); 
+        IPTokenLite pToken = IPTokenLite(_pTokenAddress);
         if (!pToken.exists(account)) pToken.mint(account);
         pToken.addMargin(account, bAmount.utoi());
         emit AddMargin(account, bAmount);
@@ -579,5 +580,4 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
     // function claimNewController() external override {
     //     // TODO: Implement
     // }
-
 }

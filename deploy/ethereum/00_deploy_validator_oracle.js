@@ -14,6 +14,7 @@ module.exports = async ({ getNamedAccounts, deployments, network, getChainId }) 
       log: true,
       args: [],
     });
+
   } else {
     let oracleDefinition = {
       chainlinkNode: networkConfig[chainId].validatorChainlinkNode || constants.ZERO_ADDRESS,
@@ -32,3 +33,4 @@ module.exports = async ({ getNamedAccounts, deployments, network, getChainId }) 
 };
 
 module.exports.tags = ['eth_validator_oracle'];
+module.exports.dependencies = ['jot_implementation'];

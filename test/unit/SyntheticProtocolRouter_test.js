@@ -30,12 +30,10 @@ describe('SyntheticProtocolRouter', async function () {
   it('after register NFT should be non-verified', async () => {
     const verified = await router.isNFTVerified(NFT, args.syntheticTokenId);
     expect(verified).to.be.equal(false);
-
   });
 
   it('verify with correct address', async () => {
     await router.verifyNFT(NFT, args.syntheticTokenId);
-
     const verified = await router.isNFTVerified(NFT, args.syntheticTokenId);
     expect(verified).to.be.equal(true);
   });
@@ -70,7 +68,6 @@ describe('SyntheticProtocolRouter', async function () {
   it('Check isNFTVerified of a non-verified NFT', async () => {
     
     tokenId = args.syntheticTokenId;
-
     const response = await router.isNFTVerified(NFT, tokenId);
 
     expect(response).to.be.equal(false);
@@ -79,11 +76,27 @@ describe('SyntheticProtocolRouter', async function () {
 
   it('Check isNFTVerified of a verified NFT', async () => {
     tokenId = args.syntheticTokenId;
-
     await router.verifyNFT(NFT, tokenId);
     const response = await router.isNFTVerified(NFT, tokenId);
     
     expect(response).to.be.equal(true);
   });
 
+  it('Check deployFutures and address parameters', async () => {
+    // address private  _bTokenAddress;
+    // address private  _lTokenAddress;
+    // address private  _pTokenAddress;
+    // address private  _liquidatorQualifierAddress;
+    // address private  _protocolFeeCollector;
+    // address private  _underlyingAddress;
+    // address private immutable _protocolAddress;
+    
+    // Parameter deployFutures
+    // string memory originalName,
+    // string memory originalSymbol,
+    // address collection,
+    // FuturesParametersContracts memory futuresParameters
+
+
+  })
 });

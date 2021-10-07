@@ -1,4 +1,5 @@
 const { time, constants } = require('@openzeppelin/test-helpers');
+const { networkConfig } = require('../../helper-hardhat-config');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
@@ -8,6 +9,14 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const tokenName = 'MockToken';
   const tokenSymbol = 'MTKN';
   const tokenSupply = web3.utils.toWei('100');
+
+  if (network.tags.local) {
+    const jot = await ethers.getContract('Jot');
+
+    fundingTokenAddress = jot.address;
+  } else {
+    fundingTokenAddress = networkConfig[chainId].fundingTokenAddress;
+  }
 
   let token = await deploy('ERC20VotesMock', {
     from: deployer,
@@ -37,7 +46,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await deploy('ProtocolParameters', {
     from: deployer,
     log: true,
-    args: [...Object.values(defaultParameters), timelock.address],
+    args: [...Object.values(defaultParameters), timelock.address, fundingTokenAddress],
   });
 
   timelock = await ethers.getContractAt('TimelockController', timelock.address);
@@ -52,3 +61,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 };
 
 module.exports.tags = ['timelock_fixtures'];
+module.exports.dependencies = ['jot_implementation'];

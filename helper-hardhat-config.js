@@ -34,10 +34,12 @@ const networkConfig = {
     maticToken: constants.ZERO_ADDRESS,
     oracleAddress: constants.ZERO_ADDRESS,
     perpetualPoolLiteAddress: constants.ZERO_ADDRESS,
+    fundingTokenAddress: constants.ZERO_ADDRESS, 
   },
   1: {
     name: 'mainnet',
     linkToken: '0x514910771af9ca656af840dff83e8264ecf986ca',
+    fundingTokenAddress: constants.ZERO_ADDRESS,
   },
   80001: {
     name: 'mumbai',
@@ -52,6 +54,7 @@ const networkConfig = {
     maticToken: '0x101f4779090843bb394902a973D9bf1e37F00635',
     oracleAddress: '0xC5324aE5b70712F24602b5b2b13618356c44B965',
     perpetualPoolLiteAddress: '0xE409e138362Ea53125e46732f17d4E758c06dDEe',
+    fundingTokenAddress: '0x2ca48b8c2d574b282fdab69545646983a94a3286', 
   },
   137: {
     name: 'polygon',
@@ -61,6 +64,7 @@ const networkConfig = {
     vrfFee: '100000000000000',
     oracleAddress: constants.ZERO_ADDRESS,
     perpetualPoolLiteAddress: constants.ZERO_ADDRESS,
+    fundingTokenAddress: constants.ZERO_ADDRESS,
   },
 };
 

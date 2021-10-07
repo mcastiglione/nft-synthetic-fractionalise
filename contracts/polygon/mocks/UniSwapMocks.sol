@@ -58,13 +58,27 @@ contract UniSwapRouterMock {
         address to,
         uint256 deadline
     ) public returns (
-        uint256 amountA, 
-        uint256 amountB, 
+        uint256 amountA,
+        uint256 amountB,
         uint256 liquidity
     ) {
         amountA = (amountADesired/100*90);
         amountB = (amountBDesired/100*90);
         liquidity = 0;
-        return (amountA, amountB, liquidity);
     }
+
+    function removeLiquidity(
+        address tokenA,
+        address tokenB,
+        uint liquidity,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountA, uint amountB) {
+        amountA = amountAMin;
+        amountB = amountBMin;
+    }
+
+
 }

@@ -20,6 +20,7 @@ import "../governance/ProtocolParameters.sol";
 import "./Jot.sol";
 import "./Structs.sol";
 import "./Enums.sol";
+import "hardhat/console.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
@@ -135,7 +136,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address _erc721address,
         address auctionManagerAddress_,
         address protocol_,
-        address fundingTokenAddress_,
         address jotPool_,
         address swapAddress
     ) external initializer {
@@ -148,7 +148,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         jotPool = jotPool_;
         _swapAddress = swapAddress;
         jotsSupply = ProtocolConstants.JOT_SUPPLY;
-        fundingTokenAddress = fundingTokenAddress_;
+        fundingTokenAddress = ProtocolParameters(protocol_).fundingTokenAddress();
+
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ROUTER, msg.sender);
@@ -179,11 +180,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _originalToSynthetic[originalID] = newSyntheticID;
 
         // Empty previous id
-        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, 0, State.NEW);
+        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, State.NEW);
 
         // Fill new ID
         uint256 tokenSupply = ProtocolConstants.JOT_SUPPLY;
-        tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, 0, State.VERIFIED);
+        tokens[newSyntheticID] = TokenData(originalID, tokenSupply, 0, 0, 0, 0, 0, 0, 0, 0, 0, State.VERIFIED);
 
         emit TokenReassigned(newSyntheticID, newOwner_);
     }
@@ -242,6 +243,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             fractionPrices: priceFraction,
             lastFlipTime: 0,
             liquidityTokenBalance: 0,
+            UniswapJotLiquidity: 0,
+            UniswapFundingLiquidity: 0,
             state: State.NEW
         });
 
@@ -406,6 +409,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             tokens[tokenId].sellingSupply -= amountA;
             tokens[tokenId].soldSupply -= amountB;
             tokens[tokenId].liquidityTokenBalance += liquidity;
+            tokens[tokenId].UniswapJotLiquidity += amountA;
+            tokens[tokenId].UniswapFundingLiquidity += amountB;
         }
     }
 
@@ -583,8 +588,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function exitProtocol(uint256 tokenId) external {
         TokenData storage token = tokens[tokenId];
         uint256 ownerSupply = token.ownerSupply;
-        require(token.state == State.VERIFIED, "Only verified tokens");
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
+        require(token.state == State.VERIFIED, "Only verified tokens");
         require(ownerSupply >= ProtocolConstants.JOT_SUPPLY, "Insufficient jot supply in the token");
 
         // increase nonce to avoid double verification
@@ -597,8 +602,45 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         delete tokens[tokenId];
 
         // burn the jots and the nft
-        Jot(jotAddress).burn(ownerSupply);
+        Jot(jotAddress).burn(address(this), ownerSupply);
         safeBurn(tokenId);
+
+        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(
+            Jot(jotAddress).uniswapV2Pair()
+        );
+
+        uint256 jotLiquidity = token.UniswapJotLiquidity;
+        uint256 fundingLiquidity = token.UniswapFundingLiquidity;
+        uint256 liquidityTokenBalance = token.liquidityTokenBalance;
+
+        uint112 reserve0;
+        uint112 reserve1;
+        uint32 blockTimestampLast;
+
+        (reserve0, reserve1, blockTimestampLast) = uniswapV2Pair.getReserves();
+        
+        if (jotLiquidity > reserve0) {
+            jotLiquidity = reserve0;
+        }
+
+        if (fundingLiquidity > reserve1) {
+            fundingLiquidity = reserve1;
+        }
+
+        IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
+
+        uint256 amountA;
+        uint256 amountB;
+
+        (amountA, amountB) = uniswapV2Router.removeLiquidity(
+            jotAddress,
+            fundingTokenAddress,
+            liquidityTokenBalance,
+            jotLiquidity,
+            fundingLiquidity,
+            msg.sender,
+            block.timestamp // solhint-disable-line
+        );
     }
 
     /**
