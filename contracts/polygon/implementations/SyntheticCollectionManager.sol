@@ -661,9 +661,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         cn.owner = caller;
 
         token.state = State.CHANGING;
+        delete _originalToSynthetic[token.originalTokenID];
         token.originalTokenID = newOriginalId;
+        _originalToSynthetic[newOriginalId] = syntheticId;
 
         ISyntheticNFT(erc721address).setMetadata(syntheticId, metadata);
+
     }
 
     /**
