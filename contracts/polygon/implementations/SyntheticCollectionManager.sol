@@ -292,6 +292,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         if (amountLeft < buyAmount) {
             buyAmount = amountLeft;
         }
+
         uint256 amount = (buyAmount * token.fractionPrices) / 10**18;
         // Can't sell zero tokens
         require(amount != 0, "No tokens left!");
@@ -665,7 +666,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         ISyntheticNFT(erc721address).setMetadata(syntheticId, metadata);
     }
 
-        /**
+    /**
      * @notice allows to exit the protocol (retrieve the token)
      */
     function exitProtocol(uint256 tokenId) external {

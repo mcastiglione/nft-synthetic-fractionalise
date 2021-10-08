@@ -7,16 +7,27 @@ contract UniswapPairMock {
 
     constructor() {}
 
+    uint112 private _reserve0;
+    uint112 private _reserve1;
+    uint32 private _blockTimestampLast;
+
     function getReserves() public view
     returns (
         uint112 reserve0,
         uint112 reserve1,
         uint32 blockTimestampLast
     ) {
-        uint112 reserve0_ = 10000;
-        uint112 reserve1_ = 10000;
-        uint32 blockTimestampLast_ = 0;
-        return (reserve0_, reserve1_, blockTimestampLast_);
+        reserve0 = _reserve0;
+        reserve1 = _reserve1;
+        blockTimestampLast = _blockTimestampLast;
+    }
+
+    function setReserves(
+        address tokenA,
+        address tokenB
+    ) external {
+        _reserve0 = uint112(IERC20(tokenA).balanceOf(address(this)));
+        _reserve1 = uint112(IERC20(tokenB).balanceOf(address(this)));
     }
 
     function approve(address account, uint256 amount) external returns(bool) {
@@ -79,8 +90,8 @@ contract UniSwapRouterMock {
         uint256 amountB,
         uint256 liquidity
     ) {
-        amountA = (amountADesired/100*90);
-        amountB = (amountBDesired/100*90);
+        amountA = amountADesired;
+        amountB = amountBDesired;
         liquidity = 0;
 
         address pairAddress = UniSwapFactoryMock(_uniswapFactory).getPair(
@@ -90,6 +101,7 @@ contract UniSwapRouterMock {
 
         IERC20(tokenA).transferFrom(msg.sender, pairAddress, amountADesired);
         IERC20(tokenB).transferFrom(msg.sender, pairAddress, amountBDesired);
+        UniswapPairMock(pairAddress).setReserves(tokenA, tokenB);
 
     }
 
@@ -110,7 +122,7 @@ contract UniSwapRouterMock {
         );
 
         UniswapPairMock(pairAddress).executeRemoveLiquidity(
-            tokenA, 
+            tokenA,
             tokenB,
             amountAMin,
             amountBMin,

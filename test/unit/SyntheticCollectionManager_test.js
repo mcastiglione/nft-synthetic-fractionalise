@@ -277,26 +277,60 @@ describe('SyntheticCollectionManager', async function () {
 
     });
 
-    it('case ok', async () => {
+    it('case ok', async () => {      
 
-      const TX = await router.registerNFT(NFT, nftID, parseAmount('1'), 5, 'My Collection', 'MYC', '');
+      // register NFT
+      // 10.000 tokens are minted, 9.000 are kept for the owner
+      // 500 are kept for Uniswap liquidity 
+      // 500 are kept for selling supply
+      const TX = await router.registerNFT(
+        NFT, nftID, parseAmount('9000'), parseAmount('1'), 'My Collection', 'MYC', ''
+      );
       await expect(TX).to.emit(router, 'TokenRegistered');
       const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
       tokenID = ARGS.syntheticTokenId;  
 
+      // verify NFT
       await router.verifyNFT(NFT, tokenID);
 
-      const amount = parseAmount('9999');
+      // Mint and approve funding to buy 500 jots
+      // Now mint and approve 1000 jots 5000 funding tokens
+      await fundingToken.mint(owner.address, parseAmount('500'));
+      await fundingToken.approve(managerAddress, parseAmount('500'));
 
-      await jot.mint(owner.address, amount);
+      await manager.buyJotTokens(tokenID, parseAmount('500'));
 
-      await jot.approve(manager.address, amount);
+      // Now addLiquidity to Uniswap
+      // Should be 500 Jots and 500 funding Tokens
+      await manager.addLiquidityToPool(tokenID);
+
+      const UniswapPairAddress = await jot.uniswapV2Pair();
+
+      // Pair balance in jots and funding after add liquidity
+      const PairBalance = await jot.balanceOf(UniswapPairAddress);
+      const PairBalanceFunding = await fundingToken.balanceOf(UniswapPairAddress);
       
-      await manager.depositJots(tokenID, amount);
+      // Owner funding token before removeLiquidity
+      const FundingBalanceOwner = await fundingToken.balanceOf(owner.address);
 
+      // mint and approve and deposit remaining jots to reach JOTS_SUPPLY (1000)
+      await jot.mint(owner.address, parseAmount('1000'));
+      await jot.approve(manager.address, parseAmount('1000'));
+      await manager.depositJots(tokenID, parseAmount('1000'));
 
+      // Now exit protocol
       await manager.exitProtocol(tokenID);
-      
+
+      // Check that amounts were actually executed
+      const PairBalanceAfter = (await jot.balanceOf(UniswapPairAddress)).toString();
+      const PairBalanceFundingAfter = (await fundingToken.balanceOf(UniswapPairAddress)).toString();
+      const FundingBalanceOwnerAfter = (await fundingToken.balanceOf(owner.address)).toString();
+
+      expect(FundingBalanceOwnerAfter).to.be.equal(FundingBalanceOwner.add(PairBalanceFunding));
+      expect(PairBalanceAfter).to.be.equal('0');
+      expect(PairBalanceFundingAfter).to.be.equal('0');
+      expect(PairBalanceFundingAfter).to.be.equal('0');
+
     });
   });
 
