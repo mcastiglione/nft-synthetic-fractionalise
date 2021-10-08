@@ -286,8 +286,6 @@ describe('SyntheticCollectionManager', async function () {
 
       await router.verifyNFT(NFT, tokenID);
 
-      const balance = (await manager.getOwnerSupply(tokenID)).toString();
-
       const amount = parseAmount('9999');
 
       await jot.mint(owner.address, amount);
@@ -296,7 +294,6 @@ describe('SyntheticCollectionManager', async function () {
       
       await manager.depositJots(tokenID, amount);
 
-      const new_balance = (await manager.getOwnerSupply(tokenID)).toString();
 
       await manager.exitProtocol(tokenID);
       

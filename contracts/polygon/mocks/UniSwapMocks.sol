@@ -19,19 +19,8 @@ contract UniswapPairMock {
         return (reserve0_, reserve1_, blockTimestampLast_);
     }
 
-    function approve(address account, uint256 amount) external {
-        
-    }
-
-    function executeAddLiquidity(
-        address tokenA,
-        address tokenB,
-        uint256 amountADesired,
-        uint256 amountBDesired,
-        address caller
-    ) external {
-        IERC20(tokenA).transferFrom(caller, address(this), amountADesired);
-        IERC20(tokenB).transferFrom(caller, address(this), amountBDesired);
+    function approve(address account, uint256 amount) external returns(bool) {
+        return true;
     }
 
     function executeRemoveLiquidity(
@@ -39,10 +28,10 @@ contract UniswapPairMock {
         address tokenB,
         uint256 amountADesired,
         uint256 amountBDesired,
-        address caller
+        address to
     ) external {
-        IERC20(tokenA).transfer(caller, amountADesired);
-        IERC20(tokenB).transfer(caller, amountBDesired);
+        IERC20(tokenA).transfer(to, amountADesired);
+        IERC20(tokenB).transfer(to, amountBDesired);
     }
 }
 
@@ -93,6 +82,15 @@ contract UniSwapRouterMock {
         amountA = (amountADesired/100*90);
         amountB = (amountBDesired/100*90);
         liquidity = 0;
+
+        address pairAddress = UniSwapFactoryMock(_uniswapFactory).getPair(
+            tokenA,
+            tokenB
+        );
+
+        IERC20(tokenA).transferFrom(msg.sender, pairAddress, amountADesired);
+        IERC20(tokenB).transferFrom(msg.sender, pairAddress, amountBDesired);
+
     }
 
     function removeLiquidity(
@@ -106,6 +104,18 @@ contract UniSwapRouterMock {
     ) external returns (uint amountA, uint amountB) {
         amountA = amountAMin;
         amountB = amountBMin;
+        address pairAddress = UniSwapFactoryMock(_uniswapFactory).getPair(
+            tokenA,
+            tokenB
+        );
+
+        UniswapPairMock(pairAddress).executeRemoveLiquidity(
+            tokenA, 
+            tokenB,
+            amountAMin,
+            amountBMin,
+            to
+        );
     }
 
 

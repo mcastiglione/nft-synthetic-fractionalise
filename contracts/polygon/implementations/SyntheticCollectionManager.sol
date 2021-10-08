@@ -432,17 +432,21 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice Remove liquidity from pool only callable by AuctionsManager
      */
-    function removeLiquidityFromPool(uint256 tokenId, address caller) external onlyRole(AUCTION_MANAGER) {
+    function removeLiquidityFromPool(
+        uint256 tokenId, address caller
+    ) external onlyRole(AUCTION_MANAGER) {
         _removeLiquidityFromPool(tokenId, caller);
     }
 
     /**
      * @dev remove liquidity from Pool
      */
-    function _removeLiquidityFromPool(uint256 tokenId, address caller) internal {
+    function _removeLiquidityFromPool(uint256 tokenId, address caller) internal returns (uint256) {
         TokenData storage token = tokens[tokenId];
 
-        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(Jot(jotAddress).uniswapV2Pair());
+        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(
+            Jot(jotAddress).uniswapV2Pair()
+        );
 
         // Get added liquidity
         uint256 jotLiquidity = token.UniswapJotLiquidity;
@@ -473,6 +477,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 jotAmountExecuted;
         uint256 fundingAmountExecuted;
 
+        // Call Uniswap to remove liquidity
         (jotAmountExecuted, fundingAmountExecuted) = uniswapV2Router.removeLiquidity(
             jotAddress,
             fundingTokenAddress,
@@ -483,10 +488,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             block.timestamp // solhint-disable-line
         );
 
-        // burn the jots
+        // Burn received jots
         Jot(jotAddress).burn(address(this), jotAmountExecuted);
+
         // transfer funding token balance to caller
         IERC20(fundingTokenAddress).transfer(caller, fundingAmountExecuted);
+
+        emit LiquidityRemoved(jotAmountExecuted, fundingAmountExecuted);
     }
 
     /**
@@ -657,29 +665,32 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         ISyntheticNFT(erc721address).setMetadata(syntheticId, metadata);
     }
 
-    /**
+        /**
      * @notice allows to exit the protocol (retrieve the token)
      */
     function exitProtocol(uint256 tokenId) external {
         TokenData storage token = tokens[tokenId];
         uint256 ownerSupply = token.ownerSupply;
+
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
         require(token.state == State.VERIFIED, "Only verified tokens");
         require(ownerSupply >= ProtocolConstants.JOT_SUPPLY, "Insufficient jot supply in the token");
 
         // increase nonce to avoid double verification
         uint256 currentNonce = nonces[token.originalTokenID];
-        ownersByNonce[token.originalTokenID][currentNonce] = msg.sender;
+        ownersByNonce[tokenId][currentNonce] = msg.sender;
         nonces[token.originalTokenID] = currentNonce + 1;
 
-        //_removeLiquidityFromPool(tokenId, msg.sender);
+        _removeLiquidityFromPool(tokenId, msg.sender);
+
+        // burn the jots
+        Jot(jotAddress).burn(address(this), ownerSupply);
+        // Burn synthetic token
+        safeBurn(tokenId);
 
         // free space and get refunds
         delete _originalToSynthetic[token.originalTokenID];
         delete tokens[tokenId];
-
-        // Burn synthetic token
-        safeBurn(tokenId);
     }
 
     /**
