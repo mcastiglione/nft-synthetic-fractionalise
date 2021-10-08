@@ -58,7 +58,7 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
         _protocolFeeCollector = addresses[4];
         _underlyingAddress = addresses[5];
 
-        _decimals = 18;
+        _decimals = 6;
     }
 
     function getSymbolPriceAndMultiplier() external view returns (int256 price, int256 multiplier) {

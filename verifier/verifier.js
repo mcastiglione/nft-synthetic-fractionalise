@@ -24,14 +24,14 @@ function neg(value) {
 
 let usdt_address = '0x580d6ebC53BB4239f52C5E28a9c2bD037faB0089';
 
-let protocol_params_address = '0x24d99BeeB3a803B0b9D8435aae82a578d7dD992D';
-let offchainOracle_address = '0x8385c95Eb77ceab24f8BB05b33Dc7602840C0Ba1';
+let protocol_params_address = '0x7485C5B724C99475411721CE070116102665F99C';
+let offchainOracle_address = '0x5723B0c53eD5564A15c215A349445029B2dd902f';
 
-let ltoken_address = '0x931Ffe02D2cDb0e5fF8ebC3e5D582E61e096984e';
-let ptoken_address = '0x1cc7D395eFD7dbF193Fa5101AC624f8C15c5e571';
+let ltoken_address = '0xAF8623Cd7CACdE3d8e529fF9500159C6F2b03868';
+let ptoken_address = '0xb4Ee9dc5F3d21b37D931c8DB30376dceC3CF7403';
 
-let perpetual_address = '0x2070FD2bCae936C6f1123f94551e79F8B4EC5C68';
-let pool_info = '0x50193CeE72729B1ABB35042A1E485cdAb1Ca2960';
+let perpetual_address = '0x8d82EBB3fED62BeeA28a192eD9047DDf26d76fB3';
+let pool_info = '0x745035fded1AEfCf60B73117d067196c8ff22a3d';
 
 let symbolOracle = '';
 
@@ -61,74 +61,64 @@ async function main() {
     oracleDelay: 6000,
   };
  
-   // // verify test usdt
-   // console.log('Verifying usdt...');
-   // await hre.run("verify:verify", {
-   //       address: usdt_address,
-   //       constructorArguments: ['Tether USDT', 'USDT']
-   // });
-   // console.log(`Verified USDT: ${usdt_address}`);
+   // verify test usdt
+  //  console.log('Verifying usdt...');
+  //  await hre.run("verify:verify", {
+  //        address: usdt_address,
+  //        constructorArguments: ['Tether USDT', 'USDT']
+  //  });
+  //  console.log(`Verified USDT: ${usdt_address}`);
  
-   // verify liquidity token
-   // console.log('Verifying lToken...');
-   // await hre.run("verify:verify", {
-   //       address: ltoken_address,
-   //       contract: "contracts/token/LTokenLite.sol:LTokenLite",
-   //       constructorArguments: ['Privi Exchange Liquidity Token', 'pLT']
-   // });
-   // console.log(`Verified lToken: ${ltoken_address}`);
+  //  // verify liquidity token
+  //  console.log('Verifying lToken...');
+  //  await hre.run("verify:verify", {
+  //        address: ltoken_address,
+  //        //contract: "contracts/token/LTokenLite.sol:LTokenLite",
+  //        constructorArguments: []
+  //  });
+  //  console.log(`Verified lToken: ${ltoken_address}`);
  
-   // // verify position token
-   // console.log('Verifying pToken...');
-   // await hre.run("verify:verify", {
-   //       address: ptoken_address,
-   //       constructorArguments: ['Privi Exchange Position Token', 'pPT']
-   // });
-   // console.log(`Verified pToken: ${ptoken_address}`);
- 
- 
-   // // verify protocol params 
-   // console.log('Verifying protocol params...');
-   // await hre.run("verify:verify", {
-   //       address: protocol_params_address,
-   //       constructorArguments: [...Object.values(defaultProtocolParameters)]
-   // });
-   // console.log(`Verified protocol params.: ${protocol_params_address}`);
+  //  // verify position token
+  //  console.log('Verifying pToken...');
+  //  await hre.run("verify:verify", {
+  //        address: ptoken_address,
+  //        constructorArguments: []
+  //  });
+  //  console.log(`Verified pToken: ${ptoken_address}`);
  
  
-   //  // verify perpetual pool
-   //  console.log('Verifying perpetual pool...');
-   //  await hre.run("verify:verify", {
-   //        address: perpetual_address,
-   //        constructorArguments: [
-   //           [
-   //             usdt_address, // bTokenAddress
-   //             ltoken_address, // lTokenAddress
-   //             ptoken_address, // pTokenAddress
-   //             ZERO_ADDRESS, // liquidatorQualifierAddress
-   //             deployer.address, // protocolFeeCollector
-   //             "0x9d418c2cae665d877f909a725402ebd3a0742844",
-   //             protocol_params_address
-   //           ],
-   //         ]
-   //  });
-   //  console.log(`Verified perpetual pool: ${perpetual_address}`);
+   // verify protocol params 
+  //  console.log('Verifying protocol params...');
+  //  await hre.run("verify:verify", {
+  //        address: protocol_params_address,
+  //        constructorArguments: [...Object.values(defaultProtocolParameters), deployer.address]
+  //  });
+  //  console.log(`Verified protocol params.: ${protocol_params_address}`);
+ 
+ 
+    // verify perpetual pool
+    console.log('Verifying perpetual pool...');
+    await hre.run("verify:verify", {
+          address: perpetual_address,
+          constructorArguments:[[protocol_params_address, offchainOracle_address]]
+    });
+    console.log(`Verified perpetual pool: ${perpetual_address}`);
  
     // verify pool info
-    console.log('Verifying pool info...');
-    await hre.run("verify:verify", {
-          address: pool_info,
-          constructorArguments: [ perpetual_address ]
-    });
-    console.log(`Verified pool info: ${pool_info}`);
+    // console.log('Verifying pool info...');
+    // await hre.run("verify:verify", {
+    //       address: pool_info,
+    //       constructorArguments: [ perpetual_address ]
+    // });
+    // console.log(`Verified pool info: ${pool_info}`);
  
    // verify offchain oracle
-   //  console.log('Verifying offchain oracle...');
-   //  await hre.run("verify:verify", {
-   //        address: offchainOracle_address,
-   //        constructorArguments: [ deployer.address, protocol_params_address ]
-   //  });
-   //  console.log(`Verified offchain oracle: ${offchainOracle_address}`);
+    console.log('Verifying offchain oracle...');
+    await hre.run("verify:verify", {
+          address: offchainOracle_address,
+          constructorArguments: []
+    });
+    console.log(`Verified offchain oracle: ${offchainOracle_address}`);
   }
  
  function getConfigFromNetwork(network) {
