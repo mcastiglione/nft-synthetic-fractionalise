@@ -276,9 +276,10 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
     }
 
     function _addMargin(address account, uint256 bAmount) internal _lock_ {
-        bAmount = _transferIn(account, bAmount);
         IPTokenLite pToken = IPTokenLite(_pTokenAddress);
-        if (!pToken.exists(account)) pToken.mint(account);
+        require(!pToken.exists(account), "Ptoken doesn't exist for this address");
+        bAmount = _transferIn(account, bAmount);
+        pToken.mint(account);
         pToken.addMargin(account, bAmount.utoi());
         emit AddMargin(account, bAmount);
     }
