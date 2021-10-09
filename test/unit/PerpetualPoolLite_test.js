@@ -8,6 +8,7 @@ describe('PerpetualPoolLite', async function () {
     // Using fixture from hardhat-deploy
     await deployments.fixture(['auctions_manager_initialization', 'pool']);
     deployer = await getNamedAccounts();
+    [owner, address1] = await ethers.getSigners();
     router = await ethers.getContract('SyntheticProtocolRouter');
 
     NFT = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
@@ -42,12 +43,7 @@ describe('PerpetualPoolLite', async function () {
     const perpetualpool = await PerpetualPoolLite.at(perpetualPoolAddress);
 
     let tx = await perpetualpool.addMargin(100000000);
-    await expect(tx).to.emit(perpetualpool, 'AddMargin');
-    args = await getEventArgs(tx, 'AddMargin', perpetualpool);    
-    console.log('args.account', args.account, 'args.bAmount',args.bAmount);
-    const portfolio = await perpetualpool.getTraderPortfolio(deployer['deployer']);
-
-    console.log(portfolio);
+    const portfolio = await perpetualpool.getTraderPortfolio(owner.address);
 
   });
 
