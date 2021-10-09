@@ -78,6 +78,9 @@ contract AuctionsManagerMock is AccessControl, Initializable {
         uint256 nftId_,
         uint256 openingBid_
     ) external {
+
+        SyntheticCollectionManager manager = SyntheticCollectionManager(collection_);
+
         require(_whitelistedTokens[collection_][nftId_], "Token can't be auctioned");
         require(_recoverableTillDate[collection_][nftId_] < block.timestamp, "Token is yet recoverable"); //solhint-disable-line
         require(openingBid_ >= ProtocolConstants.JOT_SUPPLY, "Opening bid too low");
@@ -112,6 +115,8 @@ contract AuctionsManagerMock is AccessControl, Initializable {
             IERC20(jotToken).transferFrom(msg.sender, auctionAddress, openingBid_),
             "Unable to transfer jots"
         );
+
+        manager.removeLiquidityFromPool(nftId_); 
 
         emit AuctionStarted(collection_, nftId_, auctionAddress, openingBid_);
     }

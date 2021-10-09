@@ -116,7 +116,7 @@ contract AuctionsManager is AccessControl, Initializable {
             "Unable to transfer jots"
         );
 
-        manager.removeLiquidityFromPool(nftId_, msg.sender);
+        manager.removeLiquidityFromPool(nftId_);
 
         emit AuctionStarted(collection_, nftId_, auctionAddress, openingBid_);
     }

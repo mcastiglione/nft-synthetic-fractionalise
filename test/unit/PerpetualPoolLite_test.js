@@ -41,9 +41,13 @@ describe('PerpetualPoolLite', async function () {
   it('Call addMargin and then getTraderPortfolio', async () => {
     const perpetualpool = await PerpetualPoolLite.at(perpetualPoolAddress);
 
-    await perpetualpool.addMargin(100);
-
+    let tx = await perpetualpool.addMargin(100000000);
+    await expect(tx).to.emit(perpetualpool, 'AddMargin');
+    args = await getEventArgs(tx, 'AddMargin', perpetualpool);    
+    console.log('args.account', args.account, 'args.bAmount',args.bAmount);
     const portfolio = await perpetualpool.getTraderPortfolio(deployer['deployer']);
+
+    console.log(portfolio);
 
   });
 

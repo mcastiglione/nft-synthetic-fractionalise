@@ -22,13 +22,16 @@ describe('AuctionsManager', async function () {
     auctionsManager = await ethers.getContract('AuctionsManager'); 
     nFTAuction = await ethers.getContract('NFTAuction'); 
 
-    const router = await ethers.getContract('SyntheticProtocolRouter');
+    router = await ethers.getContract('SyntheticProtocolRouter');
     const registerNFT = await router.registerNFT(NFT, nftID, 0, 5, 'My Collection', 'MYC', '');
     newNFTTokenid = (await getEvent(registerNFT, 'TokenRegistered', router)).syntheticTokenId.toString();
     collectionManagerRegistered = await getEvent(registerNFT, 'CollectionManagerRegistered', router);
 
     managerAddress = await router.getCollectionManagerAddress(NFT);
     manager = await ethers.getContractAt('SyntheticCollectionManager', managerAddress);   
+
+    /* address */
+    [owner, address1] = await ethers.getSigners();
   });
 
   it('should be deployed', async () => {
@@ -57,6 +60,59 @@ describe('AuctionsManager', async function () {
     auctionContract = (await getEvent(startAuction, 'AuctionStarted', auctionsManager)).auctionContract;
     const auction = await ethers.getContractAt('NFTAuction', auctionContract); 
     await expect(auction.endAuction()).to.be.revertedWith('Auction not yet ended');
+  });
+
+  it('Owner should get UniSwap liquidity after startAuction', async () => {
+    const { deployer } = await getNamedAccounts();
+
+    const localNFT = await router.registerNFT(NFT, nftID+1, parseAmount('9000'), parseAmount('1'),  'My Collection', 'MYC', '');
+    localNFTID = (await getEvent(localNFT, 'TokenRegistered', router)).syntheticTokenId.toString();
+
+    const amountMint = parseAmount('1000000').toString();
+    const amountApprove = parseAmount('100000').toString();
+
+    const syntheticCollectionAddress = collectionManagerRegistered.collectionManagerAddress;
+    const collectionContract = await ethers.getContractAt('SyntheticCollectionManager', syntheticCollectionAddress);
+
+    await collectionContract.verify(localNFTID);
+
+    const fundingTokenAddress = await collectionContract.fundingTokenAddress();
+    const fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
+  
+    await fundingToken.mint(owner.address, parseAmount('500'));
+    await fundingToken.approve(syntheticCollectionAddress, parseAmount('500'));
+
+    await collectionContract.buyJotTokens(localNFTID, parseAmount('500'));
+    await collectionContract.addLiquidityToPool(localNFTID);
+
+    const fundingBalanceBefore = await fundingToken.balanceOf(deployer);
+
+    await collectionContract.withdrawJots(localNFTID, parseAmount('9000'));
+
+    const jotOwnerSupplyBefore = await collectionContract.getOwnerSupply(localNFTID);
+    console.log('jotOwnerSupplyBefore', parseReverse(jotOwnerSupplyBefore.toString()));
+
+    const jot = await ethers.getContractAt('Jot', collectionManagerRegistered.jotAddress);
+
+    await jot.mint(deployer, amountMint);
+    await jot.approve(auctionsManager.address, amountApprove);
+
+    const startAuction = await auctionsManager.startAuction(
+      syntheticCollectionAddress,
+      localNFTID,
+      amountApprove
+    );
+
+    const jotOwnerSupplyAfter = await collectionContract.getOwnerSupply(localNFTID);
+    console.log('jotOwnerSupplyAfter', parseReverse(jotOwnerSupplyAfter.toString()));
+
+    expect(jotOwnerSupplyAfter).to.be.equal(jotOwnerSupplyBefore.add(parseAmount('500')));
+
+    const fundingBalanceAfter = await fundingToken.balanceOf(deployer);
+
+    expect(fundingBalanceAfter).to.be.equal(
+      await fundingBalanceBefore.add(parseAmount('500'))
+    );
   });
 
   it ('New Testing over reassignNFT', async () => {

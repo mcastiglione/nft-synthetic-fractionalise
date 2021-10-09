@@ -431,12 +431,25 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
+     * @dev remove liquidity on exitProtocol
+     */
+    function _removeLiquidityOnExitProtocol(
+        uint256 tokenId, address caller
+    ) internal {
+        uint256 jotLiquidity =_removeLiquidityFromPool(tokenId, caller);
+        // Burn received jots
+        Jot(jotAddress).burn(address(this), jotLiquidity);
+    } 
+
+    /**
      * @notice Remove liquidity from pool only callable by AuctionsManager
      */
     function removeLiquidityFromPool(
-        uint256 tokenId, address caller
+        uint256 tokenId
     ) external onlyRole(AUCTION_MANAGER) {
-        _removeLiquidityFromPool(tokenId, caller);
+        address tokenOwner = ISyntheticNFT(erc721address).ownerOf(tokenId);
+        uint256 jotLiquidity =_removeLiquidityFromPool(tokenId, tokenOwner);
+        tokens[tokenId].ownerSupply += jotLiquidity;
     }
 
     /**
@@ -489,13 +502,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             block.timestamp // solhint-disable-line
         );
 
-        // Burn received jots
-        Jot(jotAddress).burn(address(this), jotAmountExecuted);
-
         // transfer funding token balance to caller
         IERC20(fundingTokenAddress).transfer(caller, fundingAmountExecuted);
 
         emit LiquidityRemoved(jotAmountExecuted, fundingAmountExecuted);
+
+        return jotAmountExecuted;
     }
 
     /**
@@ -685,7 +697,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         ownersByNonce[tokenId][currentNonce] = msg.sender;
         nonces[token.originalTokenID] = currentNonce + 1;
 
-        _removeLiquidityFromPool(tokenId, msg.sender);
+        _removeLiquidityOnExitProtocol(tokenId, msg.sender);
 
         // burn the jots
         Jot(jotAddress).burn(address(this), ownerSupply);
