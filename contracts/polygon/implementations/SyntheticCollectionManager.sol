@@ -436,7 +436,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function _removeLiquidityOnExitProtocol(
         uint256 tokenId, address caller
     ) internal {
-        uint256 jotLiquidity =_removeLiquidityFromPool(tokenId, caller);
+        uint256 jotLiquidity = _removeLiquidityFromPool(tokenId, caller);
         // Burn received jots
         Jot(jotAddress).burn(address(this), jotLiquidity);
     } 
