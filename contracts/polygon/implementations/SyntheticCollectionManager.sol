@@ -341,7 +341,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function increaseSellingSupply(uint256 tokenId, uint256 amount) public {
         TokenData storage token = tokens[tokenId];
         require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
-
+        require(amount > 0, "Amount can't be zero!");
         require(!lockedNFT(tokenId), "Token is locked!");
 
         require(token.ownerSupply >= amount, "You do not have enough tokens left");
@@ -360,9 +360,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * caller must be the owner of the NFT
      */
     function decreaseSellingSupply(uint256 tokenId, uint256 amount) public {
-        require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
-
         TokenData storage token = tokens[tokenId];
+
+        require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
+        require(amount > 0, "Amount can't be zero!");
 
         require(!lockedNFT(tokenId), "Token is locked!");
 
@@ -419,6 +420,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             address(this),
             block.timestamp // solhint-disable-line
         );
+
         unchecked {
             tokens[tokenId].liquiditySupply -= amountA;
             tokens[tokenId].liquiditySold -= amountB;

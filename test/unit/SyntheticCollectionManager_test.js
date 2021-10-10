@@ -37,7 +37,7 @@ describe('SyntheticCollectionManager', async function () {
     fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
   });
 
-  describe('flip the coin game', async () => {
+  /*describe('flip the coin game', async () => {
     describe('is allowed to flip getter', async () => {
       it('should be false if NFT is not fractionalized');
       it('should be false if the Jot Pool has no balance');
@@ -156,14 +156,97 @@ describe('SyntheticCollectionManager', async function () {
 
       expect(afterBalance).to.be.equal(beforeBalance + amount);
     });
-  });
+  });*/
 
-
+/*
   describe('increaseSellingSupply', async () => {
-    it('check', async () => {
+    it('non existent tokenId', async () => {
+      await expect(
+        manager.increaseSellingSupply(tokenId+1, 1)
+      ).to.be.revertedWith('ERC721: owner query for nonexistent token');
     });
-  });
 
+    it('amount 0', async () => {
+      await router.verifyNFT(NFT, tokenId);
+      await expect(
+        manager.increaseSellingSupply(tokenId, 0)
+      ).to.be.revertedWith("Amount can't be zero!");
+    });
+
+    it('sender is not owner', async () => {
+
+      await router.verifyNFT(NFT, tokenId);
+      
+      await expect(
+        manager.connect(address1).increaseSellingSupply(tokenId, 1)
+      ).to.be.revertedWith('You are not the owner of the NFT!');
+
+    });
+
+    it('amount greater than ownerSupply', async () => {
+
+      await router.verifyNFT(NFT, tokenId);
+      
+      await expect(
+        manager.increaseSellingSupply(tokenId, 10001)
+      ).to.be.revertedWith("You do not have enough tokens left");
+
+    });
+
+    it('case ok', async () => {
+
+      await router.verifyNFT(NFT, tokenId);
+
+      await manager.increaseSellingSupply(tokenId, 10)
+
+    });
+
+  });
+*/
+  describe('decreaseSellingSupply', async () => {
+    it('non existent tokenId', async () => {
+      await expect(
+        manager.decreaseSellingSupply(tokenId+1, 1)
+      ).to.be.revertedWith('ERC721: owner query for nonexistent token');
+    });
+
+    it('amount 0', async () => {
+      await router.verifyNFT(NFT, tokenId);
+      await expect(
+        manager.decreaseSellingSupply(tokenId, 0)
+      ).to.be.revertedWith("Amount can't be zero!");
+    });
+
+    it('sender is not owner', async () => {
+
+      await router.verifyNFT(NFT, tokenId);
+      
+      await expect(
+        manager.connect(address1).decreaseSellingSupply(tokenId, 1)
+      ).to.be.revertedWith('You are not the owner of the NFT!');
+
+    });
+
+    it('amount greater than ownerSupply', async () => {
+
+      await router.verifyNFT(NFT, tokenId);
+      
+      await expect(
+        manager.decreaseSellingSupply(tokenId, parseAmount('10001'))
+      ).to.be.revertedWith('You do not have enough liquidity left');
+
+    });
+
+    it('case ok', async () => {
+
+      await router.verifyNFT(NFT, tokenId);
+
+      await manager.decreaseSellingSupply(tokenId, 10)
+
+    });
+
+  });
+/*
   describe('CHECKING for 10*18 division on BACKEND in buyJotTokens, *** DO NOT MODIFY, DO NOT DELETE  THIS TEST***', async () => {
     it('check', async () => {
       await router.verifyNFT(NFT, tokenId);
@@ -381,6 +464,6 @@ describe('SyntheticCollectionManager', async function () {
 
 
     });
-  });
+  });*/
 
 });
