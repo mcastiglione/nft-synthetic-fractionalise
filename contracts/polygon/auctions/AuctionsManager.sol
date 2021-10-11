@@ -69,7 +69,7 @@ contract AuctionsManager is AccessControl, Initializable {
         address collection_,
         uint256 nftId_,
         address newOwner_
-    ) external onlyRole(AUCTION) {
+    ) virtual external onlyRole(AUCTION) {
         SyntheticCollectionManager(collection_).reassignNFT(nftId_, newOwner_);
     }
 

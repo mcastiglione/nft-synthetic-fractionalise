@@ -247,16 +247,27 @@ describe('SyntheticCollectionManager', async function () {
 
   });
 
-  describe('Metadata', async () => {
-    it('setMetadata', async () => {
-      //await router.verifyNFT(NFT, tokenId);
+  describe('setMetadata', async () => {
+    const metadataToSet = 'ASD1234567890';
 
-      const metadataToSet = 'ASD1234567890';
+    it('should fail if the Token has already been verified', async () => {
+      await manager.verify(tokenId);
+      await expect(
+        manager.setMetadata(tokenId, metadataToSet)
+      ).to.be.revertedWith("Can't change metadata after verify");
+    });
+    
+    it('should fail if you are not the owner of NFT', async () => {
+      await expect(
+        manager.connect(address1).setMetadata(tokenId, metadataToSet)
+      ).to.be.revertedWith('You are not the owner of the NFT!');
+    });
+    
+    it('verify that the data set is correct', async () => {
       const syntheticAddress = await manager.erc721address();
       const syntheticNFT = await ethers.getContractAt('SyntheticNFT', syntheticAddress);
 
       await manager.setMetadata(tokenId, metadataToSet);
-
       const metadata = await syntheticNFT.tokenURI(tokenId);
 
       expect(metadata).to.be.equal(metadataToSet);
@@ -264,6 +275,24 @@ describe('SyntheticCollectionManager', async function () {
   });
 
   describe('Uniswap', async () => {
+
+    it('getAccruedReward 0', async () => {
+
+      const TX = await router.registerNFT(
+        NFT, nftID, parseAmount('9000'), parseAmount('1'), 'My Collection', 'MYC', ''
+      );
+      await expect(TX).to.emit(router, 'TokenRegistered');
+      const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+      tokenID = ARGS.syntheticTokenId;  
+
+      await router.verifyNFT(NFT, tokenID);
+
+      const liquidity = await manager.getAccruedReward(tokenID);
+
+      expect(liquidity.toString()).to.be.equal('0');
+
+    });
+
     it('getAccruedReward', async () => {
 
       const TX = await router.registerNFT(
@@ -286,12 +315,72 @@ describe('SyntheticCollectionManager', async function () {
 
       const liquidity = await manager.getAccruedReward(tokenID);
 
-      console.log('liquidity', liquidity.toString());
+      expect(liquidity.toString()).to.be.equal(parseAmount('500'));
+
+    });
+    describe('claimLiquidityTokens', async () => {
+      it('non existent token', async () => {
+  
+        await expect(
+          manager.claimLiquidityTokens(tokenId+1, 1000)
+        ).to.be.revertedWith('ERC721: owner query for nonexistent token');
+  
+  
+      });
+  
+      it('call with other than owner', async () => {
+        await expect(
+          manager.connect(address1).claimLiquidityTokens(tokenId, 1000)
+        ).to.be.revertedWith('You are not the owner');
+      });
+
+      it('call with other than owner', async () => {
+        await expect(
+          manager.connect(address1).claimLiquidityTokens(tokenId, 1000)
+        ).to.be.revertedWith('You are not the owner');
+      });
+
+      it('more than balance', async () => {
+        await expect(
+          manager.claimLiquidityTokens(tokenId, 1)
+        ).to.be.revertedWith('Not enough liquidity available');
+      });
+
+      it('ok', async () => {
+        const TX = await router.registerNFT(
+          NFT, nftID, parseAmount('9000'), parseAmount('1'), 'My Collection', 'MYC', ''
+        );
+        await expect(TX).to.emit(router, 'TokenRegistered');
+        const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+        tokenID = ARGS.syntheticTokenId;  
+  
+        await router.verifyNFT(NFT, tokenID);
+  
+        await fundingToken.mint(owner.address, parseAmount('500'));
+        await fundingToken.approve(managerAddress, parseAmount('500'));
+  
+        await manager.buyJotTokens(tokenID, parseAmount('500'));
+  
+        // Now addLiquidity to Uniswap
+        // Should be 500 Jots and 500 funding Tokens
+        await manager.addLiquidityToPool(tokenID);
+  
+        const liquidity = await manager.getAccruedReward(tokenID);
+  
+        await manager.claimLiquidityTokens(tokenID, liquidity.toString());
+  
+        const UniswapPairAddress = await jot.uniswapV2Pair();
+  
+        const UniswapV2Pair = await ethers.getContractAt('UniswapPairMock', UniswapPairAddress);
+  
+        const balance = await UniswapV2Pair.balanceOf(owner.address);
+  
+        expect(balance).to.be.equal(liquidity.toString());
+  
+      });
 
     });
 
-    it('claimLiquidityTokens', async () => {
-    });
   });
 
   describe('CHECKING for 10*18 division on BACKEND in buyJotTokens, *** DO NOT MODIFY, DO NOT DELETE  THIS TEST***', async () => {
@@ -512,5 +601,4 @@ describe('SyntheticCollectionManager', async function () {
 
     });
   });
-
 });

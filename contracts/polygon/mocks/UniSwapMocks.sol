@@ -108,9 +108,6 @@ contract UniSwapRouterMock {
         amountA = amountADesired;
         amountB = amountBDesired;
 
-        console.log('amountA', amountA);
-        console.log('amountB', amountB);
-
         liquidity = sqrt(amountA*amountB);
 
         address pairAddress = UniSwapFactoryMock(_uniswapFactory).getPair(tokenA, tokenB);

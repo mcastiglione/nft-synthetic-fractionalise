@@ -90,7 +90,6 @@ describe('AuctionsManager', async function () {
     await collectionContract.withdrawJots(localNFTID, parseAmount('9000'));
 
     const jotOwnerSupplyBefore = await collectionContract.getOwnerSupply(localNFTID);
-    console.log('jotOwnerSupplyBefore', parseReverse(jotOwnerSupplyBefore.toString()));
 
     const jot = await ethers.getContractAt('Jot', collectionManagerRegistered.jotAddress);
 
@@ -104,7 +103,6 @@ describe('AuctionsManager', async function () {
     );
 
     const jotOwnerSupplyAfter = await collectionContract.getOwnerSupply(localNFTID);
-    console.log('jotOwnerSupplyAfter', parseReverse(jotOwnerSupplyAfter.toString()));
 
     expect(jotOwnerSupplyAfter).to.be.equal(jotOwnerSupplyBefore.add(parseAmount('500')));
 
