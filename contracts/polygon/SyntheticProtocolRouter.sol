@@ -209,6 +209,10 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 collection
             );
 
+            SyntheticCollectionManager(collectionAddress).setPerpetualPoolLiteAddress(
+                futuresData.perpetualPoolLiteAddress_
+            );
+
             _collections[collection] = SyntheticCollection({
                 collectionID: protocolVaults.current(),
                 collectionManagerAddress: collectionAddress,

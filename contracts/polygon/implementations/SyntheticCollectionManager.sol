@@ -21,6 +21,7 @@ import "./Jot.sol";
 import "./Structs.sol";
 import "./Enums.sol";
 import "hardhat/console.sol";
+import "./JotPool.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
@@ -34,6 +35,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     address private immutable _randomConsumerAddress;
     address private immutable _validatorAddress;
     address public auctionsManagerAddress;
+
+    address private _perpetualPoolLiteAddress;
 
     /**
      * @dev ERC20 totalSupply (governance) parameter
@@ -421,11 +424,29 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             block.timestamp // solhint-disable-line
         );
 
+        if (amountA < liquiditySupply) {
+            uint256 jotsRemaining = liquiditySupply - amountA;
+
+            Jot(jotAddress).approve(jotPool, jotsRemaining);
+            JotPool(jotPool).addLiquidity(jotsRemaining);
+            
+        }
+        if (amountB < liquiditySold) {
+            uint256 funding_remaining = liquiditySold - amountB;
+            
+            IERC20(fundingTokenAddress).approve(
+                _perpetualPoolLiteAddress, funding_remaining
+            );
+            IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(
+                funding_remaining
+            );
+        }
+
         unchecked {
-            tokens[tokenId].liquiditySupply -= amountA;
-            tokens[tokenId].liquiditySold -= amountB;
-            tokens[tokenId].sellingSupply -= amountA;
-            tokens[tokenId].soldSupply -= amountB;
+            tokens[tokenId].liquiditySupply -= liquiditySupply;
+            tokens[tokenId].liquiditySold -= liquiditySold;
+            tokens[tokenId].sellingSupply -= liquiditySupply;
+            tokens[tokenId].soldSupply -= liquiditySold;
             tokens[tokenId].liquidityTokenBalance += liquidity;
             tokens[tokenId].UniswapJotLiquidity += amountA;
             tokens[tokenId].UniswapFundingLiquidity += amountB;
@@ -762,6 +783,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             // solhint-disable-next-line
             block.timestamp
         );
+    }
+
+    function setPerpetualPoolLiteAddress(address perpetualPoolLiteAddress_) external onlyRole(ROUTER) {
+        _perpetualPoolLiteAddress = perpetualPoolLiteAddress_;
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
