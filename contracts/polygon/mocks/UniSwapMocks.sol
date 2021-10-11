@@ -2,10 +2,27 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "hardhat/console.sol";
 
-contract UniswapPairMock {
+function sqrt(uint y) pure returns (uint z) {
+    if (y > 3) {
+        z = y;
+        uint x = y / 2 + 1;
+        while (x < z) {
+            z = x;
+            x = (y / x + x) / 2;
+        }
+    } else if (y != 0) {
+        z = 1;
+    }
+}
 
-    constructor() {}
+
+
+contract UniswapPairMock is ERC20 {
+
+    constructor() ERC20('UNISWAP V2 PAIR', 'LP') {}
 
     uint112 private _reserve0;
     uint112 private _reserve1;
@@ -30,10 +47,6 @@ contract UniswapPairMock {
         _reserve1 = uint112(IERC20(tokenB).balanceOf(address(this)));
     }
 
-    function approve(address account, uint256 amount) external returns(bool) {
-        return true;
-    }
-
     function executeRemoveLiquidity(
         address tokenA,
         address tokenB,
@@ -43,6 +56,10 @@ contract UniswapPairMock {
     ) external {
         IERC20(tokenA).transfer(to, amountADesired);
         IERC20(tokenB).transfer(to, amountBDesired);
+    }
+
+    function mint(address account, uint256 amount) public {
+        _mint(account, amount);
     }
 }
 
@@ -92,7 +109,11 @@ contract UniSwapRouterMock {
     ) {
         amountA = amountADesired;
         amountB = amountBDesired;
-        liquidity = 0;
+
+        console.log('amountA', amountA);
+        console.log('amountB', amountB);
+
+        liquidity = sqrt(amountA*amountB);
 
         address pairAddress = UniSwapFactoryMock(_uniswapFactory).getPair(
             tokenA,
@@ -102,6 +123,7 @@ contract UniSwapRouterMock {
         IERC20(tokenA).transferFrom(msg.sender, pairAddress, amountADesired);
         IERC20(tokenB).transferFrom(msg.sender, pairAddress, amountBDesired);
         UniswapPairMock(pairAddress).setReserves(tokenA, tokenB);
+        UniswapPairMock(pairAddress).mint(msg.sender, liquidity);
 
     }
 

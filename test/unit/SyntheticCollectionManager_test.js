@@ -156,9 +156,9 @@ describe('SyntheticCollectionManager', async function () {
 
       expect(afterBalance).to.be.equal(beforeBalance + amount);
     });
-  });*/
+  });
 
-/*
+
   describe('increaseSellingSupply', async () => {
     it('non existent tokenId', async () => {
       await expect(
@@ -202,7 +202,7 @@ describe('SyntheticCollectionManager', async function () {
     });
 
   });
-*/
+
   describe('decreaseSellingSupply', async () => {
     it('non existent tokenId', async () => {
       await expect(
@@ -247,7 +247,7 @@ describe('SyntheticCollectionManager', async function () {
 
   });
 
-  describe('setMetadata', async () => {
+  describe('Metadata', async () => {
     it('setMetadata', async () => {
       //await router.verifyNFT(NFT, tokenId);
 
@@ -262,8 +262,37 @@ describe('SyntheticCollectionManager', async function () {
       expect(metadata).to.be.equal(metadataToSet);
     });
   });
+*/
+  describe('Uniswap', async () => {
+    it('getAccruedReward', async () => {
 
+      const TX = await router.registerNFT(
+        NFT, nftID, parseAmount('9000'), parseAmount('1'), 'My Collection', 'MYC', ''
+      );
+      await expect(TX).to.emit(router, 'TokenRegistered');
+      const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+      tokenID = ARGS.syntheticTokenId;  
 
+      await router.verifyNFT(NFT, tokenID);
+
+      await fundingToken.mint(owner.address, parseAmount('500'));
+      await fundingToken.approve(managerAddress, parseAmount('500'));
+
+      await manager.buyJotTokens(tokenID, parseAmount('500'));
+
+      // Now addLiquidity to Uniswap
+      // Should be 500 Jots and 500 funding Tokens
+      await manager.addLiquidityToPool(tokenID);
+
+      const liquidity = await manager.getAccruedReward(tokenID);
+
+      console.log('liquidity', liquidity.toString());
+
+    });
+
+    it('claimLiquidityTokens', async () => {
+    });
+  });
 /*
   describe('CHECKING for 10*18 division on BACKEND in buyJotTokens, *** DO NOT MODIFY, DO NOT DELETE  THIS TEST***', async () => {
     it('check', async () => {

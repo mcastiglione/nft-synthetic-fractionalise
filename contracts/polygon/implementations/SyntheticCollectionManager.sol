@@ -440,7 +440,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     ) internal {
         uint256 jotLiquidity = _removeLiquidityFromPool(tokenId, caller);
         // Burn received jots
-        Jot(jotAddress).burn(address(this), jotLiquidity);
+        if(jotLiquidity > 0) {
+            Jot(jotAddress).burn(address(this), jotLiquidity);
+        }
+        
     } 
 
     /**
@@ -468,6 +471,16 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 jotLiquidity = token.UniswapJotLiquidity;
         uint256 fundingLiquidity = token.UniswapFundingLiquidity;
         uint256 liquidityTokenBalance = token.liquidityTokenBalance;
+
+        if (liquidityTokenBalance == 0) {
+            return 0;
+        }
+
+        uint256 liquidityTokenBalanceUniswap = uniswapV2Pair.balanceOf(address(this));
+
+        if (liquidityTokenBalanceUniswap < liquidityTokenBalance) {
+            liquidityTokenBalance = liquidityTokenBalanceUniswap;
+        }
 
         // Approve liquidity transfer
         uniswapV2Pair.approve(_swapAddress, liquidityTokenBalance);
