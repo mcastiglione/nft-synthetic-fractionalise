@@ -37,7 +37,7 @@ describe('SyntheticCollectionManager', async function () {
     fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
   });
 
-  /*describe('flip the coin game', async () => {
+  describe('flip the coin game', async () => {
     describe('is allowed to flip getter', async () => {
       it('should be false if NFT is not fractionalized');
       it('should be false if the Jot Pool has no balance');
@@ -262,7 +262,7 @@ describe('SyntheticCollectionManager', async function () {
       expect(metadata).to.be.equal(metadataToSet);
     });
   });
-*/
+
   describe('Uniswap', async () => {
     it('getAccruedReward', async () => {
 
@@ -293,7 +293,7 @@ describe('SyntheticCollectionManager', async function () {
     it('claimLiquidityTokens', async () => {
     });
   });
-/*
+
   describe('CHECKING for 10*18 division on BACKEND in buyJotTokens, *** DO NOT MODIFY, DO NOT DELETE  THIS TEST***', async () => {
     it('check', async () => {
       await router.verifyNFT(NFT, tokenId);
@@ -511,6 +511,6 @@ describe('SyntheticCollectionManager', async function () {
 
 
     });
-  });*/
+  });
 
 });

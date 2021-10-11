@@ -15,7 +15,6 @@ import "./SyntheticCollectionManager.sol";
 import "./Structs.sol";
 
 contract SyntheticNFT is Context, ERC165, IERC721Metadata, Initializable, AccessControl {
-
     using Address for address;
     using Strings for uint256;
 
@@ -63,18 +62,15 @@ contract SyntheticNFT is Context, ERC165, IERC721Metadata, Initializable, Access
     }
 
     function safeMint(
-        address to, 
-        uint256 tokenId, 
-        string memory metadata 
+        address to,
+        uint256 tokenId,
+        string memory metadata
     ) public onlyRole(MANAGER) {
         _mint(to, tokenId);
         _tokenMetadata[tokenId] = metadata;
     }
 
-    function setMetadata(
-        uint256 tokenId, 
-        string memory metadata
-    ) public onlyRole(MANAGER) {
+    function setMetadata(uint256 tokenId, string memory metadata) public onlyRole(MANAGER) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
         _tokenMetadata[tokenId] = metadata;
     }
@@ -90,11 +86,10 @@ contract SyntheticNFT is Context, ERC165, IERC721Metadata, Initializable, Access
         override(AccessControl, ERC165, IERC165)
         returns (bool)
     {
-        return 
+        return
             interfaceId == type(IERC721).interfaceId ||
             interfaceId == type(IERC721Metadata).interfaceId ||
             super.supportsInterface(interfaceId);
-
     }
 
     function balanceOf(address owner) public view virtual override returns (uint256) {
@@ -163,7 +158,10 @@ contract SyntheticNFT is Context, ERC165, IERC721Metadata, Initializable, Access
         uint256 tokenId
     ) public virtual override {
         //solhint-disable-next-line max-line-length
-        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved");
+        require(
+            _isApprovedOrOwner(_msgSender(), tokenId),
+            "ERC721: transfer caller is not owner nor approved"
+        );
 
         _transfer(from, to, tokenId);
     }
@@ -182,7 +180,10 @@ contract SyntheticNFT is Context, ERC165, IERC721Metadata, Initializable, Access
         uint256 tokenId,
         bytes memory _data
     ) public virtual override {
-        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved");
+        require(
+            _isApprovedOrOwner(_msgSender(), tokenId),
+            "ERC721: transfer caller is not owner nor approved"
+        );
         _safeTransfer(from, to, tokenId, _data);
     }
 
@@ -193,7 +194,10 @@ contract SyntheticNFT is Context, ERC165, IERC721Metadata, Initializable, Access
         bytes memory _data
     ) internal virtual {
         _transfer(from, to, tokenId);
-        require(_checkOnERC721Received(from, to, tokenId, _data), "ERC721: transfer to non ERC721Receiver implementer");
+        require(
+            _checkOnERC721Received(from, to, tokenId, _data),
+            "ERC721: transfer to non ERC721Receiver implementer"
+        );
     }
 
     function _exists(uint256 tokenId) internal view virtual returns (bool) {
@@ -278,12 +282,15 @@ contract SyntheticNFT is Context, ERC165, IERC721Metadata, Initializable, Access
         bytes memory _data
     ) private returns (bool) {
         if (to.isContract()) {
-            try IERC721Receiver(to).onERC721Received(_msgSender(), from, tokenId, _data) returns (bytes4 retval) {
+            try IERC721Receiver(to).onERC721Received(_msgSender(), from, tokenId, _data) returns (
+                bytes4 retval
+            ) {
                 return retval == IERC721Receiver.onERC721Received.selector;
             } catch (bytes memory reason) {
                 if (reason.length == 0) {
                     revert("ERC721: transfer to non ERC721Receiver implementer");
                 } else {
+                    // solhint-disable-next-line
                     assembly {
                         revert(add(32, reason), mload(reason))
                     }
@@ -306,5 +313,4 @@ contract SyntheticNFT is Context, ERC165, IERC721Metadata, Initializable, Access
             require(!SyntheticCollectionManager(_collectionManager).lockedNFT(tokenId), "Token is locked");
         }
     }
-
 }

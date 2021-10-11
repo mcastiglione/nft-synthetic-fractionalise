@@ -8,7 +8,7 @@ import "../Interfaces.sol";
 import "../implementations/Structs.sol";
 
 contract SyntheticNFTMock is ERC721, Initializable, AccessControl {
-    bytes32 public constant MANAGER = keccak256("MANAGER");    
+    bytes32 public constant MANAGER = keccak256("MANAGER");
 
     // token metadata
     mapping(uint256 => string) private _tokenMetadata;
@@ -62,17 +62,14 @@ contract SyntheticNFTMock is ERC721, Initializable, AccessControl {
 
     function safeMint(
         address to,
-        uint256 tokenId, 
+        uint256 tokenId,
         string memory metadata
     ) public onlyRole(MANAGER) {
         _mint(to, tokenId);
         _tokenMetadata[tokenId] = metadata;
     }
 
-    function setMetadata(
-        uint256 tokenId,
-        string memory metadata
-    ) public onlyRole(MANAGER) {
+    function setMetadata(uint256 tokenId, string memory metadata) public onlyRole(MANAGER) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
         _tokenMetadata[tokenId] = metadata;
     }
@@ -89,15 +86,5 @@ contract SyntheticNFTMock is ERC721, Initializable, AccessControl {
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
-    }
-
-    /**
-     * @dev override the before transfer hook to allow locking the nft
-     */
-    function _beforeTokenTransfer(
-        address,
-        address,
-        uint256 tokenId
-    ) internal view override {
     }
 }

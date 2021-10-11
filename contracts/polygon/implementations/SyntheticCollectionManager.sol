@@ -477,7 +477,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         }
 
         uint256 liquidityTokenBalanceUniswap = uniswapV2Pair.balanceOf(address(this));
-
+    
         if (liquidityTokenBalanceUniswap < liquidityTokenBalance) {
             liquidityTokenBalance = liquidityTokenBalanceUniswap;
         }
