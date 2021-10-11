@@ -486,7 +486,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 fundingLiquidity = token.UniswapFundingLiquidity;
         uint256 liquidityTokenBalance = token.liquidityTokenBalance;
 
-        if (liquidityTokenBalance == 0) {
+        if (liquidityTokenBalance == 0  || jotLiquidity == 0 || fundingLiquidity == 0) {
             return 0;
         }
 
@@ -510,8 +510,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         if (jotLiquidity > jotReserves) {
             jotLiquidity = jotReserves;
         }
+
         if (fundingLiquidity > fundingReserves) {
             fundingLiquidity = fundingReserves;
+        }
+
+        if (jotReserves == 0 || fundingReserves == 0) {
+            return 0;
         }
 
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
