@@ -423,14 +423,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             address(this),
             block.timestamp // solhint-disable-line
         );
-
-        if (amountA < liquiditySupply) {
-            uint256 jotsRemaining = liquiditySupply - amountA;
-
-            Jot(jotAddress).approve(jotPool, jotsRemaining);
-            JotPool(jotPool).addLiquidity(jotsRemaining);
-            
-        }
+        
         if (amountB < liquiditySold) {
             uint256 funding_remaining = liquiditySold - amountB;
             
@@ -443,9 +436,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         }
 
         unchecked {
-            tokens[tokenId].liquiditySupply -= liquiditySupply;
+            tokens[tokenId].liquiditySupply -= amountA;
             tokens[tokenId].liquiditySold -= liquiditySold;
-            tokens[tokenId].sellingSupply -= liquiditySupply;
+            tokens[tokenId].sellingSupply -= amountA;
             tokens[tokenId].soldSupply -= liquiditySold;
             tokens[tokenId].liquidityTokenBalance += liquidity;
             tokens[tokenId].UniswapJotLiquidity += amountA;
