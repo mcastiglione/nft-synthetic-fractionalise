@@ -246,6 +246,24 @@ describe('SyntheticCollectionManager', async function () {
     });
 
   });
+
+  describe('setMetadata', async () => {
+    it('setMetadata', async () => {
+      //await router.verifyNFT(NFT, tokenId);
+
+      const metadataToSet = 'ASD1234567890';
+      const syntheticAddress = await manager.erc721address();
+      const syntheticNFT = await ethers.getContractAt('SyntheticNFT', syntheticAddress);
+
+      await manager.setMetadata(tokenId, metadataToSet);
+
+      const metadata = await syntheticNFT.tokenURI(tokenId);
+
+      expect(metadata).to.be.equal(metadataToSet);
+    });
+  });
+
+
 /*
   describe('CHECKING for 10*18 division on BACKEND in buyJotTokens, *** DO NOT MODIFY, DO NOT DELETE  THIS TEST***', async () => {
     it('check', async () => {
