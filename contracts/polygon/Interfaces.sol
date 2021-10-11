@@ -8,8 +8,7 @@ interface IFlipCoinGenerator {
 }
 
 interface ISyntheticNFT is IERC721Metadata {
-
-    function setMetadata(uint256 tokenId,string memory metadata) external;
+    function setMetadata(uint256 tokenId, string memory metadata) external;
 
     function isVerified(uint256 tokenId) external view returns (bool);
 
@@ -86,8 +85,10 @@ interface IUniswapV2Pair {
         uint256 value
     ) external returns (bool);
 
+    // solhint-disable-next-line
     function DOMAIN_SEPARATOR() external view returns (bytes32);
 
+    // solhint-disable-next-line
     function PERMIT_TYPEHASH() external pure returns (bytes32);
 
     function nonces(address owner) external view returns (uint256);
@@ -114,6 +115,7 @@ interface IUniswapV2Pair {
     );
     event Sync(uint112 reserve0, uint112 reserve1);
 
+    // solhint-disable-next-line
     function MINIMUM_LIQUIDITY() external pure returns (uint256);
 
     function factory() external view returns (address);
@@ -160,6 +162,7 @@ interface IUniswapV2Pair {
 interface IUniswapV2Router01 {
     function factory() external pure returns (address);
 
+    // solhint-disable-next-line
     function WETH() external pure returns (address);
 
     function addLiquidity(
@@ -392,18 +395,18 @@ interface IMigratable is IOwnable {
 }
 
 interface IPerpetualPoolLite {
-// struct SymbolInfo {
-//         uint256 symbolId;
-//         string symbol;
-//         address oracleAddress;
-//         int256 multiplier;
-//         int256 feeRatio;
-//         int256 fundingRateCoefficient;
-//         int256 price;
-//         int256 cumulativeFundingRate;
-//         int256 tradersNetVolume;
-//         int256 tradersNetCost;
-//     }
+    // struct SymbolInfo {
+    //         uint256 symbolId;
+    //         string symbol;
+    //         address oracleAddress;
+    //         int256 multiplier;
+    //         int256 feeRatio;
+    //         int256 fundingRateCoefficient;
+    //         int256 price;
+    //         int256 cumulativeFundingRate;
+    //         int256 tradersNetVolume;
+    //         int256 tradersNetCost;
+    //     }
 
     struct SymbolInfo {
         int256 price;

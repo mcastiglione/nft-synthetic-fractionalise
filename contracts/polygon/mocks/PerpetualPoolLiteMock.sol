@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-contract PerpetualPoolLiteMock  {
-
-
-    constructor() {} 
+contract PerpetualPoolLiteMock {
+    // solhint-disable-next-line
+    constructor() {}
 
     function addSymbol(
-        uint256 symbolId,
-        string memory symbol,
-        address oracleAddress,
-        uint256 multiplier,
-        uint256 feeRatio,
-        uint256 fundingRateCoefficient
-    ) public {
-        uint256 a = 1;
-    }
-
+        uint256,
+        string memory,
+        address,
+        uint256,
+        uint256,
+        uint256
+    ) public {} // solhint-disable-line
 }

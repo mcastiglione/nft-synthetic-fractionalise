@@ -1,7 +1,8 @@
 {
   "scripts": {
     "test": "yarn hardhat test",
-    "compile": "yarn hardhat compile"
+    "compile": "yarn hardhat compile",
+    "solhint": "./node_modules/.bin/solhint 'contracts/**/*.sol'"
   },
   "name": "hardhat-project",
   "devDependencies": {
