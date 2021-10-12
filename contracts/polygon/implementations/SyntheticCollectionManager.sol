@@ -384,12 +384,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     function updatePriceFraction(uint256 tokenId, uint256 newFractionPrice) public {
         require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
+        require(newFractionPrice > 0, "Fraction price must be greater than zero");
+        require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
+        require(!lockedNFT(tokenId), "Token is locked!");
 
         TokenData storage token = tokens[tokenId];
 
-        require(!lockedNFT(tokenId), "Token is locked!");
-
-        require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
         token.fractionPrices = newFractionPrice;
     }
 

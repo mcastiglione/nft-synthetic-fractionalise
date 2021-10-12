@@ -22,7 +22,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let swapAddress;
 
   if (chainId == 1337 || chainId == 31337) {
-    let UniswapPairMock = await deploy('UniswapPairMock', {
+    /*let UniswapPairMock = await deploy('UniswapPairMock', {
       from: deployer,
     });
     let UniSwapFactoryMock = await deploy('UniSwapFactoryMock', {
@@ -33,7 +33,8 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
       from: deployer,
       args: [UniSwapFactoryMock.address],
     });
-    swapAddress = UniSwapRouterMock.address;
+    swapAddress = UniSwapRouterMock.address;*/
+    swapAddress = networkConfig[chainId].uniswapAddress;
   } else {
     swapAddress = networkConfig[chainId].uniswapAddress;
   }

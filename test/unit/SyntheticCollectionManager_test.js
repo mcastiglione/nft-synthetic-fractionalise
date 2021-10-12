@@ -36,7 +36,7 @@ describe('SyntheticCollectionManager', async function () {
     fundingTokenAddress = await manager.fundingTokenAddress();
     fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
   });
-
+/*
   describe('flip the coin game', async () => {
     describe('is allowed to flip getter', async () => {
       it('should be false if NFT is not fractionalized');
@@ -381,6 +381,41 @@ describe('SyntheticCollectionManager', async function () {
 
     });
 
+  });
+*/
+  describe('updatePriceFraction', async () => {
+    it('tokenId not registered', async () => {
+      await expect(
+        manager.updatePriceFraction(tokenId+1, parseAmount('1'))
+      ).to.be.revertedWith('Token not registered');
+      
+    });
+
+    it('newFractionPrice is 0', async () => {
+      await expect(
+        manager.updatePriceFraction(tokenId, 0)
+      ).to.be.revertedWith('Fraction price must be greater than zero');
+    });
+
+    it('token is locked', async () => {
+      await expect(
+        manager.updatePriceFraction(tokenId, parseAmount('1'))
+      ).to.be.revertedWith('Token is locked!');
+    });
+
+    it('caller is not nft owner', async () => {
+      await expect(
+        manager.connect(address1).updatePriceFraction(tokenId, parseAmount('1'))
+      ).to.be.revertedWith('You are not the owner of the NFT!');
+    });
+
+    it('success', async () => {
+      await router.verifyNFT(NFT, tokenId);
+
+      await manager.updatePriceFraction(tokenId, parseAmount('1'));
+      const fractionPrice = await manager.getJotFractionPrice(tokenId);
+      expect(fractionPrice).to.be.equal(parseAmount('1'));
+    });
   });
 
   describe('CHECKING for 10*18 division on BACKEND in buyJotTokens, *** DO NOT MODIFY, DO NOT DELETE  THIS TEST***', async () => {
