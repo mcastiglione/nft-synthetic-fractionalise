@@ -103,7 +103,10 @@ contract NFTAuction is Initializable {
         _claimed = true;
 
         // transfer the jots
-        require(IERC20(jot).transfer(jot, ProtocolConstants.JOT_SUPPLY), "Unable to transfer jots");
+        require(
+            IERC20(jot).transfer(syntheticCollection, ProtocolConstants.JOT_SUPPLY),
+            "Unable to transfer jots"
+        );
 
         if (highestBid - ProtocolConstants.JOT_SUPPLY > 0) {
             require(
