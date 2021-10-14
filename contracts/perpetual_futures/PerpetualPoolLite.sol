@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../polygon/governance/FuturesProtocolParameters.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "hardhat/console.sol";
 
 contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
     using SafeMath for uint256;
@@ -240,6 +241,7 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
         ILTokenLite lToken = ILTokenLite(_lTokenAddress);
 
         uint256 totalSupply = lToken.totalSupply();
+
         uint256 lShares;
         if (totalSupply == 0) {
             lShares = bAmount;
@@ -258,7 +260,9 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
         ILTokenLite lToken = ILTokenLite(_lTokenAddress);
 
         uint256 totalSupply = lToken.totalSupply();
+        require(totalSupply > 0, "There's no LToken supply");
         uint256 bAmount = (lShares * totalDynamicEquity.itou()) / totalSupply;
+        
 
         _liquidity -= bAmount.utoi();
 
@@ -439,6 +443,7 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
 
         if (curBlockNumber > preBlockNumber) {
             _symbol.price = IOracle(_protocolParameters.futuresOracleAddress()).getPrice().utoi();
+            console.log("_symbol.price");
         }
         if (_symbol.tradersNetVolume != 0) {
             int256 cost = (((_symbol.tradersNetVolume * _symbol.price) / ONE) *

@@ -1,13 +1,24 @@
 const { constants } = require('@openzeppelin/test-helpers');
 
-module.exports = async ({ getNamedAccounts, deployments }) => {
+module.exports = async ({ getNamedAccounts, deployments, network }) => {
   const { deploy } = deployments;
   const { deployer, signatory } = await getNamedAccounts();
 
   // get the previously deployed governance (actually the timelock controller)
   let governance = await ethers.getContract('TimelockController');
 
-  let symbolOracle = await deploy('SymbolOracleOffChain', { from: deployer, log: true, args: [deployer] });
+  let symbolOracle;
+
+  if (network.tags.local) {
+    symbolOracle = await deploy('SymbolOracleOffChain', {
+       contract: 'SymbolOracleOffChainMock',
+       from: deployer, 
+       log: true, 
+       args: [deployer] 
+    });
+  } else {
+    symbolOracle = await deploy('SymbolOracleOffChain', { from: deployer, log: true, args: [deployer] });
+  }
 
   const mainParams = {
     minPoolMarginRatio: one(),

@@ -36,7 +36,7 @@ describe('SyntheticCollectionManager', async function () {
     fundingTokenAddress = await manager.fundingTokenAddress();
     fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
   });
-/*
+
   describe('flip the coin game', async () => {
     describe('is allowed to flip getter', async () => {
       it('should be false if NFT is not fractionalized');
@@ -382,7 +382,7 @@ describe('SyntheticCollectionManager', async function () {
     });
 
   });
-*/
+
   describe('updatePriceFraction', async () => {
     it('tokenId not registered', async () => {
       await expect(
