@@ -27,6 +27,21 @@ describe('Stringify', async function () {
 
     let bytes32 = await this.mock.stringToBytes32(phrase);
 
-    expect(bytes32).to.be.equal(ethers.utils.hexlify(bytes));
+    expect(bytes32).to.be.equal(ethers.utils.hexZeroPad(bytes, 32));
+  });
+
+  it('string to bytes32 empty case', async () => {
+    let phrase = '';
+    let bytes = ethers.utils.toUtf8Bytes(phrase);
+
+    let bytes32 = await this.mock.stringToBytes32(phrase);
+
+    expect(bytes32).to.be.equal(ethers.utils.hexZeroPad(bytes, 32));
+  });
+
+  it('uint to string 0 case', async () => {
+    let string = await this.mock.uintToString(0);
+
+    expect(string).to.be.equal('0');
   });
 });
