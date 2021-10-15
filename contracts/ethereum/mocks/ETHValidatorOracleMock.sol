@@ -78,7 +78,7 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
         address newOwner = address(uint160(newOwner_));
 
         // only call the synthetic collection contract if is locked
-        NFTVaultManager(_vaultManagerAddress).unlockNFT(
+        NFTVaultManager(_vaultManagerAddress).processUnlockResponse(
             requestId,
             requestData.collection,
             requestData.tokenId,
@@ -94,7 +94,7 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
     function processChangeResponseMock(bytes32 requestId, bool changeable) public {
         ChangeRequest memory requestData = _changeRequests[requestId];
 
-        NFTVaultManager(_vaultManagerAddress).processChange(
+        NFTVaultManager(_vaultManagerAddress).processChangeResponse(
             requestData.collection,
             requestData.tokenFrom,
             requestData.tokenTo,

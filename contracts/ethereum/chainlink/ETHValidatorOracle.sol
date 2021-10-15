@@ -199,7 +199,7 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
         address newOwner = address(uint160(newOwner_));
 
         // only call the synthetic collection contract if is locked
-        NFTVaultManager(vaultManagerAddress).unlockNFT(
+        NFTVaultManager(vaultManagerAddress).processUnlockResponse(
             requestId_,
             requestData.collection,
             requestData.tokenId,
@@ -218,7 +218,7 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
     {
         ChangeRequest memory requestData = _changeRequests[requestId_];
 
-        NFTVaultManager(vaultManagerAddress).processChange(
+        NFTVaultManager(vaultManagerAddress).processChangeResponse(
             requestData.collection,
             requestData.tokenFrom,
             requestData.tokenTo,
