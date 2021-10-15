@@ -1,22 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "../governance/ProtocolParameters.sol";
 import "../implementations/SyntheticCollectionManager.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../libraries/ProtocolConstants.sol";
-import "./NFTAuction.sol";
+
+import {NFTAuction} from "./NFTAuction.sol";
 
 /**
  * @title auctions manager (fabric for auctions)
  * @author priviprotocol
  */
-contract AuctionsManager is AccessControl, Initializable {
+contract AuctionsManager is AccessControlUpgradeable, Initializable {
     // roles for access control
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant COLLECTION_MANAGER = keccak256("COLLECTION_MANAGER");
     bytes32 public constant DEPLOYER = keccak256("DEPLOYER");
     bytes32 public constant AUCTION = keccak256("AUCTION");
@@ -56,23 +58,36 @@ contract AuctionsManager is AccessControl, Initializable {
         uint256 openingBid
     );
 
-    /// @param nftAuction_ the address of the auction contract implementation
-    constructor(address nftAuction_) {
-        _nftAuctionImplementation = nftAuction_;
-
-        _setupRole(DEPLOYER, msg.sender);
-    }
+    /**
+     * @dev the initializer modifier is to avoid someone initializing
+     *      the implementation contract after deployment
+     */
+    constructor(address nftAuction_) initializer {} // solhint-disable-line
 
     /**
-     * @dev initializes the protocol and router addresses
+     * @dev initializes the protocol and router addresses,
+     *      sets the UPGRADER_ROLE to governance (only governance can upgrade)
+     *
+     * @param governance_ the address of the goverance contract (timelock actually)
+     * @param nftAuction_ the address of the auction contract implementation
      * @param protocol_ the address of the protocol parameters contract
      * @param router_ the address of the protocol router contract
      */
-    function initialize(address protocol_, address router_) external initializer onlyRole(DEPLOYER) {
+    function initialize(
+        address governance_,
+        address nftAuction_,
+        address protocol_,
+        address router_
+    ) external initializer onlyRole(DEPLOYER) {
+        _nftAuctionImplementation = nftAuction_;
         protocol = ProtocolParameters(protocol_);
         router = SyntheticProtocolRouter(router_);
 
+        __AccessControl_init();
+        __UUPSUpgradeable_init();
+
         _setupRole(DEFAULT_ADMIN_ROLE, router_);
+        _setupRole(UPGRADER_ROLE, governance_);
     }
 
     /**
@@ -152,7 +167,7 @@ contract AuctionsManager is AccessControl, Initializable {
 
         // deploys a minimal proxy contract from privi nft auction implementation
         address auctionAddress = Clones.clone(_nftAuctionImplementation);
-        NFTAuction(auctionAddress).initialize(
+        INFTAuction(auctionAddress).initialize(
             nftId_,
             jotToken,
             router.getJotPoolAddress(originalCollection),
@@ -175,4 +190,7 @@ contract AuctionsManager is AccessControl, Initializable {
 
         emit AuctionStarted(collection_, nftId_, auctionAddress, openingBid_);
     }
+
+    // solhint-disable-next-line
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
 }
