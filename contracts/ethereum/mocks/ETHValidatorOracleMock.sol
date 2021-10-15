@@ -34,35 +34,36 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
 
     /**
      * @dev call to verify if a token is withdrawble in the synthetic collection,
-     * this method can be called only from the nft vault contract
+     *      this method can be called only from the nft vault contract
+     *
      * @return requestId the id of the request to the Chainlink oracle
      */
     function verifyTokenIsWithdrawable(
-        address collection,
-        uint256 tokenId,
+        address collection_,
+        uint256 tokenId_,
         uint256
     ) external returns (bytes32 requestId) {
         requestId = keccak256(abi.encodePacked("requestId"));
 
-        _verifyRequests[requestId] = VerifyRequest({tokenId: tokenId, collection: collection});
+        _verifyRequests[requestId] = VerifyRequest({tokenId: tokenId_, collection: collection_});
 
         processResponseMock(requestId, verifyResponse);
     }
 
     function verifyTokenIsChangeable(
-        address collection,
-        uint256 tokenFrom,
-        uint256 tokenTo,
-        address caller,
+        address collection_,
+        uint256 tokenFrom_,
+        uint256 tokenTo_,
+        address caller_,
         uint256
     ) external returns (bytes32 requestId) {
         requestId = keccak256(abi.encodePacked("requestId"));
 
         _changeRequests[requestId] = ChangeRequest({
-            tokenFrom: tokenFrom,
-            collection: collection,
-            tokenTo: tokenTo,
-            caller: caller
+            tokenFrom: tokenFrom_,
+            collection: collection_,
+            tokenTo: tokenTo_,
+            caller: caller_
         });
 
         processChangeResponseMock(requestId, changeResponse);
@@ -70,16 +71,16 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
 
     /**
      * @dev function to process the oracle response (only callable from oracle)
-     * @param requestId the id of the request to the Chainlink oracle
+     * @param requestId_ the id of the request to the Chainlink oracle
      * @param newOwner_ the address who can retrieve the nft (if 0 assumes is not withdrawable)
      */
-    function processResponseMock(bytes32 requestId, uint256 newOwner_) public {
-        VerifyRequest memory requestData = _verifyRequests[requestId];
+    function processResponseMock(bytes32 requestId_, uint256 newOwner_) public {
+        VerifyRequest memory requestData = _verifyRequests[requestId_];
         address newOwner = address(uint160(newOwner_));
 
         // only call the synthetic collection contract if is locked
         NFTVaultManager(_vaultManagerAddress).processUnlockResponse(
-            requestId,
+            requestId_,
             requestData.collection,
             requestData.tokenId,
             newOwner
@@ -88,19 +89,19 @@ contract ETHValidatorOracleMock is ChainlinkClient, Ownable, Initializable {
 
     /**
      * @dev function to process the oracle response (only callable from oracle)
-     * @param requestId the id of the request to the Chainlink oracle
-     * @param changeable if the tokens are changeable
+     * @param requestId_ the id of the request to the Chainlink oracle
+     * @param changeable_ if the tokens are changeable
      */
-    function processChangeResponseMock(bytes32 requestId, bool changeable) public {
-        ChangeRequest memory requestData = _changeRequests[requestId];
+    function processChangeResponseMock(bytes32 requestId_, bool changeable_) public {
+        ChangeRequest memory requestData = _changeRequests[requestId_];
 
         NFTVaultManager(_vaultManagerAddress).processChangeResponse(
             requestData.collection,
             requestData.tokenFrom,
             requestData.tokenTo,
             requestData.caller,
-            changeable,
-            requestId
+            changeable_,
+            requestId_
         );
     }
 }

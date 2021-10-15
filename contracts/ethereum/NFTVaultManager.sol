@@ -8,7 +8,7 @@ import "./chainlink/ETHValidatorOracle.sol";
 import "./Structs.sol";
 
 /**
- * @title the Vault where nft are locked
+ * @title the Vault where nfts are locked
  * @author priviprotocol
  */
 contract NFTVaultManager is AccessControl {
