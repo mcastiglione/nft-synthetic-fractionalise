@@ -25,7 +25,7 @@ describe('PerpetualPoolLite', async function () {
     args = await getEventArgs(tx, 'CollectionManagerRegistered', router);
 
     ltokenAddress = args.lTokenLite_;
-    ptoken = args.pTokenLite_;
+    ptokenAddress = args.pTokenLite_;
     perpetualPoolAddress = args.perpetualPoolLiteAddress_;
     PerpetualPool = await PerpetualPoolLite.at(perpetualPoolAddress);
 
@@ -33,11 +33,12 @@ describe('PerpetualPoolLite', async function () {
     bTokenAddress = addresses[0];
     bToken = await ethers.getContractAt('Jot', bTokenAddress);
     lToken = await ethers.getContractAt('Jot', ltokenAddress);
+    pToken = await ethers.getContractAt('PTokenLite', ptokenAddress);
   });
-/*
+
   it('Verify it is created “LToken”, “PToken” and “PerpetualFutures” when initialised a new collection', async () => {
     assert.ok(ltokenAddress);
-    assert.ok(ptoken);
+    assert.ok(ptokenAddress);
     assert.ok(perpetualPoolAddress);
   });
 
@@ -52,39 +53,30 @@ describe('PerpetualPoolLite', async function () {
     const portfolio = await PerpetualPool.getTraderPortfolio(owner.address);
   });
 
-*/
+
   describe('addLiquidity', async function () {
     it('bAmount is zero', async () => {
       await expect(PerpetualPool.addLiquidity(0)).to.be.revertedWith('PerpetualPool: 0 bAmount');
     });
 
     it('Check that Amount was actually transferred', async () => {
-
-      console.log('owner1', (await bToken.balanceOf(owner.address)).toString());
-      console.log('PerpetualPool1', (await bToken.balanceOf(PerpetualPool.address)).toString());
       await bToken.approve(PerpetualPool.address, parseAmount('1'));
       await PerpetualPool.addLiquidity(parseAmount('1'));
-      console.log('owner2', (await bToken.balanceOf(owner.address)).toString());
-      console.log('PerpetualPool2', (await bToken.balanceOf(PerpetualPool.address)).toString());
-
     });
 
     it('Check that LToken was minted with correct amount', async () => {
       const balance = await lToken.balanceOf(owner.address);
-      console.log('before', balance.toString());
       await bToken.approve(PerpetualPool.address, parseAmount('1'));
       await PerpetualPool.addLiquidity(parseAmount('1'));
       const balanceAfter = await lToken.balanceOf(owner.address);
-      console.log('after', balanceAfter.toString());
+      await expect(balanceAfter).to.be.equal(balance.add('1000000000000000000'));
     });
 
-    it('Check that AddLiquidity was emitted', async () => {
+    /*it('Check that AddLiquidity was emitted', async () => {
       await bToken.approve(PerpetualPool.address, parseAmount('1'));
       const tx = await PerpetualPool.addLiquidity(parseAmount('1'));
-      //await expect(tx).to.emit(PerpetualPool, 'AddLiquidity');
-    });
-
-    
+      await expect(tx).to.emit(PerpetualPool, 'AddLiquidity');
+    });*/
 
   });
   describe('removeLiquidity', async function () {
@@ -92,39 +84,54 @@ describe('PerpetualPoolLite', async function () {
       await expect(PerpetualPool.removeLiquidity(0)).to.be.revertedWith('PerpetualPool: 0 lShares');
     });
 
-    /*it('LShares greater than available', async () => {
+    it('LShares greater than available', async () => {
+      await expect(PerpetualPool.removeLiquidity(1)).to.be.revertedWith("There's no LToken supply");
     });
 
     it('LToken was burnt', async () => {
+      await bToken.approve(PerpetualPool.address, parseAmount('1'));
+      await PerpetualPool.addLiquidity(parseAmount('1'));
+      await PerpetualPool.removeLiquidity(parseAmount('1'));
+      const balanceAfter = await lToken.balanceOf(owner.address);
 
+      expect(balanceAfter).to.be.equal(0);
     });
 
     it('bAmount was actually transferred', async () => {
-
+      const balanceBefore = await lToken.balanceOf(owner.address);
+      await bToken.approve(PerpetualPool.address, parseAmount('1'));
+      await PerpetualPool.addLiquidity(parseAmount('1'));
+      await PerpetualPool.removeLiquidity(parseAmount('1'));
+      const balanceAfter = await lToken.balanceOf(owner.address);
+      expect(balanceAfter).to.be.equal(balanceBefore);
     });
-
+    /*
     it('RemoveLiquidity was emitted', async () => {
 
     });*/
   });
+
   describe('addMargin', async function () {
     it('bAmount is zero', async () => {
       await expect(PerpetualPool.addMargin(0)).to.be.revertedWith('PerpetualPool: 0 bAmount');
     });
 
-    /*it('PToken already exists', async () => {
+    it('PToken is minted', async () => {
+      const existsBefore = await pToken.exists(owner.address);
 
+      PerpetualPool.addMargin(2);
+
+      const existsAfter = await pToken.exists(owner.address);
+
+      PerpetualPool.addMargin(2);
     });
 
+  
     it('bAmount exceeds balance', async () => {
 
     });
-
+/*
     it('bAmount is actually transferred', async () => {
-
-    });
-
-    it('PToken is minted', async () => {
 
     });
 
@@ -134,11 +141,11 @@ describe('PerpetualPoolLite', async function () {
 
     it('Check that margin was actually added', async () => {
       // call ptoken.getMargin
-    });*/
-
-
+    });
+  */
 
   });
+
   describe('removeMargin', async function () {
     it('bAmount is zero', async () => {
       await expect(PerpetualPool.removeMargin(0)).to.be.revertedWith('PerpetualPool: 0 bAmount');
@@ -161,6 +168,7 @@ describe('PerpetualPoolLite', async function () {
     });*/
 
   });
+
   describe('trade', async function () {
     /*it('invalid tradeVolume', async () => {
 
@@ -183,6 +191,7 @@ describe('PerpetualPoolLite', async function () {
     });*/
 
   });
+
   describe('liquidate', async function () {
     /*it('Not qualified liquidator', async () => {
     });

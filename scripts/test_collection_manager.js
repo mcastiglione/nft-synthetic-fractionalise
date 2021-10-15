@@ -9,13 +9,16 @@ async function asyncCall() {
     const routerFactory = await ethers.getContractFactory('SyntheticProtocolRouter');
     const router = await routerFactory.attach(routerAddress);
 
-    const collectionAddress = await router.getCollectionManagerAddress(nftAddress);
+    //const collectionAddress = await router.getCollectionManagerAddress(nftAddress);
+    const collectionAddress = '0xf07b8F49b43329270811CF75A5dA7538fa456E29';
 
     const collectionManagerFactory = await ethers.getContractFactory('SyntheticCollectionManager');
 
     const manager = await collectionManagerFactory.attach(collectionAddress);
-    const verified = await manager.isVerified(tokenId);
-    console.log(verified);
+    //const verified = await manager.isVerified(tokenId);
+    //console.log(verified);
+    const originalID = await manager.getOriginalID('5');
+    console.log(originalID.toString());
 }
 
 asyncCall();

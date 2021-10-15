@@ -1,6 +1,7 @@
 const { assert, expect } = require('chai');
 const { ethers } = require('hardhat');
 const { getEventArgs } = require('./helpers/events');
+const { constants } = require('@openzeppelin/test-helpers');
 
 describe('SyntheticProtocolRouter', async function () {
   beforeEach(async () => {
@@ -19,6 +20,13 @@ describe('SyntheticProtocolRouter', async function () {
 
   it('should be deployed', async () => {
     assert.ok(router.address);
+  });
+
+  it('should fail if the address of the collectible is address(0)', async () => {
+    const NFT = constants.ZERO_ADDRESS;
+    await expect(
+      router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '')
+    ).to.be.revertedWith('Invalid collection');
   });
 
   it('verify that UniSwap Pair was created after registerNFT', async () => {
@@ -54,9 +62,8 @@ describe('SyntheticProtocolRouter', async function () {
   });
 
   it('Register an NFT and then check isSyntheticNFTCreated', async () => {
-    const response = await router.isSyntheticNFTCreated(NFT, tokenId);
+    const response = await router.isSyntheticNFTCreated(NFT, args.syntheticTokenId);
     expect(response).to.be.equal(true);
-
   });
 
   it('Check isNFTVerified of a non-registered NFT', async () => {

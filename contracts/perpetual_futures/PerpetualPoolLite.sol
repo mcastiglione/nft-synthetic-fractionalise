@@ -281,9 +281,10 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
 
     function _addMargin(address account, uint256 bAmount) internal _lock_ {
         IPTokenLite pToken = IPTokenLite(_pTokenAddress);
-        require(!pToken.exists(account), "Ptoken doesn't exist for this address");
+        if (!pToken.exists(account)) {
+            pToken.mint(account);
+        }
         bAmount = _transferIn(account, bAmount);
-        pToken.mint(account);
         pToken.addMargin(account, bAmount.utoi());
         emit AddMargin(account, bAmount);
     }
@@ -443,7 +444,6 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
 
         if (curBlockNumber > preBlockNumber) {
             _symbol.price = IOracle(_protocolParameters.futuresOracleAddress()).getPrice().utoi();
-            console.log("_symbol.price");
         }
         if (_symbol.tradersNetVolume != 0) {
             int256 cost = (((_symbol.tradersNetVolume * _symbol.price) / ONE) *

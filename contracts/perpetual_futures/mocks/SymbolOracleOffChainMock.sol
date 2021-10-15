@@ -11,7 +11,7 @@ contract SymbolOracleOffChainMock is IOracleWithUpdate, Initializable {
     FuturesProtocolParameters private _protocolParameters;
 
     uint256 public timestamp = block.timestamp;
-    uint256 public price = 1000000;
+    uint256 public price = 1;
 
     address private immutable _deployer;
 

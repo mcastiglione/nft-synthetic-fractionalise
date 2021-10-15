@@ -1,6 +1,7 @@
 {
   "scripts": {
     "test": "yarn hardhat test",
+    "test-node": "./node_fork.sh",
     "compile": "yarn hardhat compile",
     "solhint": "./node_modules/.bin/solhint 'contracts/**/*.sol'"
   },
