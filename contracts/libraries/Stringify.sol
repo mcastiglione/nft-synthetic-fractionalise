@@ -40,4 +40,16 @@ library Stringify {
         if (uint8(b) < 10) return bytes1(uint8(b) + 0x30);
         else return bytes1(uint8(b) + 0x57);
     }
+
+    function toBytes32(string memory source) internal pure returns (bytes32 result) {
+        bytes memory tempEmptyStringTest = bytes(source);
+        if (tempEmptyStringTest.length == 0) {
+            return 0x0;
+        }
+
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            result := mload(add(source, 32))
+        }
+    }
 }
