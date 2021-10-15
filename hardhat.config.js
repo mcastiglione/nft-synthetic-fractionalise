@@ -8,6 +8,7 @@ require('mocha-skip-if');
 require('hardhat-gas-reporter');
 require('hardhat-contract-sizer');
 require('hardhat-deploy');
+require('hardhat-docgen');
 require('./tasks/accounts');
 require('./tasks/balance');
 
@@ -19,6 +20,11 @@ const MUMBAI_RPC_URL = process.env.MUMBAI_RPC_URL;
 const INFURA_API_KEY = process.env.INFURA_API_KEY;
 
 module.exports = {
+  docgen: {
+    path: './docs',
+    clear: true,
+    runOnCompile: false,
+  },
   networks: {
     hardhat: {
       tags: ['local'],

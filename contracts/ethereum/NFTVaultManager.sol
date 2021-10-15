@@ -34,13 +34,13 @@ contract NFTVaultManager is AccessControl {
     mapping(address => mapping(uint256 => address)) public pendingWithdraws;
 
     /**
-     * @dev tokens in this map can be changed
+     * @notice tokens in this map can be changed
      */
     mapping(address => mapping(uint256 => PendingChange)) public pendingChanges;
 
     address private _validatorOracleAddress;
 
-    event UnlockRequested(bytes32 indexed requestId, address collection, uint256 tokenId);
+    event UnlockRequested(bytes32 indexed requestId2, address collection, uint256 tokenId);
     event ChangeApproveRequested(
         bytes32 indexed requestId,
         address collection,
