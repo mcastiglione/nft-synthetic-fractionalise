@@ -2,24 +2,15 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  // get the previously deployed contracts
-  const auction = await ethers.getContract('NFTAuction');
-
-  if (network.tags.local) {
-    await deploy('AuctionsManager', {
-      contract: 'AuctionsManagerMock',
-      from: deployer,
-      log: true,
-      args: [auction.address],
-    });
-  } else {
-    await deploy('AuctionsManager', {
-      from: deployer,
-      log: true,
-      args: [auction.address],
-    });
-  }
-
+  // this contract is upgradeable through uups (EIP-1822)
+  await deploy('AuctionsManager', {
+    from: deployer,
+    proxy: {
+      proxyContract: 'UUPSProxy',
+    },
+    log: true,
+    args: [],
+  });
 };
 
 module.exports.tags = ['auctions_manager'];

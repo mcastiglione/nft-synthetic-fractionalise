@@ -1,7 +1,7 @@
 const { networkConfig } = require('../../helper-hardhat-config');
 
 module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
-  const { deploy } = deployments;
+  const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
   const chainId = await getChainId();
 
@@ -19,6 +19,9 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let poolInfo = await ethers.getContract('PoolInfo');
   let lToken = await ethers.getContract('LTokenLite');
   let pToken = await ethers.getContract('PTokenLite');
+  let auction = await ethers.getContract('NFTAuction');
+  let governance = await ethers.getContract('TimelockController');
+
   let swapAddress;
 
   if (chainId == 1337 || chainId == 31337) {
@@ -71,8 +74,17 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     ],
   });
 
+  let upgrader = governance.address;
+  if (network.tags.testnet || network.tags.local) {
+    upgrader = deployer;
+  }
+
   if (router.newlyDeployed) {
+    log('Initializing syntheticNFT...');
     await syntheticNFT.initialize('TEST', 'TEST', router.address);
+    log('Initializing AuctionsManager proxy...');
+    await auctionsManager.initialize(upgrader, auction.address, protocol.address, router.address);
+    log('Transferring ownership of RandomNumberConsumer and PolygonValidatorOracle to router...');
     await randomConsumer.transferOwnership(router.address);
     await validator.transferOwnership(router.address);
   }

@@ -7,7 +7,7 @@ const ORIGINAL_COLLECTION_ADDRESS = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087'
 describe('RandomNumberConsumer', async function () {
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
-    await deployments.fixture(['collection_fixtures']);
+    await deployments.fixture(['synthetic_router']);
 
     this.router = await ethers.getContract('SyntheticProtocolRouter');
     this.randomConsumer = await ethers.getContract('RandomNumberConsumer');

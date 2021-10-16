@@ -3,11 +3,13 @@ require('@nomiclabs/hardhat-waffle');
 require('@nomiclabs/hardhat-solhint');
 require('@nomiclabs/hardhat-web3');
 require('@nomiclabs/hardhat-truffle5');
+require('@openzeppelin/hardhat-upgrades');
 require('solidity-coverage');
 require('mocha-skip-if');
 require('hardhat-gas-reporter');
 require('hardhat-contract-sizer');
 require('hardhat-deploy');
+require('hardhat-docgen');
 require('./tasks/accounts');
 require('./tasks/balance');
 
@@ -19,6 +21,11 @@ const MUMBAI_RPC_URL = process.env.MUMBAI_RPC_URL;
 const INFURA_API_KEY = process.env.INFURA_API_KEY;
 
 module.exports = {
+  docgen: {
+    path: './docs',
+    clear: true,
+    runOnCompile: false,
+  },
   networks: {
     hardhat: {
       tags: ['local'],
@@ -30,7 +37,7 @@ module.exports = {
       },
     },
     localhost: {
-      url: 'http://127.0.0.1:7545', // ganache local network
+      url: 'http://127.0.0.1:8545', // hardhat local network
       tags: ['local'],
     },
     kovan: {

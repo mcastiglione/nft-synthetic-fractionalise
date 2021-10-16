@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../extensions/IERC20ManagedAccounts.sol";
-import "../auctions/AuctionsManager.sol";
 import "../chainlink/RandomNumberConsumer.sol";
 import "../chainlink/PolygonValidatorOracle.sol";
 import "../chainlink//OracleStructs.sol";
@@ -22,6 +21,8 @@ import "./Structs.sol";
 import "./Enums.sol";
 import "hardhat/console.sol";
 import "./JotPool.sol";
+
+import {AuctionsManager} from "../auctions/AuctionsManager.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
@@ -423,16 +424,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             address(this),
             block.timestamp // solhint-disable-line
         );
-        
+
         if (amountB < liquiditySold) {
             uint256 funding_remaining = liquiditySold - amountB;
-            
-            IERC20(fundingTokenAddress).approve(
-                _perpetualPoolLiteAddress, funding_remaining
-            );
-            IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(
-                funding_remaining
-            );
+
+            IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, funding_remaining);
+            IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(funding_remaining);
         }
 
         unchecked {
@@ -456,7 +453,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 jotLiquidity;
         uint256 fundingLiquidity;
 
-        jotLiquidity, fundingLiquidity = _removeLiquidityFromPool(tokenId);
+        (jotLiquidity, fundingLiquidity) = _removeLiquidityFromPool(tokenId);
 
          // Burn received jots
         if(jotLiquidity > 0) {
@@ -472,15 +469,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice Remove liquidity from pool only callable by AuctionsManager
      */
-    function removeLiquidityFromPool(
-        uint256 tokenId
-    ) external onlyRole(AUCTION_MANAGER) {
+    function removeLiquidityFromPool(uint256 tokenId) external onlyRole(AUCTION_MANAGER) {
         address tokenOwner = ISyntheticNFT(erc721address).ownerOf(tokenId);
 
         uint256 jotLiquidity;
         uint256 fundingLiquidity;
 
-        jotLiquidity, fundingLiquidity =_removeLiquidityFromPool(tokenId);
+        (jotLiquidity, fundingLiquidity) =_removeLiquidityFromPool(tokenId);
         tokens[tokenId].ownerSupply += jotLiquidity;
         // transfer funding token balance to caller
         IERC20(fundingTokenAddress).transfer(tokenOwner, fundingLiquidity);
@@ -492,21 +487,19 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function _removeLiquidityFromPool(uint256 tokenId) internal returns (uint256, uint256) {
         TokenData storage token = tokens[tokenId];
 
-        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(
-            Jot(jotAddress).uniswapV2Pair()
-        );
+        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(Jot(jotAddress).uniswapV2Pair());
 
         // Get added liquidity
         uint256 jotLiquidity = token.UniswapJotLiquidity;
         uint256 fundingLiquidity = token.UniswapFundingLiquidity;
         uint256 liquidityTokenBalance = token.liquidityTokenBalance;
 
-        if (liquidityTokenBalance == 0  || jotLiquidity == 0 || fundingLiquidity == 0) {
-            return 0;
+        if (liquidityTokenBalance == 0 || jotLiquidity == 0 || fundingLiquidity == 0) {
+            return (0, 0);
         }
 
         uint256 liquidityTokenBalanceUniswap = uniswapV2Pair.balanceOf(address(this));
-    
+
         if (liquidityTokenBalanceUniswap < liquidityTokenBalance) {
             liquidityTokenBalance = liquidityTokenBalanceUniswap;
         }
@@ -531,7 +524,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         }
 
         if (jotReserves == 0 || fundingReserves == 0) {
-            return 0;
+            return (0, 0);
         }
 
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
@@ -553,7 +546,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         emit LiquidityRemoved(jotAmountExecuted, fundingAmountExecuted);
 
-        return jotAmountExecuted, fundingAmountExecuted;
+        return (jotAmountExecuted, fundingAmountExecuted);
     }
 
     /**
@@ -724,7 +717,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _originalToSynthetic[newOriginalId] = syntheticId;
 
         ISyntheticNFT(erc721address).setMetadata(syntheticId, metadata);
-
     }
 
     /**
@@ -755,41 +747,75 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         delete tokens[tokenId];
     }
 
+
+    /**
+    * @notice buyBack function
+     */
     function buyBack(uint256 tokenId) public {
         //Buyback fund address
         address buybackAddress = address(0);
-
+        
+        //requirements
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
         require(tokens[tokenId].state == State.VERIFIED, "Only verified tokens");
 
+        // get available liquidity (owner + selling + liquidity + uniswap )
         uint256 jotLiquidity;
         uint256 fundingLiquidity;
 
-        jotLiquidity, fundingLiquidity = _removeLiquidityFromPool(tokenId);
+        (jotLiquidity, fundingLiquidity) = getAvailableBuyback(tokenId);
+        require(jotLiquidity >= ProtocolConstants.JOT_SUPPLY, "Not enough liquidity");
+        
+        (jotLiquidity, fundingLiquidity) = _removeLiquidityFromPool(tokenId);
 
-         // Burn received jots
-        if(jotLiquidity > 0) {
-            Jot(jotAddress).burn(address(this), jotLiquidity);
-        }
+        // TODO: get PerpetualPoolLite.getLiquidity
+        //uint256 perpetualPoolLiteLiquidity;            
 
+        uint256 ownerSupply = tokens[tokenId].ownerSupply;
+        uint256 sellingSupply = tokens[tokenId].sellingSupply;
+        uint256 liquiditySupply = tokens[tokenId].liquiditySupply;
+        uint256 total = ownerSupply + sellingSupply + liquiditySupply + jotLiquidity;
+
+        // burn the jots
+        //Jot(jotAddress).burn(address(this), total);
+
+        // Update balances
+        tokens[tokenId].ownerSupply += (sellingSupply + liquiditySupply + jotLiquidity);
+        tokens[tokenId].sellingSupply = 0;
+        tokens[tokenId].liquiditySupply = 0;
+        // TODO: check that liquidityTokenBalance is correct
+        tokens[tokenId].liquidityTokenBalance = 0;
+        tokens[tokenId].UniswapFundingLiquidity -= fundingLiquidity;
+        tokens[tokenId].UniswapJotLiquidity -= jotLiquidity;
+
+        //send user funds to buyback pool        
         if(fundingLiquidity > 0) {
             IERC20(fundingTokenAddress).transfer(buybackAddress, fundingLiquidity);
         }
 
+    }
+
+    /**
+    * @notice returns funds owned by token, in Jots and Funding, in contract and in UniSwap
+     */
+    function getAvailableBuyback(uint256 tokenId) public returns (uint256, uint256) {
+        // Funds already in contract
         uint256 ownerSupply = tokens[tokenId].ownerSupply;
-        uint256 sellingSupply = tokens[tokenId].sellingSupply
-        uint256 liquiditySupply = tokens[tokenId].liquiditySupply
-        uint256 total = ownerSupply + sellingSupply + liquiditySupply;
+        uint256 sellingSupply = tokens[tokenId].sellingSupply;
+        uint256 liquiditySupply = tokens[tokenId].liquiditySupply;
 
+        // Funds in uniswap
+        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(Jot(jotAddress).uniswapV2Pair());
 
-        // burn the jots
-        Jot(jotAddress).burn(address(this), total);
+        uint112 jotReserves;
+        uint112 fundingReserves;
+        uint32 blockTimestampLast;
 
-        // PerpetualPoolLite.getLiquidity
-        uint256 perpetualPoolLiteLiquidity;
+        (jotReserves, fundingReserves, blockTimestampLast) = uniswapV2Pair.getReserves();
 
-        //burn all jots
-        //send user funds to buyback pool
+        uint256 totalJot = ownerSupply + sellingSupply + liquiditySupply + uint256(jotReserves);
+        uint256 totalFunding = uint256(fundingReserves);
+        return (totalJot, totalFunding);
 
     }
 

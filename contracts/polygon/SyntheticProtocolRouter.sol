@@ -11,7 +11,6 @@ import "./implementations/SyntheticCollectionManager.sol";
 import "./implementations/Jot.sol";
 import "./implementations/JotPool.sol";
 import "./implementations/SyntheticNFT.sol";
-import "./auctions/AuctionsManager.sol";
 import "./Structs.sol";
 import "./governance/ProtocolParameters.sol";
 import "./governance/FuturesProtocolParameters.sol";
@@ -20,6 +19,8 @@ import "../perpetual_futures/tokens/PTokenLite.sol";
 import "../perpetual_futures/PerpetualPoolLite.sol";
 import "../perpetual_futures/PoolInfo.sol";
 import "./Interfaces.sol";
+
+import {AuctionsManager} from "./auctions/AuctionsManager.sol";
 
 contract SyntheticProtocolRouter is AccessControl, Ownable {
     using Counters for Counters.Counter;

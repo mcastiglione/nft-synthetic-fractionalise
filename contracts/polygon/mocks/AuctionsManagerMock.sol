@@ -5,7 +5,8 @@ import "../auctions/AuctionsManager.sol";
 import "hardhat/console.sol";
 
 contract AuctionsManagerMock is AuctionsManager {
-    constructor(address nftAuction_) AuctionsManager(nftAuction_) {}
+    // solhint-disable-next-line
+    constructor() AuctionsManager() {}
 
     function reassignNFT(
         address collection_,
