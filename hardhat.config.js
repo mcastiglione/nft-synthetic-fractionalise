@@ -1,5 +1,6 @@
 require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-waffle');
+require('@nomiclabs/hardhat-etherscan');
 require('@nomiclabs/hardhat-solhint');
 require('@nomiclabs/hardhat-web3');
 require('@nomiclabs/hardhat-truffle5');
@@ -19,6 +20,7 @@ const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const MUMBAI_RPC_URL = process.env.MUMBAI_RPC_URL;
 const INFURA_API_KEY = process.env.INFURA_API_KEY;
+const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY;
 
 module.exports = {
   docgen: {
@@ -77,6 +79,11 @@ module.exports = {
   },
   mocha: {
     timeout: 999999,
+  },
+  etherscan: {
+    // Your API key for Etherscan
+    // Obtain one at https://etherscan.io/
+    apiKey: POLYGONSCAN_API_KEY,
   },
   solidity: {
     compilers: [
