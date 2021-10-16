@@ -3,12 +3,11 @@ const { assert, expect } = require('chai');
 const { getEventArgs } = require('./helpers/events');
 
 describe('isRecoverableTillCollection', async function () {
-
   const parseAmount = (amount) => ethers.utils.parseEther(amount);
 
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
-    await deployments.fixture(['collection_fixtures']);
+    await deployments.fixture(['synthetic_router']);
 
     /* address */
     [owner, address1] = await ethers.getSigners();
@@ -37,7 +36,6 @@ describe('isRecoverableTillCollection', async function () {
     AuctionsManager = await ethers.getContractAt('AuctionsManager', auctionAddress);
   });
 
-
   describe('register NFT', async function () {
     it('Verify that NFT is whitelisted', async () => {
       // Verify NFT
@@ -46,8 +44,6 @@ describe('isRecoverableTillCollection', async function () {
       let isRecoverableTill = await AuctionsManager.isRecoverableTill(managerAddress, tokenId);
 
       assert.ok(isRecoverableTill);
-
     });
   });
-
 });

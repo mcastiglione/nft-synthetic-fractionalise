@@ -16,7 +16,7 @@ import {NFTAuction} from "./NFTAuction.sol";
  * @title auctions manager (fabric for auctions)
  * @author priviprotocol
  */
-contract AuctionsManager is AccessControlUpgradeable, Initializable {
+contract AuctionsManager is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
     // roles for access control
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant COLLECTION_MANAGER = keccak256("COLLECTION_MANAGER");
@@ -24,7 +24,7 @@ contract AuctionsManager is AccessControlUpgradeable, Initializable {
     bytes32 public constant AUCTION = keccak256("AUCTION");
 
     /// @dev the implementation to deploy through minimal proxies
-    address private immutable _nftAuctionImplementation;
+    address private _nftAuctionImplementation;
 
     /// @notice the address of the protocol parameters controlled by goverance
     ProtocolParameters public protocol;
@@ -62,7 +62,7 @@ contract AuctionsManager is AccessControlUpgradeable, Initializable {
      * @dev the initializer modifier is to avoid someone initializing
      *      the implementation contract after deployment
      */
-    constructor(address nftAuction_) initializer {} // solhint-disable-line
+    constructor() initializer {} // solhint-disable-line
 
     /**
      * @dev initializes the protocol and router addresses,
@@ -78,7 +78,7 @@ contract AuctionsManager is AccessControlUpgradeable, Initializable {
         address nftAuction_,
         address protocol_,
         address router_
-    ) external initializer onlyRole(DEPLOYER) {
+    ) external initializer {
         _nftAuctionImplementation = nftAuction_;
         protocol = ProtocolParameters(protocol_);
         router = SyntheticProtocolRouter(router_);
@@ -167,7 +167,7 @@ contract AuctionsManager is AccessControlUpgradeable, Initializable {
 
         // deploys a minimal proxy contract from privi nft auction implementation
         address auctionAddress = Clones.clone(_nftAuctionImplementation);
-        INFTAuction(auctionAddress).initialize(
+        NFTAuction(auctionAddress).initialize(
             nftId_,
             jotToken,
             router.getJotPoolAddress(originalCollection),

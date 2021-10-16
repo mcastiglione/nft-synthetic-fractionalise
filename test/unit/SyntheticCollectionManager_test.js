@@ -8,7 +8,7 @@ describe('SyntheticCollectionManager', async function () {
 
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
-    await deployments.fixture(['collection_fixtures']);
+    await deployments.fixture(['synthetic_router']);
 
     /* address */
     [owner, address1] = await ethers.getSigners();
@@ -158,93 +158,74 @@ describe('SyntheticCollectionManager', async function () {
     });
   });
 
-
   describe('increaseSellingSupply', async () => {
     it('non existent tokenId', async () => {
-      await expect(
-        manager.increaseSellingSupply(tokenId+1, 1)
-      ).to.be.revertedWith('ERC721: owner query for nonexistent token');
+      await expect(manager.increaseSellingSupply(tokenId + 1, 1)).to.be.revertedWith(
+        'ERC721: owner query for nonexistent token'
+      );
     });
 
     it('amount 0', async () => {
       await router.verifyNFT(NFT, tokenId);
-      await expect(
-        manager.increaseSellingSupply(tokenId, 0)
-      ).to.be.revertedWith("Amount can't be zero!");
+      await expect(manager.increaseSellingSupply(tokenId, 0)).to.be.revertedWith("Amount can't be zero!");
     });
 
     it('sender is not owner', async () => {
-
       await router.verifyNFT(NFT, tokenId);
-      
-      await expect(
-        manager.connect(address1).increaseSellingSupply(tokenId, 1)
-      ).to.be.revertedWith('You are not the owner of the NFT!');
 
+      await expect(manager.connect(address1).increaseSellingSupply(tokenId, 1)).to.be.revertedWith(
+        'You are not the owner of the NFT!'
+      );
     });
 
     it('amount greater than ownerSupply', async () => {
-
       await router.verifyNFT(NFT, tokenId);
-      
-      await expect(
-        manager.increaseSellingSupply(tokenId, 10001)
-      ).to.be.revertedWith("You do not have enough tokens left");
 
+      await expect(manager.increaseSellingSupply(tokenId, 10001)).to.be.revertedWith(
+        'You do not have enough tokens left'
+      );
     });
 
     it('case ok', async () => {
-
       await router.verifyNFT(NFT, tokenId);
 
-      await manager.increaseSellingSupply(tokenId, 10)
-
+      await manager.increaseSellingSupply(tokenId, 10);
     });
-
   });
 
   describe('decreaseSellingSupply', async () => {
     it('non existent tokenId', async () => {
-      await expect(
-        manager.decreaseSellingSupply(tokenId+1, 1)
-      ).to.be.revertedWith('ERC721: owner query for nonexistent token');
+      await expect(manager.decreaseSellingSupply(tokenId + 1, 1)).to.be.revertedWith(
+        'ERC721: owner query for nonexistent token'
+      );
     });
 
     it('amount 0', async () => {
       await router.verifyNFT(NFT, tokenId);
-      await expect(
-        manager.decreaseSellingSupply(tokenId, 0)
-      ).to.be.revertedWith("Amount can't be zero!");
+      await expect(manager.decreaseSellingSupply(tokenId, 0)).to.be.revertedWith("Amount can't be zero!");
     });
 
     it('sender is not owner', async () => {
-
       await router.verifyNFT(NFT, tokenId);
-      
-      await expect(
-        manager.connect(address1).decreaseSellingSupply(tokenId, 1)
-      ).to.be.revertedWith('You are not the owner of the NFT!');
 
+      await expect(manager.connect(address1).decreaseSellingSupply(tokenId, 1)).to.be.revertedWith(
+        'You are not the owner of the NFT!'
+      );
     });
 
     it('amount greater than ownerSupply', async () => {
-
       await router.verifyNFT(NFT, tokenId);
-      
-      await expect(
-        manager.decreaseSellingSupply(tokenId, parseAmount('10001'))
-      ).to.be.revertedWith('You do not have enough liquidity left');
 
+      await expect(manager.decreaseSellingSupply(tokenId, parseAmount('10001'))).to.be.revertedWith(
+        'You do not have enough liquidity left'
+      );
     });
 
     it('case ok', async () => {
-
       await router.verifyNFT(NFT, tokenId);
 
-      await manager.decreaseSellingSupply(tokenId, 10)
-
+      await manager.decreaseSellingSupply(tokenId, 10);
     });
-
   });
 
   describe('setMetadata', async () => {
@@ -252,17 +233,17 @@ describe('SyntheticCollectionManager', async function () {
 
     it('should fail if the Token has already been verified', async () => {
       await manager.verify(tokenId);
-      await expect(
-        manager.setMetadata(tokenId, metadataToSet)
-      ).to.be.revertedWith("Can't change metadata after verify");
+      await expect(manager.setMetadata(tokenId, metadataToSet)).to.be.revertedWith(
+        "Can't change metadata after verify"
+      );
     });
-    
+
     it('should fail if you are not the owner of NFT', async () => {
-      await expect(
-        manager.connect(address1).setMetadata(tokenId, metadataToSet)
-      ).to.be.revertedWith('You are not the owner of the NFT!');
+      await expect(manager.connect(address1).setMetadata(tokenId, metadataToSet)).to.be.revertedWith(
+        'You are not the owner of the NFT!'
+      );
     });
-    
+
     it('verify that the data set is correct', async () => {
       const syntheticAddress = await manager.erc721address();
       const syntheticNFT = await ethers.getContractAt('SyntheticNFT', syntheticAddress);
@@ -275,32 +256,40 @@ describe('SyntheticCollectionManager', async function () {
   });
 
   describe('Uniswap', async () => {
-
     it('getAccruedReward 0', async () => {
-
       const TX = await router.registerNFT(
-        NFT, nftID, parseAmount('9000'), parseAmount('1'), 'My Collection', 'MYC', ''
+        NFT,
+        nftID,
+        parseAmount('9000'),
+        parseAmount('1'),
+        'My Collection',
+        'MYC',
+        ''
       );
       await expect(TX).to.emit(router, 'TokenRegistered');
       const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
-      tokenID = ARGS.syntheticTokenId;  
+      tokenID = ARGS.syntheticTokenId;
 
       await router.verifyNFT(NFT, tokenID);
 
       const liquidity = await manager.getAccruedReward(tokenID);
 
       expect(liquidity.toString()).to.be.equal('0');
-
     });
 
     it('getAccruedReward', async () => {
-
       const TX = await router.registerNFT(
-        NFT, nftID, parseAmount('9000'), parseAmount('1'), 'My Collection', 'MYC', ''
+        NFT,
+        nftID,
+        parseAmount('9000'),
+        parseAmount('1'),
+        'My Collection',
+        'MYC',
+        ''
       );
       await expect(TX).to.emit(router, 'TokenRegistered');
       const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
-      tokenID = ARGS.syntheticTokenId;  
+      tokenID = ARGS.syntheticTokenId;
 
       await router.verifyNFT(NFT, tokenID);
 
@@ -316,97 +305,91 @@ describe('SyntheticCollectionManager', async function () {
       const liquidity = await manager.getAccruedReward(tokenID);
 
       expect(liquidity.toString()).to.be.equal(parseAmount('500'));
-
     });
     describe('claimLiquidityTokens', async () => {
       it('non existent token', async () => {
-  
-        await expect(
-          manager.claimLiquidityTokens(tokenId+1, 1000)
-        ).to.be.revertedWith('ERC721: owner query for nonexistent token');
-  
-  
-      });
-  
-      it('call with other than owner', async () => {
-        await expect(
-          manager.connect(address1).claimLiquidityTokens(tokenId, 1000)
-        ).to.be.revertedWith('You are not the owner');
+        await expect(manager.claimLiquidityTokens(tokenId + 1, 1000)).to.be.revertedWith(
+          'ERC721: owner query for nonexistent token'
+        );
       });
 
       it('call with other than owner', async () => {
-        await expect(
-          manager.connect(address1).claimLiquidityTokens(tokenId, 1000)
-        ).to.be.revertedWith('You are not the owner');
+        await expect(manager.connect(address1).claimLiquidityTokens(tokenId, 1000)).to.be.revertedWith(
+          'You are not the owner'
+        );
+      });
+
+      it('call with other than owner', async () => {
+        await expect(manager.connect(address1).claimLiquidityTokens(tokenId, 1000)).to.be.revertedWith(
+          'You are not the owner'
+        );
       });
 
       it('more than balance', async () => {
-        await expect(
-          manager.claimLiquidityTokens(tokenId, 1)
-        ).to.be.revertedWith('Not enough liquidity available');
+        await expect(manager.claimLiquidityTokens(tokenId, 1)).to.be.revertedWith('Not enough liquidity available');
       });
 
       it('ok', async () => {
         const TX = await router.registerNFT(
-          NFT, nftID, parseAmount('9000'), parseAmount('1'), 'My Collection', 'MYC', ''
+          NFT,
+          nftID,
+          parseAmount('9000'),
+          parseAmount('1'),
+          'My Collection',
+          'MYC',
+          ''
         );
         await expect(TX).to.emit(router, 'TokenRegistered');
         const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
-        tokenID = ARGS.syntheticTokenId;  
-  
+        tokenID = ARGS.syntheticTokenId;
+
         await router.verifyNFT(NFT, tokenID);
-  
+
         await fundingToken.mint(owner.address, parseAmount('500'));
         await fundingToken.approve(managerAddress, parseAmount('500'));
-  
+
         await manager.buyJotTokens(tokenID, parseAmount('500'));
-  
+
         // Now addLiquidity to Uniswap
         // Should be 500 Jots and 500 funding Tokens
         await manager.addLiquidityToPool(tokenID);
-  
+
         const liquidity = await manager.getAccruedReward(tokenID);
-  
+
         await manager.claimLiquidityTokens(tokenID, liquidity.toString());
-  
+
         const UniswapPairAddress = await jot.uniswapV2Pair();
-  
+
         const UniswapV2Pair = await ethers.getContractAt('UniswapPairMock', UniswapPairAddress);
-  
+
         const balance = await UniswapV2Pair.balanceOf(owner.address);
-  
+
         expect(balance).to.be.equal(liquidity.toString());
-  
       });
-
     });
-
   });
 
   describe('updatePriceFraction', async () => {
     it('tokenId not registered', async () => {
-      await expect(
-        manager.updatePriceFraction(tokenId+1, parseAmount('1'))
-      ).to.be.revertedWith('Token not registered');
-      
+      await expect(manager.updatePriceFraction(tokenId + 1, parseAmount('1'))).to.be.revertedWith(
+        'Token not registered'
+      );
     });
 
     it('newFractionPrice is 0', async () => {
-      await expect(
-        manager.updatePriceFraction(tokenId, 0)
-      ).to.be.revertedWith('Fraction price must be greater than zero');
+      await expect(manager.updatePriceFraction(tokenId, 0)).to.be.revertedWith(
+        'Fraction price must be greater than zero'
+      );
     });
 
     it('token is locked', async () => {
-      await expect(
-        manager.updatePriceFraction(tokenId, parseAmount('1'))
-      ).to.be.revertedWith('Token is locked!');
+      await expect(manager.updatePriceFraction(tokenId, parseAmount('1'))).to.be.revertedWith('Token is locked!');
     });
 
     it('caller is not nft owner', async () => {
-      await expect(
-        manager.connect(address1).updatePriceFraction(tokenId, parseAmount('1'))
-      ).to.be.revertedWith('You are not the owner of the NFT!');
+      await expect(manager.connect(address1).updatePriceFraction(tokenId, parseAmount('1'))).to.be.revertedWith(
+        'You are not the owner of the NFT!'
+      );
     });
 
     it('success', async () => {
@@ -431,29 +414,6 @@ describe('SyntheticCollectionManager', async function () {
       await manager.buyJotTokens(tokenId, amount);
       const liquiditySold = await manager.getliquiditySold(tokenId);
       expect(liquiditySold).to.be.equal(5);
-    });
-  });
-
-  describe('reassignNFT', async () => {
-    it('Testing reassignNFT via auctionManagerMock', async () => {
-
-      const [newOwner] = await getUnnamedAccounts();
-
-      const tx = await router.registerNFT(NFT, nftID, 0, 5, 'My Collection', 'MYC', '');
-      await expect(tx).to.emit(router, 'TokenRegistered');
-      const args = await getEventArgs(tx, 'TokenRegistered', router);
-      tokenId = args.syntheticTokenId;
-
-      const auctionsManagerAddress = await manager.auctionsManagerAddress();
-      const auctionsManager = await ethers.getContractAt('AuctionsManager', auctionsManagerAddress);
-      const verified = await manager.isVerified(tokenId)
-      await manager.verify(tokenId)
-
-      const reassign = await auctionsManager.reassignNFT(managerAddress, tokenId, newOwner);
-      await expect(reassign).to.emit(manager, 'TokenReassigned');
-      const eventArgsTokenReassigned = await getEventArgs(reassign, 'TokenReassigned', manager);
-
-      expect(await manager.getSyntheticNFTOwner(eventArgsTokenReassigned.tokenID)).to.be.equal(newOwner);
     });
   });
 
@@ -502,22 +462,16 @@ describe('SyntheticCollectionManager', async function () {
 
   describe('exitProtocol', async () => {
     it('Not existent token', async () => {
-      await expect(
-        manager.exitProtocol(355)
-      ).to.be.revertedWith('ERC721: owner query for nonexistent token');
+      await expect(manager.exitProtocol(355)).to.be.revertedWith('ERC721: owner query for nonexistent token');
     });
 
     it('Not verified token', async () => {
-      await expect(
-        manager.exitProtocol(tokenId)
-      ).to.be.revertedWith('Only verified tokens');
+      await expect(manager.exitProtocol(tokenId)).to.be.revertedWith('Only verified tokens');
     });
 
     it('Caller is not owner', async () => {
       await router.verifyNFT(NFT, tokenId);
-      await expect(
-        manager.connect(address1).exitProtocol(tokenId)
-      ).to.be.revertedWith('Only owner allowed');
+      await expect(manager.connect(address1).exitProtocol(tokenId)).to.be.revertedWith('Only owner allowed');
     });
 
     it('Insufficient jot supply', async () => {
@@ -525,27 +479,29 @@ describe('SyntheticCollectionManager', async function () {
 
       await manager.withdrawJots(tokenId, 10);
 
-      await expect(
-        manager.exitProtocol(tokenId)
-      ).to.be.revertedWith('Insufficient jot supply in the token');
-
+      await expect(manager.exitProtocol(tokenId)).to.be.revertedWith('Insufficient jot supply in the token');
     });
 
-    it('case ok', async () => {      
-
+    it('case ok', async () => {
       // register NFT
       // 10.000 tokens are minted, 9.000 are kept for the owner
-      // 500 are kept for Uniswap liquidity 
+      // 500 are kept for Uniswap liquidity
       // 500 are kept for selling supply
 
-      const managerBeforeRegisterBalance = parseReverse(await jot.balanceOf(managerAddress))
+      const managerBeforeRegisterBalance = parseReverse(await jot.balanceOf(managerAddress));
 
       const TX = await router.registerNFT(
-        NFT, nftID, parseAmount('9000'), parseAmount('1'), 'My Collection', 'MYC', ''
+        NFT,
+        nftID,
+        parseAmount('9000'),
+        parseAmount('1'),
+        'My Collection',
+        'MYC',
+        ''
       );
       await expect(TX).to.emit(router, 'TokenRegistered');
       const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
-      tokenID = ARGS.syntheticTokenId;  
+      tokenID = ARGS.syntheticTokenId;
 
       // verify NFT
       await router.verifyNFT(NFT, tokenID);
@@ -566,23 +522,23 @@ describe('SyntheticCollectionManager', async function () {
       // Pair balance in jots and funding after add liquidity
       const PairBalance = await jot.balanceOf(UniswapPairAddress);
       const PairBalanceFunding = await fundingToken.balanceOf(UniswapPairAddress);
-      
+
       // Owner funding token before removeLiquidity
       const FundingBalanceOwner = await fundingToken.balanceOf(owner.address);
 
-      const managerInitialBalance = parseReverse(await jot.balanceOf(managerAddress))
+      const managerInitialBalance = parseReverse(await jot.balanceOf(managerAddress));
 
       // mint and approve and deposit remaining jots to reach JOTS_SUPPLY (1000)
       await jot.mint(owner.address, parseAmount('1000'));
       await jot.approve(manager.address, parseAmount('1000'));
       await manager.depositJots(tokenID, parseAmount('1000'));
 
-      const managerAfterDepositBalance = parseReverse(await jot.balanceOf(managerAddress))
+      const managerAfterDepositBalance = parseReverse(await jot.balanceOf(managerAddress));
 
       // Now exit protocol
       await manager.exitProtocol(tokenID);
 
-      const managerAfterExitProtocolBalance = parseReverse(await jot.balanceOf(managerAddress))
+      const managerAfterExitProtocolBalance = parseReverse(await jot.balanceOf(managerAddress));
 
       // Check that amounts were actually executed
       const PairBalanceAfter = (await jot.balanceOf(UniswapPairAddress)).toString();
@@ -594,19 +550,23 @@ describe('SyntheticCollectionManager', async function () {
       expect(PairBalanceFundingAfter).to.be.equal('0');
       expect(PairBalanceFundingAfter).to.be.equal('0');
       expect(managerBeforeRegisterBalance).to.be.equal(managerAfterExitProtocolBalance);
-
     });
 
-    it('verify liquidity balance Jot', async () => {      
-
+    it('verify liquidity balance Jot', async () => {
       const managerBeforeRegisterBalanceJot = parseReverse(await jot.balanceOf(managerAddress));
 
       const TX = await router.registerNFT(
-        NFT, nftID, parseAmount('9000'), parseAmount('1'), 'My Collection', 'MYC', ''
+        NFT,
+        nftID,
+        parseAmount('9000'),
+        parseAmount('1'),
+        'My Collection',
+        'MYC',
+        ''
       );
       await expect(TX).to.emit(router, 'TokenRegistered');
       const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
-      tokenID = ARGS.syntheticTokenId;  
+      tokenID = ARGS.syntheticTokenId;
 
       // verify NFT
       await router.verifyNFT(NFT, tokenID);
@@ -621,7 +581,7 @@ describe('SyntheticCollectionManager', async function () {
       // Now addLiquidity to Uniswap
       // Should be 500 Jots and 500 funding Tokens
       await manager.addLiquidityToPool(tokenID);
-  
+
       // mint and approve and deposit remaining jots to reach JOTS_SUPPLY (1000)
       await jot.mint(owner.address, parseAmount('1000'));
       await jot.approve(manager.address, parseAmount('1000'));
@@ -632,8 +592,6 @@ describe('SyntheticCollectionManager', async function () {
 
       const managerAfterExitProtocolBalanceJot = parseReverse(await jot.balanceOf(managerAddress));
       expect(managerBeforeRegisterBalanceJot).to.be.equal(managerAfterExitProtocolBalanceJot);
-
-
     });
   });
 });

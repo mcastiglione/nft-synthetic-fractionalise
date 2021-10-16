@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../extensions/IERC20ManagedAccounts.sol";
-import "../auctions/AuctionsManager.sol";
 import "../chainlink/RandomNumberConsumer.sol";
 import "../chainlink/PolygonValidatorOracle.sol";
 import "../chainlink//OracleStructs.sol";
@@ -22,6 +21,8 @@ import "./Structs.sol";
 import "./Enums.sol";
 import "hardhat/console.sol";
 import "./JotPool.sol";
+
+import {AuctionsManager} from "../auctions/AuctionsManager.sol";
 
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
@@ -423,16 +424,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             address(this),
             block.timestamp // solhint-disable-line
         );
-        
+
         if (amountB < liquiditySold) {
             uint256 funding_remaining = liquiditySold - amountB;
-            
-            IERC20(fundingTokenAddress).approve(
-                _perpetualPoolLiteAddress, funding_remaining
-            );
-            IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(
-                funding_remaining
-            );
+
+            IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, funding_remaining);
+            IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(funding_remaining);
         }
 
         unchecked {
@@ -449,25 +446,20 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @dev remove liquidity on exitProtocol
      */
-    function _removeLiquidityOnExitProtocol(
-        uint256 tokenId, address caller
-    ) internal {
+    function _removeLiquidityOnExitProtocol(uint256 tokenId, address caller) internal {
         uint256 jotLiquidity = _removeLiquidityFromPool(tokenId, caller);
         // Burn received jots
-        if(jotLiquidity > 0) {
+        if (jotLiquidity > 0) {
             Jot(jotAddress).burn(address(this), jotLiquidity);
         }
-        
-    } 
+    }
 
     /**
      * @notice Remove liquidity from pool only callable by AuctionsManager
      */
-    function removeLiquidityFromPool(
-        uint256 tokenId
-    ) external onlyRole(AUCTION_MANAGER) {
+    function removeLiquidityFromPool(uint256 tokenId) external onlyRole(AUCTION_MANAGER) {
         address tokenOwner = ISyntheticNFT(erc721address).ownerOf(tokenId);
-        uint256 jotLiquidity =_removeLiquidityFromPool(tokenId, tokenOwner);
+        uint256 jotLiquidity = _removeLiquidityFromPool(tokenId, tokenOwner);
         tokens[tokenId].ownerSupply += jotLiquidity;
     }
 
@@ -477,21 +469,19 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function _removeLiquidityFromPool(uint256 tokenId, address caller) internal returns (uint256) {
         TokenData storage token = tokens[tokenId];
 
-        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(
-            Jot(jotAddress).uniswapV2Pair()
-        );
+        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(Jot(jotAddress).uniswapV2Pair());
 
         // Get added liquidity
         uint256 jotLiquidity = token.UniswapJotLiquidity;
         uint256 fundingLiquidity = token.UniswapFundingLiquidity;
         uint256 liquidityTokenBalance = token.liquidityTokenBalance;
 
-        if (liquidityTokenBalance == 0  || jotLiquidity == 0 || fundingLiquidity == 0) {
+        if (liquidityTokenBalance == 0 || jotLiquidity == 0 || fundingLiquidity == 0) {
             return 0;
         }
 
         uint256 liquidityTokenBalanceUniswap = uniswapV2Pair.balanceOf(address(this));
-    
+
         if (liquidityTokenBalanceUniswap < liquidityTokenBalance) {
             liquidityTokenBalance = liquidityTokenBalanceUniswap;
         }
@@ -712,7 +702,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _originalToSynthetic[newOriginalId] = syntheticId;
 
         ISyntheticNFT(erc721address).setMetadata(syntheticId, metadata);
-
     }
 
     /**

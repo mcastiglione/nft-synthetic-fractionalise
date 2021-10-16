@@ -3,6 +3,7 @@ require('@nomiclabs/hardhat-waffle');
 require('@nomiclabs/hardhat-solhint');
 require('@nomiclabs/hardhat-web3');
 require('@nomiclabs/hardhat-truffle5');
+require('@openzeppelin/hardhat-upgrades');
 require('solidity-coverage');
 require('mocha-skip-if');
 require('hardhat-gas-reporter');
