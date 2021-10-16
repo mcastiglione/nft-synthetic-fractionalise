@@ -74,11 +74,16 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     ],
   });
 
+  let upgrader = governance.address;
+  if (network.tags.testnet || network.tags.local) {
+    upgrader = deployer;
+  }
+
   if (router.newlyDeployed) {
     log('Initializing syntheticNFT...');
     await syntheticNFT.initialize('TEST', 'TEST', router.address);
     log('Initializing AuctionsManager proxy...');
-    await auctionsManager.initialize(governance.address, auction.address, protocol.address, router.address);
+    await auctionsManager.initialize(upgrader, auction.address, protocol.address, router.address);
     log('Transferring ownership of RandomNumberConsumer and PolygonValidatorOracle to router...');
     await randomConsumer.transferOwnership(router.address);
     await validator.transferOwnership(router.address);
