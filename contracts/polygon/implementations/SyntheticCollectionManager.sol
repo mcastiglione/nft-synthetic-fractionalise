@@ -452,10 +452,19 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function _removeLiquidityOnExitProtocol(
         uint256 tokenId, address caller
     ) internal {
-        uint256 jotLiquidity = _removeLiquidityFromPool(tokenId, caller);
-        // Burn received jots
+
+        uint256 jotLiquidity;
+        uint256 fundingLiquidity;
+
+        jotLiquidity, fundingLiquidity = _removeLiquidityFromPool(tokenId);
+
+         // Burn received jots
         if(jotLiquidity > 0) {
             Jot(jotAddress).burn(address(this), jotLiquidity);
+        }
+
+        if(fundingLiquidity > 0) {
+            IERC20(fundingTokenAddress).transfer(caller, fundingLiquidity);    
         }
         
     } 
@@ -467,14 +476,20 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 tokenId
     ) external onlyRole(AUCTION_MANAGER) {
         address tokenOwner = ISyntheticNFT(erc721address).ownerOf(tokenId);
-        uint256 jotLiquidity =_removeLiquidityFromPool(tokenId, tokenOwner);
+
+        uint256 jotLiquidity;
+        uint256 fundingLiquidity;
+
+        jotLiquidity, fundingLiquidity =_removeLiquidityFromPool(tokenId);
         tokens[tokenId].ownerSupply += jotLiquidity;
+        // transfer funding token balance to caller
+        IERC20(fundingTokenAddress).transfer(tokenOwner, fundingLiquidity);
     }
 
     /**
      * @dev remove liquidity from Pool
      */
-    function _removeLiquidityFromPool(uint256 tokenId, address caller) internal returns (uint256) {
+    function _removeLiquidityFromPool(uint256 tokenId) internal returns (uint256, uint256) {
         TokenData storage token = tokens[tokenId];
 
         IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(
@@ -536,12 +551,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             block.timestamp // solhint-disable-line
         );
 
-        // transfer funding token balance to caller
-        IERC20(fundingTokenAddress).transfer(caller, fundingAmountExecuted);
-
         emit LiquidityRemoved(jotAmountExecuted, fundingAmountExecuted);
 
-        return jotAmountExecuted;
+        return jotAmountExecuted, fundingAmountExecuted;
     }
 
     /**
@@ -741,6 +753,44 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // free space and get refunds
         delete _originalToSynthetic[token.originalTokenID];
         delete tokens[tokenId];
+    }
+
+    function buyBack(uint256 tokenId) public {
+        //Buyback fund address
+        address buybackAddress = address(0);
+
+        require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
+        require(tokens[tokenId].state == State.VERIFIED, "Only verified tokens");
+
+        uint256 jotLiquidity;
+        uint256 fundingLiquidity;
+
+        jotLiquidity, fundingLiquidity = _removeLiquidityFromPool(tokenId);
+
+         // Burn received jots
+        if(jotLiquidity > 0) {
+            Jot(jotAddress).burn(address(this), jotLiquidity);
+        }
+
+        if(fundingLiquidity > 0) {
+            IERC20(fundingTokenAddress).transfer(buybackAddress, fundingLiquidity);
+        }
+
+        uint256 ownerSupply = tokens[tokenId].ownerSupply;
+        uint256 sellingSupply = tokens[tokenId].sellingSupply
+        uint256 liquiditySupply = tokens[tokenId].liquiditySupply
+        uint256 total = ownerSupply + sellingSupply + liquiditySupply;
+
+
+        // burn the jots
+        Jot(jotAddress).burn(address(this), total);
+
+        // PerpetualPoolLite.getLiquidity
+        uint256 perpetualPoolLiteLiquidity;
+
+        //burn all jots
+        //send user funds to buyback pool
+
     }
 
     /**
