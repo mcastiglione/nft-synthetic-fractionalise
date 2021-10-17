@@ -103,6 +103,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     address public jotPool;
 
+    uint256 public buyBackPrice = 1000000000000000000;
+
     event CoinFlipped(
         bytes32 indexed requestId,
         address indexed player,
@@ -129,10 +131,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     event TokenReassigned(uint256 tokenID, address newOwner);
 
-    event LiquidityAdded();
     event LiquidityRemoved(uint256 jotAmount, uint256 fundingAmount);
 
-    constructor(address randomConsumerAddress, address validatorAddress) {
+    constructor(
+        address randomConsumerAddress, 
+        address validatorAddress
+    ) {
         _randomConsumerAddress = randomConsumerAddress;
         _validatorAddress = validatorAddress;
     }
@@ -722,7 +726,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice allows to exit the protocol (retrieve the token)
      */
-    function exitProtocol(uint256 tokenId) external {
+    function exitProtocol(uint256 tokenId) public {
         TokenData storage token = tokens[tokenId];
         uint256 ownerSupply = token.ownerSupply;
 
@@ -747,18 +751,40 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         delete tokens[tokenId];
     }
 
-
     /**
-    * @notice buyBack function
+     * @notice Buy token back. 
+     * Caller needs to pre-approve a transaction worth the amount
+     * returned by the getRequiredFundingForBuyBack(uint256 tokenId) function
      */
     function buyBack(uint256 tokenId) public {
-        //Buyback fund address
-        address buybackAddress = address(0);
+        address buybackAddress = address(this);
         
         //requirements
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
-        require(tokens[tokenId].state == State.VERIFIED, "Only verified tokens");
+        require(!lockedNFT(tokenId), "Token is locked!");
 
+        // get available liquidity (owner + selling + liquidity + uniswap )
+        uint256 jotLiquidity;
+        uint256 fundingLiquidity;
+        (jotLiquidity, fundingLiquidity) = getAvailableBuyback(tokenId);
+
+        // Get required funding required and execute transfer and buyback
+        uint256 buybackAmount = (ProtocolConstants.JOT_SUPPLY - jotLiquidity) * buyBackPrice/10**18;
+
+        IERC20(fundingTokenAddress).transferFrom(msg.sender, buybackAddress, buybackAmount);
+        _executeBuyBack(tokenId);
+        //_exitProtocol(tokenId, msg.sender);
+
+    }
+
+    /**
+     * @notice buyBack function
+     */
+    function _executeBuyBack(uint256 tokenId) internal returns(uint256) {
+        //Buyback fund address
+        address buybackAddress = address(0);
+        
+        
         // get available liquidity (owner + selling + liquidity + uniswap )
         uint256 jotLiquidity;
         uint256 fundingLiquidity;
