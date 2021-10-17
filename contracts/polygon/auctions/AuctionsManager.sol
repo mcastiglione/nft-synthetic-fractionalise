@@ -190,4 +190,7 @@ contract AuctionsManager is Initializable, AccessControlUpgradeable, UUPSUpgrade
 
         emit AuctionStarted(collection_, nftId_, auctionAddress, openingBid_);
     }
+
+    // solhint-disable-next-line
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
 }
