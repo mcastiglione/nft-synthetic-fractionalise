@@ -6,6 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../libraries/ProtocolConstants.sol";
 import "./AuctionsManager.sol";
 
+/**
+ * @title upgradeable auction contract
+ * @author priviprotocol
+ */
 contract NFTAuction is Initializable {
     /// @notice the date when the auction will finish
     uint256 public auctionEndTime;
@@ -50,6 +54,13 @@ contract NFTAuction is Initializable {
      * @param amount the highest bid at the end
      */
     event AuctionEnded(address winner, uint256 amount);
+
+    /**
+     * @dev the initializer modifier is to avoid someone initializing
+     *      the implementation contract after deployment
+     */
+    // solhint-disable-next-line
+    constructor() initializer {}
 
     /**
      * @dev initializes the auction (called by auctions manager after deploy)

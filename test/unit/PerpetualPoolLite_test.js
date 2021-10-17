@@ -4,13 +4,11 @@ const { getEventArgs } = require('./helpers/events');
 const PerpetualPoolLite = artifacts.require('PerpetualPoolLite');
 
 describe('PerpetualPoolLite', async function () {
-
   const parseAmount = (amount) => ethers.utils.parseEther(amount);
-
 
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
-    await deployments.fixture(['auctions_manager_initialization', 'pool']);
+    await deployments.fixture(['synthetic_router', 'pool']);
     deployer = await getNamedAccounts();
     [owner, address1] = await ethers.getSigners();
     router = await ethers.getContract('SyntheticProtocolRouter');
@@ -20,7 +18,7 @@ describe('PerpetualPoolLite', async function () {
     nftID = 1;
 
     tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
-    
+
     await expect(tx).to.emit(router, 'CollectionManagerRegistered');
     args = await getEventArgs(tx, 'CollectionManagerRegistered', router);
 
@@ -45,14 +43,12 @@ describe('PerpetualPoolLite', async function () {
   it('Verify that can call PerpetualPoolLite getLiquidity and getSymbol', async () => {
     await PerpetualPool.getLiquidity();
     await PerpetualPool.getSymbol();
-
   });
 
   it('Call addMargin and then getTraderPortfolio', async () => {
     let tx = await PerpetualPool.addMargin(100000000);
     const portfolio = await PerpetualPool.getTraderPortfolio(owner.address);
   });
-
 
   describe('addLiquidity', async function () {
     it('bAmount is zero', async () => {
@@ -77,7 +73,6 @@ describe('PerpetualPoolLite', async function () {
       const tx = await PerpetualPool.addLiquidity(parseAmount('1'));
       await expect(tx).to.emit(PerpetualPool, 'AddLiquidity');
     });*/
-
   });
   describe('removeLiquidity', async function () {
     it('lShares is zero', async () => {
@@ -126,11 +121,8 @@ describe('PerpetualPoolLite', async function () {
       PerpetualPool.addMargin(2);
     });
 
-  
-    it('bAmount exceeds balance', async () => {
-
-    });
-/*
+    it('bAmount exceeds balance', async () => {});
+    /*
     it('bAmount is actually transferred', async () => {
 
     });
@@ -143,7 +135,6 @@ describe('PerpetualPoolLite', async function () {
       // call ptoken.getMargin
     });
   */
-
   });
 
   describe('removeMargin', async function () {
@@ -166,7 +157,6 @@ describe('PerpetualPoolLite', async function () {
     it('margin was actually removed', async () => {
 
     });*/
-
   });
 
   describe('trade', async function () {
@@ -189,7 +179,6 @@ describe('PerpetualPoolLite', async function () {
     it('Portfolio was correctly updated', async () => {
 
     });*/
-
   });
 
   describe('liquidate', async function () {
@@ -211,7 +200,5 @@ describe('PerpetualPoolLite', async function () {
     it('Liquidate event was emitted', async () => {
 
     });*/
-
   });
-
 });

@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/proxy/Clones.sol";
 import "../governance/ProtocolParameters.sol";
 import "../implementations/SyntheticCollectionManager.sol";
 import "../SyntheticProtocolRouter.sol";
@@ -20,11 +20,10 @@ contract AuctionsManager is Initializable, AccessControlUpgradeable, UUPSUpgrade
     // roles for access control
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant COLLECTION_MANAGER = keccak256("COLLECTION_MANAGER");
-    bytes32 public constant DEPLOYER = keccak256("DEPLOYER");
     bytes32 public constant AUCTION = keccak256("AUCTION");
 
-    /// @dev the implementation to deploy through minimal proxies
-    address private _nftAuctionImplementation;
+    /// @dev the address of the beacon contract for the auctions upgrades
+    address private _beacon;
 
     /// @notice the address of the protocol parameters controlled by goverance
     ProtocolParameters public protocol;
@@ -69,19 +68,18 @@ contract AuctionsManager is Initializable, AccessControlUpgradeable, UUPSUpgrade
      *      sets the UPGRADER_ROLE to governance (only governance can upgrade)
      *
      * @param governance_ the address of the goverance contract (timelock actually)
-     * @param nftAuction_ the address of the auction contract implementation
      * @param protocol_ the address of the protocol parameters contract
      * @param router_ the address of the protocol router contract
      */
     function initialize(
         address governance_,
-        address nftAuction_,
+        address beacon_,
         address protocol_,
         address router_
     ) external initializer {
-        _nftAuctionImplementation = nftAuction_;
         protocol = ProtocolParameters(protocol_);
         router = SyntheticProtocolRouter(router_);
+        _beacon = beacon_;
 
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -165,8 +163,8 @@ contract AuctionsManager is Initializable, AccessControlUpgradeable, UUPSUpgrade
         address originalCollection = manager.originalCollectionAddress();
         address jotToken = router.getJotsAddress(originalCollection);
 
-        // deploys a minimal proxy contract from privi nft auction implementation
-        address auctionAddress = Clones.clone(_nftAuctionImplementation);
+        // deploy the beacon proxy
+        address auctionAddress = address(new BeaconProxy(_beacon, ""));
         NFTAuction(auctionAddress).initialize(
             nftId_,
             jotToken,
@@ -192,5 +190,5 @@ contract AuctionsManager is Initializable, AccessControlUpgradeable, UUPSUpgrade
     }
 
     // solhint-disable-next-line
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) {}
 }
