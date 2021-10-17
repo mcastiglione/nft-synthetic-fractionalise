@@ -25,9 +25,6 @@ contract AuctionsManager is Initializable, AccessControlUpgradeable, UUPSUpgrade
     /// @dev the address of the beacon contract for the auctions upgrades
     address private _beacon;
 
-    /// @dev the governance contract address to initialize the auctions (upgrader)
-    address private _governance;
-
     /// @notice the address of the protocol parameters controlled by goverance
     ProtocolParameters public protocol;
 
@@ -82,7 +79,6 @@ contract AuctionsManager is Initializable, AccessControlUpgradeable, UUPSUpgrade
     ) external initializer {
         protocol = ProtocolParameters(protocol_);
         router = SyntheticProtocolRouter(router_);
-        _governance = governance_;
         _beacon = beacon_;
 
         __AccessControl_init();
@@ -176,8 +172,7 @@ contract AuctionsManager is Initializable, AccessControlUpgradeable, UUPSUpgrade
             router.getCollectionManagerAddress(originalCollection),
             openingBid_,
             protocol.auctionDuration(),
-            msg.sender,
-            _governance
+            msg.sender
         );
 
         // give the AUCTION role to allow blacklisting

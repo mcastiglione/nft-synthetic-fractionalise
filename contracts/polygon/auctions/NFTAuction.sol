@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../libraries/ProtocolConstants.sol";
 import "./AuctionsManager.sol";
@@ -11,7 +10,7 @@ import "./AuctionsManager.sol";
  * @title upgradeable auction contract
  * @author priviprotocol
  */
-contract NFTAuction is Initializable, UUPSUpgradeable, OwnableUpgradeable {
+contract NFTAuction is Initializable {
     /// @notice the date when the auction will finish
     uint256 public auctionEndTime;
 
@@ -81,8 +80,7 @@ contract NFTAuction is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address syntheticCollection_,
         uint256 initialBid_,
         uint256 auctionDuration_,
-        address initialBidder_,
-        address governance_
+        address initialBidder_
     ) external initializer {
         nftId = nftId_;
         auctionEndTime = block.timestamp + auctionDuration_; // solhint-disable-line
@@ -92,9 +90,6 @@ contract NFTAuction is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         syntheticCollection = syntheticCollection_;
         highestBidder = initialBidder_;
         auctionsManager = msg.sender;
-
-        __Ownable_init();
-        transferOwnership(governance_);
     }
 
     /**
@@ -170,8 +165,4 @@ contract NFTAuction is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
         emit AuctionEnded(highestBidder, highestBid);
     }
-
-    /// @dev the owner of the contract must be the governance
-    // solhint-disable-next-line
-    function _authorizeUpgrade(address) internal view override onlyOwner {}
 }
