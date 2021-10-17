@@ -16,16 +16,13 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   });
 
   if (implementation.newlyDeployed) {
-    log('Upgrading NFTAuction implementation...');
+    log('Upgrading NFTAuction beacon implementation...');
     // get the proxy
-    let proxy = await ethers.getContract('NFTAuction_Proxy');
-
-    // change the ABI
-    proxy = await ethers.getContractAt('NFTAuction', proxy.address);
+    let beacon = await ethers.getContract('NFTAuctionBeacon');
 
     // update the implementation
-    await proxy.upgradeTo(implementation.address);
+    await beacon.upgradeTo(implementation.address);
   }
 };
 
-module.exports.tags = ['update_nft_auction'];
+module.exports.tags = ['update_nft_auctions'];

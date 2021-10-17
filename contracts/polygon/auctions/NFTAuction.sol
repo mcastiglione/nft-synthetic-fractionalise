@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../libraries/ProtocolConstants.sol";
@@ -10,7 +11,7 @@ import "./AuctionsManager.sol";
  * @title upgradeable auction contract
  * @author priviprotocol
  */
-contract NFTAuction is Initializable, UUPSUpgradeable {
+contract NFTAuction is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     /// @notice the date when the auction will finish
     uint256 public auctionEndTime;
 
@@ -59,7 +60,8 @@ contract NFTAuction is Initializable, UUPSUpgradeable {
      * @dev the initializer modifier is to avoid someone initializing
      *      the implementation contract after deployment
      */
-    constructor() initializer {} // solhint-disable-line
+    // solhint-disable-next-line
+    constructor() initializer {}
 
     /**
      * @dev initializes the auction (called by auctions manager after deploy)
@@ -79,7 +81,8 @@ contract NFTAuction is Initializable, UUPSUpgradeable {
         address syntheticCollection_,
         uint256 initialBid_,
         uint256 auctionDuration_,
-        address initialBidder_
+        address initialBidder_,
+        address governance_
     ) external initializer {
         nftId = nftId_;
         auctionEndTime = block.timestamp + auctionDuration_; // solhint-disable-line
@@ -89,6 +92,9 @@ contract NFTAuction is Initializable, UUPSUpgradeable {
         syntheticCollection = syntheticCollection_;
         highestBidder = initialBidder_;
         auctionsManager = msg.sender;
+
+        __Ownable_init();
+        transferOwnership(governance_);
     }
 
     /**
@@ -165,6 +171,7 @@ contract NFTAuction is Initializable, UUPSUpgradeable {
         emit AuctionEnded(highestBidder, highestBid);
     }
 
+    /// @dev the owner of the contract must be the governance
     // solhint-disable-next-line
-    function _authorizeUpgrade(address newImplementation) internal override {}
+    function _authorizeUpgrade(address) internal view override onlyOwner {}
 }

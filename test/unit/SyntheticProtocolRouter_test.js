@@ -9,7 +9,7 @@ describe('SyntheticProtocolRouter', async function () {
     nftID = 1;
 
     // Using fixture from hardhat-deploy
-    await deployments.fixture(['auctions_manager_initialization']);
+    await deployments.fixture(['synthetic_router']);
     const deployer = await getNamedAccounts();
     router = await ethers.getContract('SyntheticProtocolRouter');
 
@@ -24,9 +24,9 @@ describe('SyntheticProtocolRouter', async function () {
 
   it('should fail if the address of the collectible is address(0)', async () => {
     const NFT = constants.ZERO_ADDRESS;
-    await expect(
-      router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '')
-    ).to.be.revertedWith('Invalid collection');
+    await expect(router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '')).to.be.revertedWith(
+      'Invalid collection'
+    );
   });
 
   it('verify that UniSwap Pair was created after registerNFT', async () => {
@@ -73,19 +73,17 @@ describe('SyntheticProtocolRouter', async function () {
   });
 
   it('Check isNFTVerified of a non-verified NFT', async () => {
-    
     tokenId = args.syntheticTokenId;
     const response = await router.isNFTVerified(NFT, tokenId);
 
     expect(response).to.be.equal(false);
-
   });
 
   it('Check isNFTVerified of a verified NFT', async () => {
     tokenId = args.syntheticTokenId;
     await router.verifyNFT(NFT, tokenId);
     const response = await router.isNFTVerified(NFT, tokenId);
-    
+
     expect(response).to.be.equal(true);
   });
 
@@ -97,13 +95,10 @@ describe('SyntheticProtocolRouter', async function () {
     // address private  _protocolFeeCollector;
     // address private  _underlyingAddress;
     // address private immutable _protocolAddress;
-    
     // Parameter deployFutures
     // string memory originalName,
     // string memory originalSymbol,
     // address collection,
     // FuturesParametersContracts memory futuresParameters
-
-
-  })
+  });
 });

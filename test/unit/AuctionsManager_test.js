@@ -1,11 +1,8 @@
-// const NFTAuction = artifacts.require('NFTAuction');
-
-const { ethers, deployments, getNamedAccounts } = require('hardhat');
+const { constants } = require('@openzeppelin/test-helpers');
 const { assert, expect } = require('chai');
 const { getEventArgs } = require('./helpers/events');
 
 describe('AuctionsManager', async function () {
-  const parseReverse = (amount) => ethers.utils.formatEther(amount);
   const parseAmount = (amount) => ethers.utils.parseEther(amount);
 
   const getEvent = async (parameters, event, contract) => {
@@ -18,7 +15,7 @@ describe('AuctionsManager', async function () {
     NFT = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
     nftID = 1;
     // Using fixture from hardhat-deploy
-    await deployments.fixture(['auctions_manager_initialization']);
+    await deployments.fixture(['synthetic_router']);
     auctionsManager = await ethers.getContract('AuctionsManager');
     nFTAuction = await ethers.getContract('NFTAuction');
 
@@ -54,7 +51,8 @@ describe('AuctionsManager', async function () {
     const startAuction = await auctionsManager.startAuction(syntheticCollectionAddress, newNFTTokenid, amountApprove);
 
     auctionContract = (await getEvent(startAuction, 'AuctionStarted', auctionsManager)).auctionContract;
-    const auction = await ethers.getContractAt('NFTAuction', auctionContract);
+    let auction = await ethers.getContractAt('NFTAuction', auctionContract);
+
     await expect(auction.endAuction()).to.be.revertedWith('Auction not yet ended');
   });
 
