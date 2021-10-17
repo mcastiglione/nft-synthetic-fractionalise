@@ -81,4 +81,17 @@ contract PoolInfo is Initializable {
         }
         return totalAbsCost == 0 ? type(int256).max : (totalDynamicEquity * ONE) / totalAbsCost;
     }
+
+    function getFundingRates()
+        external
+        view
+        returns (
+            int256 totalDynamicEquity,
+            int256 totalAbsCost,
+            int256 cumulativeFundingRate
+        )
+    {
+        (totalDynamicEquity, totalAbsCost, cumulativeFundingRate) = PerpetualPoolLite(poolAddress)
+            .getFundingRates();
+    }
 }

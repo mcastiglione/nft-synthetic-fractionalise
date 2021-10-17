@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../libraries/ProtocolConstants.sol";
 import "./AuctionsManager.sol";
 
-contract NFTAuction is Initializable {
+contract NFTAuction is Initializable, UUPSUpgradeable {
     /// @notice the date when the auction will finish
     uint256 public auctionEndTime;
 
@@ -154,4 +154,7 @@ contract NFTAuction is Initializable {
 
         emit AuctionEnded(highestBidder, highestBid);
     }
+
+    // solhint-disable-next-line
+    function _authorizeUpgrade(address newImplementation) internal override {}
 }

@@ -262,7 +262,6 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
         uint256 totalSupply = lToken.totalSupply();
         require(totalSupply > 0, "There's no LToken supply");
         uint256 bAmount = (lShares * totalDynamicEquity.itou()) / totalSupply;
-        
 
         _liquidity -= bAmount.utoi();
 
@@ -466,6 +465,39 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
         }
 
         _lastUpdateBlock = curBlockNumber;
+    }
+
+    function getFundingRates()
+        external
+        view
+        returns (
+            int256 totalDynamicEquity,
+            int256 totalAbsCost,
+            int256 cumulativeFundingRate
+        )
+    {
+        uint256 preBlockNumber = _lastUpdateBlock;
+        uint256 curBlockNumber = block.number;
+        int256 price = _symbol.price;
+        totalDynamicEquity = _liquidity;
+
+        if (_symbol.tradersNetVolume != 0) {
+            int256 cost = (((_symbol.tradersNetVolume * price) / ONE) *
+                _protocolParameters.futuresMultiplier()) / ONE;
+            totalDynamicEquity -= cost - _symbol.tradersNetCost;
+            totalAbsCost += cost.abs();
+        }
+
+        if (curBlockNumber > preBlockNumber) {
+            if (_symbol.tradersNetVolume != 0) {
+                int256 ratePerBlock = (((((((((_symbol.tradersNetVolume * price) / ONE) * price) / ONE) *
+                    _protocolParameters.futuresMultiplier()) / ONE) *
+                    _protocolParameters.futuresMultiplier()) / ONE) *
+                    _protocolParameters.futuresFundingRateCoefficient()) / totalDynamicEquity;
+                int256 delta = ratePerBlock * int256(curBlockNumber - preBlockNumber);
+                cumulativeFundingRate = _symbol.cumulativeFundingRate + delta;
+            }
+        }
     }
 
     function getTraderPortfolio(address account)
