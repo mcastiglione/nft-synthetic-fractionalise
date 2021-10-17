@@ -38,7 +38,7 @@ describe('AuctionsManager', async function () {
     assert.ok(auctionsManager.address);
   });
 
-  it('Should start a new auction successfully', async () => {
+  it('should start a new auction successfully', async () => {
     const { deployer } = await getNamedAccounts();
     const amountMint = parseAmount('1000000').toString();
     const amountApprove = parseAmount('100000').toString();
@@ -58,7 +58,7 @@ describe('AuctionsManager', async function () {
     await expect(auction.endAuction()).to.be.revertedWith('Auction not yet ended');
   });
 
-  it('Owner should get UniSwap liquidity after startAuction', async () => {
+  it('owner should get UniSwap liquidity after startAuction', async () => {
     const { deployer } = await getNamedAccounts();
 
     const localNFT = await router.registerNFT(
@@ -111,5 +111,31 @@ describe('AuctionsManager', async function () {
     expect(fundingBalanceAfter).to.be.equal(await fundingBalanceBefore.add(parseAmount('500')));
   });
 
-  it('New Testing over reassignNFT');
+  it('should be upgradeable', async () => {
+    const { deployer } = await getNamedAccounts();
+
+    // get the proxy
+    let proxy = await ethers.getContract('AuctionsManager');
+
+    let isRecoverable = await proxy.isRecoverable(10);
+
+    // in the real implementation this should return false
+    expect(isRecoverable).to.be.false;
+
+    // deploy new implementation
+    let implementation = await deployments.deploy('AuctionsManager_Implementation', {
+      contract: 'AuctionsManagerUpgradeMock',
+      from: deployer,
+      log: true,
+      args: [],
+    });
+
+    // upgrade the implementation
+    await proxy.upgradeTo(implementation.address);
+
+    isRecoverable = await proxy.isRecoverable(10);
+
+    // in the mocked implementation this should return true
+    expect(isRecoverable).to.be.true;
+  });
 });
