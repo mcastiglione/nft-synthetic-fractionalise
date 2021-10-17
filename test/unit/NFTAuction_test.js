@@ -1,41 +1,58 @@
-const { assert, expect } = require('chai');
+const Jot = artifacts.require('Jot');
+const NFTAuction = artifacts.require('NFTAuction');
+const AuctionsManager = artifacts.require('AuctionsManager');
+const SyntheticProtocolRouter = artifacts.require('SyntheticProtocolRouter');
+const SyntheticCollectionManager = artifacts.require('SyntheticCollectionManager');
+
+const { expectEvent, expectRevert, time, snapshot } = require('@openzeppelin/test-helpers');
 
 describe('NFTAuction', async function () {
   beforeEach(async () => {
     // Using fixture from hardhat-deploy
-    await deployments.fixture(['synthetic_router']);
-    this.auctionsManager = await ethers.getContract('AuctionsManager');
+    await deployments.fixture(['synthetic_router', 'nft_mock']);
+
+    let originalCollection = await deployments.get('NFTMock');
+    let auctionsManager = await deployments.get('AuctionsManager');
+    let router = await deployments.get('SyntheticProtocolRouter');
+
+    this.auctionsManager = await AuctionsManager.at(auctionsManager.address);
+    this.router = await SyntheticProtocolRouter.at(router.address);
+
+    let tx = await this.router.registerNFT(originalCollection.address, 1, 0, 5, 'My Collection', 'MYC', '');
+    let log1 = expectEvent(tx, 'TokenRegistered', {});
+    let log2 = expectEvent(tx, 'CollectionManagerRegistered', {});
+
+    this.synhteticTokenId = log1.args.syntheticTokenId;
+    this.jot = await Jot.at(log2.args.jotAddress);
+    this.syntheticCollection = await SyntheticCollectionManager.at(log2.args.collectionManagerAddress);
   });
 
   it('should be deployed', async () => {
-    assert.ok(this.auctionsManager.address);
-  });
-
-  it('should be upgradeable', async () => {
     const { deployer } = await getNamedAccounts();
 
-    // get the proxy
-    let proxy = this.auctionsManager;
+    const amount = web3.utils.toWei('10000');
 
-    let isRecoverable = await proxy.isRecoverable(10);
+    // verify token
+    await this.syntheticCollection.verify(0);
 
-    // in the real implementation this should return false
-    expect(isRecoverable).to.be.false;
+    // mint and approve
+    await this.jot.mint(deployer, amount);
+    await this.jot.approve(this.auctionsManager.address, amount);
 
-    // deploy new implementation
-    let implementation = await deployments.deploy('AuctionsManager_Implementation', {
-      contract: 'AuctionsManagerUpgradeMock',
-      from: deployer,
-      log: true,
-      args: [],
-    });
+    let tx = await this.auctionsManager.startAuction(this.syntheticCollection.address, 0, amount);
+    let log = expectEvent(tx, 'AuctionStarted', {});
 
-    // upgrade the implementation
-    await proxy.upgradeTo(implementation.address);
+    let auction = await NFTAuction.at(log.args.auctionContract);
 
-    isRecoverable = await proxy.isRecoverable(10);
+    await expectRevert(auction.endAuction(), 'Auction not yet ended');
 
-    // in the mocked implementation this should return true
-    expect(isRecoverable).to.be.true;
+    let snapshotA = await snapshot();
+
+    await time.increase(time.duration.weeks(1));
+
+    tx = await auction.endAuction();
+    expectEvent(tx, 'AuctionEnded', {});
+
+    await snapshotA.restore();
   });
 });
