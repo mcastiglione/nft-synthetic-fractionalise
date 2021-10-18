@@ -768,13 +768,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 fundingLiquidity;
         (jotLiquidity, fundingLiquidity) = getAvailableBuyback(tokenId);
 
+        require(jotLiquidity > 0, "Already have required liquidity, call exitProtocol");
+
         // Get required funding required and execute transfer and buyback
         uint256 buybackAmount = (ProtocolConstants.JOT_SUPPLY - jotLiquidity) * buyBackPrice/10**18;
 
         IERC20(fundingTokenAddress).transferFrom(msg.sender, buybackAddress, buybackAmount);
         _executeBuyBack(tokenId);
-        //_exitProtocol(tokenId, msg.sender);
-
     }
 
     /**
@@ -964,7 +964,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 amount = (buyAmount * tokens[tokenId].fractionPrices);
         return amount;
     }
-
+/*
     function getFundingTokenAllowance() public view returns (uint256) {
         return IERC20(fundingTokenAddress).allowance(msg.sender, address(this));
     }
@@ -972,7 +972,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function getContractJotsBalance() public view returns (uint256) {
         return IJot(jotAddress).balanceOf(address(this));
     }
-
+*/
     function lockedNFT(uint256 tokenId) public view returns (bool) {
         TokenData storage token = tokens[tokenId];
         return !isVerified(tokenId) || token.ownerSupply == 0;
