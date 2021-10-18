@@ -788,10 +788,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // get available liquidity (owner + selling + liquidity + uniswap )
         uint256 jotLiquidity;
         uint256 fundingLiquidity;
-
-        (jotLiquidity, fundingLiquidity) = getAvailableBuyback(tokenId);
-        require(jotLiquidity >= ProtocolConstants.JOT_SUPPLY, "Not enough liquidity");
-        
         (jotLiquidity, fundingLiquidity) = _removeLiquidityFromPool(tokenId);
 
         // TODO: get PerpetualPoolLite.getLiquidity
