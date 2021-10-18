@@ -63,7 +63,8 @@ contract RedemptionPool is Initializable, AccessControl {
     }
 
     function redeem(uint256 amountOfJots_) external {
-        require(amountOfJots_ > 0, "Invalid amount");
+        require(amountOfJots_ > 0, "Amount should be greater than 0");
+        require(jotsToRedeem >= amountOfJots_, "Not enough tokens left");
 
         uint256 amountToGive = (totalLiquidityToRedeeem * amountOfJots_) / jotsToRedeem;
 
