@@ -73,6 +73,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address collectionManagerAddress,
         address jotAddress,
         address jotPoolAddress,
+        address redemptionPoolAddress,
         address jotPairAddress,
         address syntheticNFTAddress,
         address quickSwapAddress,
@@ -126,19 +127,15 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
      *  @param collection the address of the synthetic collection
      *  @param tokenId the token id
      *  @param supplyToKeep supply to keep
-     *  @param priceFraction the price for a fraction
-     *  @param originalName the original collection name
-     *  @param originalSymbol the original collection symbol
+     *  @param registrationMetadata the metadata for the registration
      */
     function registerNFT(
         address collection,
         uint256 tokenId,
         uint256 supplyToKeep,
         uint256 priceFraction,
-        string memory originalName,
-        string memory originalSymbol,
-        string memory metadata
-    ) public {
+        RegistrationMetadata calldata registrationMetadata
+    ) external {
         require(collection != address(0), "Invalid collection");
 
         address collectionAddress;
@@ -147,14 +144,14 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         if (!isSyntheticCollectionRegistered(collection)) {
             // deploys and initialize a Jot
             address jotAddress = _deployAndInitJot(
-                string(abi.encodePacked("Privi Jot ", originalName)),
-                string(abi.encodePacked("JOT_", originalSymbol))
+                string(abi.encodePacked("Privi Jot ", registrationMetadata.originalName)),
+                string(abi.encodePacked("JOT_", registrationMetadata.originalSymbol))
             );
 
             // deploys and initialize a JotPool
             address jotPoolAddress = _deployAndInitJotPool(
                 jotAddress,
-                string(abi.encodePacked("Privi Jot ", originalName))
+                string(abi.encodePacked("Privi Jot ", registrationMetadata.originalName))
             );
 
             // deploys a SyntheticNFT
@@ -184,8 +181,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
             // initializes the SyntheticNFT
             SyntheticNFT(syntheticNFTAddress).initialize(
-                string(abi.encodePacked("Privi Synthetic ", originalName)),
-                string(abi.encodePacked("pS_", originalSymbol)),
+                string(abi.encodePacked("Privi Synthetic ", registrationMetadata.originalName)),
+                string(abi.encodePacked("pS_", registrationMetadata.originalSymbol)),
                 collectionAddress
             );
 
@@ -195,8 +192,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
             // deploy and initialize future contracts
             FuturesParametersContracts memory futuresData = _deployFutures(
-                originalName,
-                originalSymbol,
+                registrationMetadata.originalName,
+                registrationMetadata.originalSymbol,
                 collection
             );
 
@@ -209,10 +206,11 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 collectionManagerAddress: collectionAddress,
                 jotAddress: jotAddress,
                 jotPoolAddress: jotPoolAddress,
+                redemptionPoolAddress: redemptionPoolAddress,
                 jotPairAddress: Jot(jotAddress).uniswapV2Pair(),
                 syntheticNFTAddress: syntheticNFTAddress,
-                originalName: originalName,
-                originalSymbol: originalSymbol,
+                originalName: registrationMetadata.originalName,
+                originalSymbol: registrationMetadata.originalSymbol,
                 lTokenAddress: futuresData.lTokenLite_,
                 pTokenAddress: futuresData.pTokenLite_,
                 perpetualPoolLiteAddress: futuresData.perpetualPoolLiteAddress_,
@@ -226,6 +224,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 collectionAddress,
                 jotAddress,
                 jotPoolAddress,
+                redemptionPoolAddress,
                 Jot(jotAddress).uniswapV2Pair(),
                 syntheticNFTAddress,
                 swapAddress,
@@ -248,7 +247,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             supplyToKeep,
             priceFraction,
             msg.sender,
-            metadata
+            registrationMetadata.metadata
         );
 
         emit TokenRegistered(collectionAddress, protocolVaults.current(), syntheticID);

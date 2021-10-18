@@ -20,7 +20,7 @@ describe('AuctionsManager', async function () {
     nFTAuction = await ethers.getContract('NFTAuction');
 
     router = await ethers.getContract('SyntheticProtocolRouter');
-    const registerNFT = await router.registerNFT(NFT, nftID, 0, 5, 'My Collection', 'MYC', '');
+    const registerNFT = await router.registerNFT(NFT, nftID, 0, 5, ['My Collection', 'MYC', '']);
     newNFTTokenid = (await getEvent(registerNFT, 'TokenRegistered', router)).syntheticTokenId.toString();
     collectionManagerRegistered = await getEvent(registerNFT, 'CollectionManagerRegistered', router);
 
@@ -59,15 +59,11 @@ describe('AuctionsManager', async function () {
   it('owner should get UniSwap liquidity after startAuction', async () => {
     const { deployer } = await getNamedAccounts();
 
-    const localNFT = await router.registerNFT(
-      NFT,
-      nftID + 1,
-      parseAmount('9000'),
-      parseAmount('1'),
+    const localNFT = await router.registerNFT(NFT, nftID + 1, parseAmount('9000'), parseAmount('1'), [
       'My Collection',
       'MYC',
-      ''
-    );
+      '',
+    ]);
     localNFTID = (await getEvent(localNFT, 'TokenRegistered', router)).syntheticTokenId.toString();
 
     const amountMint = parseAmount('1000000').toString();

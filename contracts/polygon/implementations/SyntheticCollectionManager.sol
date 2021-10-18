@@ -33,6 +33,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     bytes32 public constant RANDOM_ORACLE = keccak256("RANDOM_ORACLE");
     bytes32 public constant VALIDATOR_ORACLE = keccak256("VALIDATOR_ORACLE");
 
+    uint256 public immutable buybackPrice = 1000000000000000000;
     address private immutable _randomConsumerAddress;
     address private immutable _validatorAddress;
     address public auctionsManagerAddress;
@@ -103,8 +104,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     address public jotPool;
     address public redemptionPool;
-
-    uint256 public buybackPrice = 1000000000000000000;
 
     event CoinFlipped(
         bytes32 indexed requestId,
@@ -470,7 +469,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(Jot(jotAddress).uniswapV2Pair());
 
-        // Get added liquidity
+        // get added liquidity
         uint256 jotLiquidity = token.UniswapJotLiquidity;
         uint256 fundingLiquidity = token.UniswapFundingLiquidity;
         uint256 liquidityTokenBalance = token.liquidityTokenBalance;
@@ -485,17 +484,17 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             liquidityTokenBalance = liquidityTokenBalanceUniswap;
         }
 
-        // Approve liquidity transfer
+        // approve liquidity transfer
         uniswapV2Pair.approve(_swapAddress, liquidityTokenBalance);
 
-        // Pair reserves in Uniswap Pair
+        // pair reserves in Uniswap Pair
         uint112 jotReserves;
         uint112 fundingReserves;
         uint32 blockTimestampLast;
 
         (jotReserves, fundingReserves, blockTimestampLast) = uniswapV2Pair.getReserves();
 
-        // Handle low balance edge cases
+        // handle low balance edge cases
         if (jotLiquidity > jotReserves) {
             jotLiquidity = jotReserves;
         }
@@ -510,11 +509,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
 
-        // Actual liquidity removed
+        // actual liquidity removed
         uint256 jotAmountExecuted;
         uint256 fundingAmountExecuted;
 
-        // Call Uniswap to remove liquidity
+        // call Uniswap to remove liquidity
         (jotAmountExecuted, fundingAmountExecuted) = uniswapV2Router.removeLiquidity(
             jotAddress,
             fundingTokenAddress,
@@ -700,6 +699,42 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         ISyntheticNFT(erc721address).setMetadata(syntheticId, metadata);
     }
 
+    function buybackRequiredAmount(uint256 tokenId)
+        public
+        view
+        returns (uint256 buybackAmount, uint256 fundingLeft)
+    {
+        require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
+        require(!lockedNFT(tokenId), "Token is locked!");
+
+        TokenData storage token = tokens[tokenId];
+
+        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(Jot(jotAddress).uniswapV2Pair());
+
+        uint256 liquidity = token.liquidityTokenBalance;
+
+        if (liquidity == 0) {
+            return (0, 0);
+        }
+
+        uint256 liquidityUniswap = uniswapV2Pair.balanceOf(address(this));
+
+        if (liquidityUniswap < liquidity) {
+            liquidity = liquidityUniswap;
+        }
+
+        (uint112 jotReserves, uint112 fundingReserves, ) = uniswapV2Pair.getReserves();
+
+        uint256 totalSupply = uniswapV2Pair.totalSupply();
+
+        uint256 jotLiquidity = (liquidity * jotReserves) / totalSupply;
+        uint256 fundingLiquidity = (liquidity * fundingReserves) / totalSupply;
+
+        uint256 total = token.ownerSupply + token.sellingSupply + token.liquiditySupply + jotLiquidity;
+
+        (fundingLeft, buybackAmount) = _getFundingLeftAndBuybackAmount(total, fundingLiquidity);
+    }
+
     /**
      * @notice Buy token back.
      * Caller needs to pre-approve a transaction worth the amount
@@ -755,7 +790,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     function _getFundingLeftAndBuybackAmount(uint256 total_, uint256 fundingLiquidity_)
         internal
-        view
+        pure
         returns (uint256 fundingLeft, uint256 buybackAmount)
     {
         // funding left (outstanding amount from uniswap)

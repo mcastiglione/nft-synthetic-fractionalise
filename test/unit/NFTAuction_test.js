@@ -18,7 +18,7 @@ describe('NFTAuction', async function () {
     this.auctionsManager = await AuctionsManager.at(auctionsManager.address);
     this.router = await SyntheticProtocolRouter.at(router.address);
 
-    let tx = await this.router.registerNFT(originalCollection.address, 1, 0, 5, 'My Collection', 'MYC', '');
+    let tx = await this.router.registerNFT(originalCollection.address, 1, 0, 5, ['My Collection', 'MYC', '']);
     let log1 = expectEvent(tx, 'TokenRegistered', {});
     let log2 = expectEvent(tx, 'CollectionManagerRegistered', {});
 

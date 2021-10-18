@@ -9,6 +9,7 @@ struct SyntheticCollection {
     address collectionManagerAddress;
     address jotAddress;
     address jotPoolAddress;
+    address redemptionPoolAddress;
     address jotPairAddress;
     address syntheticNFTAddress;
     string originalName;
@@ -29,4 +30,10 @@ struct FuturesParametersContracts {
     address pTokenLite_;
     address perpetualPoolLiteAddress_;
     address poolInfo_;
+}
+
+struct RegistrationMetadata {
+    string originalName;
+    string originalSymbol;
+    string metadata;
 }

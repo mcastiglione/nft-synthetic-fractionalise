@@ -13,7 +13,7 @@ describe('SyntheticProtocolRouter', async function () {
     const deployer = await getNamedAccounts();
     router = await ethers.getContract('SyntheticProtocolRouter');
 
-    const registerNFT = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
+    const registerNFT = await router.registerNFT(NFT, nftID, 10, 5, ['My Collection', 'MYC', '']);
     await expect(registerNFT).to.emit(router, 'TokenRegistered');
     args = await getEventArgs(registerNFT, 'TokenRegistered', router);
   });
@@ -24,13 +24,13 @@ describe('SyntheticProtocolRouter', async function () {
 
   it('should fail if the address of the collectible is address(0)', async () => {
     const NFT = constants.ZERO_ADDRESS;
-    await expect(router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '')).to.be.revertedWith(
+    await expect(router.registerNFT(NFT, nftID, 10, 5, ['My Collection', 'MYC', ''])).to.be.revertedWith(
       'Invalid collection'
     );
   });
 
   it('verify that UniSwap Pair was created after registerNFT', async () => {
-    await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
+    await router.registerNFT(NFT, nftID, 10, 5, ['My Collection', 'MYC', '']);
     const uniswapV2Pair = await router.getCollectionUniswapPair(NFT);
     assert.ok(uniswapV2Pair);
   });
@@ -51,7 +51,7 @@ describe('SyntheticProtocolRouter', async function () {
   });
 
   it('Register an NFT and then check isSyntheticCollectionRegistered', async () => {
-    await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
+    await router.registerNFT(NFT, nftID, 10, 5, ['My Collection', 'MYC', '']);
     const response = await router.isSyntheticCollectionRegistered(NFT);
     expect(response).to.be.equal(true);
   });
@@ -68,7 +68,7 @@ describe('SyntheticProtocolRouter', async function () {
 
   it('Check isNFTVerified of a non-registered NFT', async () => {
     const [NFT] = await getUnnamedAccounts();
-    await router.registerNFT(NFT, nftID + 1, 10, 5, 'My Collection', 'MYC', '');
+    await router.registerNFT(NFT, nftID + 1, 10, 5, ['My Collection', 'MYC', '']);
     await expect(router.isNFTVerified(NFT, nftID)).to.be.revertedWith('NFT not registered');
   });
 

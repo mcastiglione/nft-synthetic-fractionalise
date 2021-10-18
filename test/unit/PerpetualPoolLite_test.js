@@ -17,7 +17,7 @@ describe('PerpetualPoolLite', async function () {
 
     nftID = 1;
 
-    tx = await router.registerNFT(NFT, nftID, 10, 5, 'My Collection', 'MYC', '');
+    tx = await router.registerNFT(NFT, nftID, 10, 5, ['My Collection', 'MYC', '']);
 
     await expect(tx).to.emit(router, 'CollectionManagerRegistered');
     args = await getEventArgs(tx, 'CollectionManagerRegistered', router);

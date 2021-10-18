@@ -19,7 +19,7 @@ describe('SyntheticCollectionManager', async function () {
     nftID = 1;
     NFT = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
 
-    const tx = await router.registerNFT(NFT, nftID, 5000, 5, 'My Collection', 'MYC', '');
+    const tx = await router.registerNFT(NFT, nftID, 5000, 5, ['My Collection', 'MYC', '']);
     await expect(tx).to.emit(router, 'TokenRegistered');
     const args = await getEventArgs(tx, 'TokenRegistered', router);
     tokenId = args.syntheticTokenId;
@@ -257,15 +257,11 @@ describe('SyntheticCollectionManager', async function () {
 
   describe('Uniswap', async () => {
     it('getAccruedReward 0', async () => {
-      const TX = await router.registerNFT(
-        NFT,
-        nftID,
-        parseAmount('9000'),
-        parseAmount('1'),
+      const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
         'My Collection',
         'MYC',
-        ''
-      );
+        '',
+      ]);
       await expect(TX).to.emit(router, 'TokenRegistered');
       const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
       tokenID = ARGS.syntheticTokenId;
@@ -278,15 +274,11 @@ describe('SyntheticCollectionManager', async function () {
     });
 
     it('getAccruedReward', async () => {
-      const TX = await router.registerNFT(
-        NFT,
-        nftID,
-        parseAmount('9000'),
-        parseAmount('1'),
+      const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
         'My Collection',
         'MYC',
-        ''
-      );
+        '',
+      ]);
       await expect(TX).to.emit(router, 'TokenRegistered');
       const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
       tokenID = ARGS.syntheticTokenId;
@@ -330,15 +322,11 @@ describe('SyntheticCollectionManager', async function () {
       });
 
       it('ok', async () => {
-        const TX = await router.registerNFT(
-          NFT,
-          nftID,
-          parseAmount('9000'),
-          parseAmount('1'),
+        const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
           'My Collection',
           'MYC',
-          ''
-        );
+          '',
+        ]);
         await expect(TX).to.emit(router, 'TokenRegistered');
         const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
         tokenID = ARGS.syntheticTokenId;
@@ -490,15 +478,11 @@ describe('SyntheticCollectionManager', async function () {
 
       const managerBeforeRegisterBalance = parseReverse(await jot.balanceOf(managerAddress));
 
-      const TX = await router.registerNFT(
-        NFT,
-        nftID,
-        parseAmount('9000'),
-        parseAmount('1'),
+      const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
         'My Collection',
         'MYC',
-        ''
-      );
+        '',
+      ]);
       await expect(TX).to.emit(router, 'TokenRegistered');
       const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
       tokenID = ARGS.syntheticTokenId;
@@ -555,15 +539,11 @@ describe('SyntheticCollectionManager', async function () {
     it('verify liquidity balance Jot', async () => {
       const managerBeforeRegisterBalanceJot = parseReverse(await jot.balanceOf(managerAddress));
 
-      const TX = await router.registerNFT(
-        NFT,
-        nftID,
-        parseAmount('9000'),
-        parseAmount('1'),
+      const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
         'My Collection',
         'MYC',
-        ''
-      );
+        '',
+      ]);
       await expect(TX).to.emit(router, 'TokenRegistered');
       const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
       tokenID = ARGS.syntheticTokenId;
