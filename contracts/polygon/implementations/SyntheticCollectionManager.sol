@@ -762,18 +762,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         //requirements
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
         require(!lockedNFT(tokenId), "Token is locked!");
-
-        // get available liquidity (owner + selling + liquidity + uniswap )
-        uint256 jotLiquidity;
-        uint256 fundingLiquidity;
-        (jotLiquidity, fundingLiquidity) = getAvailableBuyback(tokenId);
-
-        require(jotLiquidity > 0, "Already have required liquidity, call exitProtocol");
-
-        // Get required funding required and execute transfer and buyback
-        uint256 buybackAmount = (ProtocolConstants.JOT_SUPPLY - jotLiquidity) * buyBackPrice/10**18;
-
-        IERC20(fundingTokenAddress).transferFrom(msg.sender, buybackAddress, buybackAmount);
         _executeBuyBack(tokenId);
     }
 
@@ -798,11 +786,26 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 liquiditySupply = tokens[tokenId].liquiditySupply;
         uint256 total = ownerSupply + sellingSupply + liquiditySupply + jotLiquidity;
 
+        
+
+         // Get required funding required and execute transfer and buyback
+        uint256 buybackAmount = (ProtocolConstants.JOT_SUPPLY - total) * buyBackPrice/10**18;
+        uint256 fundingLeft = 0;
+        if buybackAmount >= fundingLiquidity {
+            buybackAmount -= fundingLiquidity;
+        } else {
+            buybackAmount = 0;
+            fundingLeft = fundingLiquidity-buybackAmount;
+        }
+
+
+        IERC20(fundingTokenAddress).transferFrom(msg.sender, buybackAddress, buybackAmount);
+
         // burn the jots
         //Jot(jotAddress).burn(address(this), total);
 
         // Update balances
-        tokens[tokenId].ownerSupply += (sellingSupply + liquiditySupply + jotLiquidity);
+        tokens[tokenId].ownerSupply = 0;
         tokens[tokenId].sellingSupply = 0;
         tokens[tokenId].liquiditySupply = 0;
         // TODO: check that liquidityTokenBalance is correct
@@ -811,10 +814,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         tokens[tokenId].UniswapJotLiquidity -= jotLiquidity;
 
         //send user funds to buyback pool        
-        if(fundingLiquidity > 0) {
-            IERC20(fundingTokenAddress).transfer(buybackAddress, fundingLiquidity);
+        if(fundingLeft > 0) {
+            IERC20(fundingTokenAddress).transfer(msg.sender, fundingLeft);
         }
-
     }
 
     /**
