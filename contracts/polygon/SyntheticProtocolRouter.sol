@@ -10,6 +10,7 @@ import "./chainlink/PolygonValidatorOracle.sol";
 import "./implementations/SyntheticCollectionManager.sol";
 import "./implementations/Jot.sol";
 import "./implementations/JotPool.sol";
+import "./implementations/RedemptionPool.sol";
 import "./implementations/SyntheticNFT.sol";
 import "./Structs.sol";
 import "./governance/ProtocolParameters.sol";
@@ -30,6 +31,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
      */
     address private _jot;
     address private _jotPool;
+    address private _redemptionPool;
     address private _collectionManager;
     address private _syntheticNFT;
     address private _auctionManager;
@@ -93,6 +95,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address swapAddress_,
         address jot_,
         address jotPool_,
+        address redemptionPoolAddress_,
         address collectionManager_,
         address syntheticNFT_,
         address auctionManager_,
@@ -104,6 +107,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         swapAddress = swapAddress_;
         _jot = jot_;
         _jotPool = jotPool_;
+        _redemptionPool = redemptionPoolAddress_;
         _collectionManager = collectionManager_;
         _syntheticNFT = syntheticNFT_;
         _auctionManager = auctionManager_;
@@ -141,59 +145,44 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         // Checks whether a collection is registered or not
         // If not registered, then register it and increase the Vault counter
         if (!isSyntheticCollectionRegistered(collection)) {
-            // deploys a minimal proxy contract from the jot contract implementation
-            address jotAddress = Clones.clone(_jot);
-            Jot(jotAddress).initialize(
+            // deploys and initialize a Jot
+            address jotAddress = _deployAndInitJot(
                 string(abi.encodePacked("Privi Jot ", originalName)),
-                string(abi.encodePacked("JOT_", originalSymbol)),
-                swapAddress,
-                ProtocolParameters(_protocol).fundingTokenAddress()
+                string(abi.encodePacked("JOT_", originalSymbol))
             );
 
-            // deploys a minimal proxy contract from the jotPool contract implementation
-            address jotPoolAddress = Clones.clone(_jotPool);
-            JotPool(jotPoolAddress).initialize(
+            // deploys and initialize a JotPool
+            address jotPoolAddress = _deployAndInitJotPool(
                 jotAddress,
-                ProtocolParameters(_protocol).fundingTokenAddress(),
-                string(abi.encodePacked("Privi JotPool ", originalName)),
-                string(abi.encodePacked(" ", originalName))
+                string(abi.encodePacked("Privi Jot ", originalName))
             );
 
+            // deploys a SyntheticNFT
             address syntheticNFTAddress = Clones.clone(_syntheticNFT);
 
-            // deploys a minimal proxy contract from the collectionManager contract implementation
-            collectionAddress = Clones.clone(_collectionManager);
-            SyntheticCollectionManager(collectionAddress).initialize(
+            // deploys a RedemptionPool
+            address redemptionPoolAddress = Clones.clone(_redemptionPool);
+
+            // deploys and init a SyntheticCollectionManager
+            collectionAddress = _deployAndInitSyntheticCollection(
                 jotAddress,
-                collection,
-                syntheticNFTAddress,
-                _auctionManager,
-                _protocol,
                 jotPoolAddress,
-                swapAddress
+                redemptionPoolAddress,
+                syntheticNFTAddress,
+                collection
             );
 
-            AuctionsManager(_auctionManager).grantRole(
-                AuctionsManager(_auctionManager).COLLECTION_MANAGER(),
+            // initializes the RedemptionPool
+            RedemptionPool(redemptionPoolAddress).initialize(
+                jotAddress,
+                ProtocolParameters(_protocol).fundingTokenAddress(),
                 collectionAddress
             );
 
-            // Done this way because of stack limitations
-            SyntheticCollectionManager(collectionAddress).grantRole(
-                SyntheticCollectionManager(collectionAddress).RANDOM_ORACLE(),
-                _randomConsumerAddress
-            );
+            // assigns the roles to the deployed contracts
+            _assignRoles(jotAddress, jotPoolAddress, collectionAddress);
 
-            SyntheticCollectionManager(collectionAddress).grantRole(
-                SyntheticCollectionManager(collectionAddress).VALIDATOR_ORACLE(),
-                _validatorAddress
-            );
-
-            Jot(jotAddress).grantRole(Jot(jotAddress).MINTER(), collectionAddress);
-
-            // set the manager to allow control over the funds
-            Jot(jotAddress).setManager(collectionAddress, jotPoolAddress);
-
+            // initializes the SyntheticNFT
             SyntheticNFT(syntheticNFTAddress).initialize(
                 string(abi.encodePacked("Privi Synthetic ", originalName)),
                 string(abi.encodePacked("pS_", originalSymbol)),
@@ -204,7 +193,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             RandomNumberConsumer(_randomConsumerAddress).whitelistCollection(collectionAddress);
             PolygonValidatorOracle(_validatorAddress).whitelistCollection(collectionAddress);
 
-            FuturesParametersContracts memory futuresData = deployFutures(
+            // deploy and initialize future contracts
+            FuturesParametersContracts memory futuresData = _deployFutures(
                 originalName,
                 originalSymbol,
                 collection
@@ -264,7 +254,83 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         emit TokenRegistered(collectionAddress, protocolVaults.current(), syntheticID);
     }
 
-    function deployFutures(
+    function _deployAndInitJot(string memory originalName_, string memory originalSymbol_)
+        private
+        returns (address jotAddress)
+    {
+        // deploys a minimal proxy contract from the jot contract implementation
+        jotAddress = Clones.clone(_jot);
+        Jot(jotAddress).initialize(
+            string(abi.encodePacked("Privi Jot ", originalName_)),
+            string(abi.encodePacked("JOT_", originalSymbol_)),
+            swapAddress,
+            ProtocolParameters(_protocol).fundingTokenAddress()
+        );
+    }
+
+    function _deployAndInitJotPool(address jotAddress_, string memory originalName_)
+        private
+        returns (address jotPoolAddress)
+    {
+        // deploys a minimal proxy contract from the jotPool contract implementation
+        jotPoolAddress = Clones.clone(_jotPool);
+        JotPool(jotPoolAddress).initialize(
+            jotAddress_,
+            ProtocolParameters(_protocol).fundingTokenAddress(),
+            string(abi.encodePacked("Privi JotPool ", originalName_)),
+            string(abi.encodePacked(" ", originalName_))
+        );
+    }
+
+    function _deployAndInitSyntheticCollection(
+        address jotAddress_,
+        address jotPoolAddress_,
+        address redemptionPoolAddress_,
+        address syntheticNFTAddress_,
+        address collection_
+    ) private returns (address collectionAddress) {
+        // deploys a minimal proxy contract from the collectionManager contract implementation
+        collectionAddress = Clones.clone(_collectionManager);
+        SyntheticCollectionManager(collectionAddress).initialize(
+            jotAddress_,
+            collection_,
+            syntheticNFTAddress_,
+            _auctionManager,
+            _protocol,
+            jotPoolAddress_,
+            redemptionPoolAddress_,
+            swapAddress
+        );
+    }
+
+    function _assignRoles(
+        address jotAddress_,
+        address jotPoolAddress_,
+        address collectionAddress_
+    ) private {
+        AuctionsManager(_auctionManager).grantRole(
+            AuctionsManager(_auctionManager).COLLECTION_MANAGER(),
+            collectionAddress_
+        );
+
+        // Done this way because of stack limitations
+        SyntheticCollectionManager(collectionAddress_).grantRole(
+            SyntheticCollectionManager(collectionAddress_).RANDOM_ORACLE(),
+            _randomConsumerAddress
+        );
+
+        SyntheticCollectionManager(collectionAddress_).grantRole(
+            SyntheticCollectionManager(collectionAddress_).VALIDATOR_ORACLE(),
+            _validatorAddress
+        );
+
+        Jot(jotAddress_).grantRole(Jot(jotAddress_).MINTER(), collectionAddress_);
+
+        // set the manager to allow control over the funds
+        Jot(jotAddress_).setManager(collectionAddress_, jotPoolAddress_);
+    }
+
+    function _deployFutures(
         string memory originalName,
         string memory originalSymbol,
         address collection

@@ -51,7 +51,7 @@ contract RedemptionPool is Initializable, AccessControl {
      * @param liquidity_ the increase on redeemable liquidity
      * @param jots_ the increase on redeemable jots
      */
-    function addRedeemableBalance(uint256 liquidity_, uint256 jots_) external onlyRole(MANAGER) {
+    function addRedemableBalance(uint256 liquidity_, uint256 jots_) external onlyRole(MANAGER) {
         totalLiquidityToRedeeem += liquidity_;
         jotsToRedeem += jots_;
     }

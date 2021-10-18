@@ -12,15 +12,15 @@ import "../extensions/IERC20ManagedAccounts.sol";
 import "../chainlink/RandomNumberConsumer.sol";
 import "../chainlink/PolygonValidatorOracle.sol";
 import "../chainlink//OracleStructs.sol";
-import "../SyntheticProtocolRouter.sol";
-import "../Interfaces.sol";
 import "../libraries/ProtocolConstants.sol";
 import "../governance/ProtocolParameters.sol";
+import "../SyntheticProtocolRouter.sol";
+import "../Interfaces.sol";
 import "./Jot.sol";
+import "./JotPool.sol";
+import "./RedemptionPool.sol";
 import "./Structs.sol";
 import "./Enums.sol";
-import "hardhat/console.sol";
-import "./JotPool.sol";
 
 import {AuctionsManager} from "../auctions/AuctionsManager.sol";
 
@@ -102,8 +102,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     address public erc721address;
 
     address public jotPool;
+    address public redemptionPool;
 
-    uint256 public buyBackPrice = 1000000000000000000;
+    uint256 public buybackPrice = 1000000000000000000;
 
     event CoinFlipped(
         bytes32 indexed requestId,
@@ -145,7 +146,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address auctionManagerAddress_,
         address protocol_,
         address jotPool_,
-        address swapAddress
+        address redemptionPool_,
+        address swapAddress_
     ) external initializer {
         jotAddress = _jotAddress;
         erc721address = _erc721address;
@@ -154,7 +156,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         auctionsManagerAddress = auctionManagerAddress_;
         protocol = ProtocolParameters(protocol_);
         jotPool = jotPool_;
-        _swapAddress = swapAddress;
+        redemptionPool = redemptionPool_;
+        _swapAddress = swapAddress_;
         jotsSupply = ProtocolConstants.JOT_SUPPLY;
         fundingTokenAddress = ProtocolParameters(protocol_).fundingTokenAddress();
 
@@ -700,14 +703,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice Buy token back.
      * Caller needs to pre-approve a transaction worth the amount
-     * returned by the getRequiredFundingForBuyBack(uint256 tokenId) function
+     * returned by the getRequiredFundingForBuyback(uint256 tokenId) function
      */
-    function buyBack(uint256 tokenId) public {
+    function buyback(uint256 tokenId) public {
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
         require(!lockedNFT(tokenId), "Token is locked!");
 
         // execute the buyback if needed and remove the liquidity
-        _executeBuyBack(tokenId);
+        _executeBuyback(tokenId);
 
         // exit the protocol
         _exitProtocol(tokenId);
@@ -716,11 +719,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @dev helper for the buyback function
      */
-    function _executeBuyBack(uint256 tokenId) internal {
+    function _executeBuyback(uint256 tokenId) internal {
         TokenData storage token = tokens[tokenId];
-
-        // buyback fund address
-        address buybackAddress = address(0);
 
         // get available liquidity (owner + selling + liquidity + uniswap )
         (uint256 jotLiquidity, uint256 fundingLiquidity) = _removeLiquidityFromPool(tokenId);
@@ -739,7 +739,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         Jot(jotAddress).burn(address(this), total);
 
         if (buybackAmount > 0) {
-            IERC20(fundingTokenAddress).transferFrom(msg.sender, buybackAddress, buybackAmount);
+            // update redemption pool balance trackers
+            RedemptionPool(redemptionPool).addRedemableBalance(buybackAmount, (buybackAmount / buybackPrice));
+
+            IERC20(fundingTokenAddress).transferFrom(msg.sender, redemptionPool, buybackAmount);
         }
 
         if (fundingLeft > 0) {
@@ -760,7 +763,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // if user has enough balance the buyback amount is 0
         buybackAmount = fundingLeft == 0
-            ? ((ProtocolConstants.JOT_SUPPLY - total_) * buyBackPrice) / 10**18
+            ? ((ProtocolConstants.JOT_SUPPLY - total_) * buybackPrice) / 10**18
             : 0;
 
         // update amounts
