@@ -7,10 +7,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Jot.sol";
 
 /**
- * @notice funds pay by the owner on buyback events are sent to this contract
+ * @notice funds paid by owners on buyback events are sent to this contract
  * @author priviprotocol
  */
 contract RedemptionPool is Initializable, AccessControl {
+    // the role for the corresponding synthetic collection manager
     bytes32 public constant MANAGER = keccak256("MANAGER");
 
     /// @notice the address of the jot corresponding token
