@@ -770,10 +770,15 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             fundingLiquidity
         );
 
+        uint256 burned = total < ProtocolConstants.JOT_SUPPLY ? total : ProtocolConstants.JOT_SUPPLY;
+
         // burn the jots
-        Jot(jotAddress).burn(address(this), total);
+        Jot(jotAddress).burn(burned);
 
         if (buybackAmount > 0) {
+            // increase allowance to burn
+            Jot(jotAddress).increaseAllowance(redemptionPool, ProtocolConstants.JOT_SUPPLY - burned);
+
             // update redemption pool balance trackers
             RedemptionPool(redemptionPool).addRedemableBalance(buybackAmount, (buybackAmount / buybackPrice));
 
@@ -879,12 +884,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function isVerified(uint256 tokenId) public view returns (bool) {
-        require(ISyntheticNFT(erc721address).exists(tokenId), "NFT not minted");
         return (tokens[tokenId].state == State.VERIFIED);
     }
 
     function getOriginalID(uint256 tokenId) public view returns (uint256) {
-        require(ISyntheticNFT(erc721address).exists(tokenId), "NFT not minted");
         return tokens[tokenId].originalTokenID;
     }
 
@@ -950,15 +953,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         return amount;
     }
 
-    /*
-    function getFundingTokenAllowance() public view returns (uint256) {
-        return IERC20(fundingTokenAddress).allowance(msg.sender, address(this));
-    }
-
-    function getContractJotsBalance() public view returns (uint256) {
-        return IJot(jotAddress).balanceOf(address(this));
-    }
-*/
     function lockedNFT(uint256 tokenId) public view returns (bool) {
         TokenData storage token = tokens[tokenId];
         return !isVerified(tokenId) || token.ownerSupply == 0;

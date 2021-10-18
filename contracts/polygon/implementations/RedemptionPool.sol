@@ -3,6 +3,8 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./Jot.sol";
 
 /**
  * @notice funds pay by the owner on buyback events are sent to this contract
@@ -16,6 +18,9 @@ contract RedemptionPool is Initializable, AccessControl {
 
     /// @notice the address of the funding token used
     address public fundingTokenAddress;
+
+    /// @notice the address of the synthetic collection
+    address public managerAddress;
 
     /// @notice the total value in funding token available to redeem
     uint256 public totalLiquidityToRedeeem;
@@ -41,6 +46,7 @@ contract RedemptionPool is Initializable, AccessControl {
 
         jotAddress = jot_;
         fundingTokenAddress = fundingToken_;
+        managerAddress = syntheticCollection_;
 
         // setup the roles for the access control
         _setupRole(MANAGER, syntheticCollection_);
@@ -54,5 +60,17 @@ contract RedemptionPool is Initializable, AccessControl {
     function addRedemableBalance(uint256 liquidity_, uint256 jots_) external onlyRole(MANAGER) {
         totalLiquidityToRedeeem += liquidity_;
         jotsToRedeem += jots_;
+    }
+
+    function redeem(uint256 amountOfJots_) external {
+        require(amountOfJots_ > 0, "Invalid amount");
+
+        uint256 amountToGive = (totalLiquidityToRedeeem * amountOfJots_) / jotsToRedeem;
+
+        totalLiquidityToRedeeem -= amountToGive;
+        jotsToRedeem -= amountOfJots_;
+
+        IERC20(fundingTokenAddress).transfer(msg.sender, amountOfJots_);
+        Jot(jotAddress).burnFrom(managerAddress, amountOfJots_);
     }
 }
