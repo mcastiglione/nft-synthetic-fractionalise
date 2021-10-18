@@ -831,29 +831,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
-     * @notice returns funds owned by token, in Jots and Funding, in contract and in UniSwap
-     */
-    function getAvailableBuyback(uint256 tokenId) public view returns (uint256, uint256) {
-        // Funds already in contract
-        uint256 ownerSupply = tokens[tokenId].ownerSupply;
-        uint256 sellingSupply = tokens[tokenId].sellingSupply;
-        uint256 liquiditySupply = tokens[tokenId].liquiditySupply;
-
-        // Funds in uniswap
-        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(Jot(jotAddress).uniswapV2Pair());
-
-        uint112 jotReserves;
-        uint112 fundingReserves;
-        uint32 blockTimestampLast;
-
-        (jotReserves, fundingReserves, blockTimestampLast) = uniswapV2Pair.getReserves();
-
-        uint256 totalJot = ownerSupply + sellingSupply + liquiditySupply + uint256(jotReserves);
-        uint256 totalFunding = uint256(fundingReserves);
-        return (totalJot, totalFunding);
-    }
-
-    /**
      * @dev burn a token
      */
     function safeBurn(uint256 tokenId) private {
