@@ -62,6 +62,14 @@ contract RedemptionPool is Initializable, AccessControl {
         jotsToRedeem += jots_;
     }
 
+    /**
+     * @notice allows to retrieve funding token from jots, to burn the supply left
+     *         by buyback calls without enough owner supply
+     *
+     *         the user should approve the jots to be burned before calling this function
+     *
+     * @param amountOfJots_ the amount of jots to burn
+     */
     function redeem(uint256 amountOfJots_) external {
         require(amountOfJots_ > 0, "Amount should be greater than 0");
         require(jotsToRedeem >= amountOfJots_, "Not enough tokens left");
@@ -71,7 +79,8 @@ contract RedemptionPool is Initializable, AccessControl {
         totalLiquidityToRedeeem -= amountToGive;
         jotsToRedeem -= amountOfJots_;
 
+        // transfer the funds and burn the jots
         IERC20(fundingTokenAddress).transfer(msg.sender, amountToGive);
-        Jot(jotAddress).burnFrom(managerAddress, amountOfJots_);
+        Jot(jotAddress).burnFrom(msg.sender, amountOfJots_);
     }
 }
