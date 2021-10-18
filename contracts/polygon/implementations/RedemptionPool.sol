@@ -1,64 +1,58 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../SyntheticProtocolRouter.sol";
-import "../Interfaces.sol";
-import "../libraries/ProtocolConstants.sol";
-import "../governance/ProtocolParameters.sol";
-import "./Structs.sol";
-import "./Enums.sol";
-import "hardhat/console.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-/*
- * funds pay by the owner on buyback events are sent to this contract
+/**
+ * @notice funds pay by the owner on buyback events are sent to this contract
+ * @author priviprotocol
  */
+contract RedemptionPool is Initializable, AccessControl {
+    bytes32 public constant MANAGER = keccak256("MANAGER");
 
-contract RedemptionPool is AccessControl {
-    using SafeERC20 for IERC20;
-    using Counters for Counters.Counter;
+    /// @notice the address of the jot corresponding token
+    address public jotAddress;
 
-    bytes32 public constant ROUTER = keccak256("ROUTER");
-    bytes32 public constant AUCTION_MANAGER = keccak256("AUCTION_MANAGER");
-    bytes32 public constant RANDOM_ORACLE = keccak256("RANDOM_ORACLE");
-    bytes32 public constant VALIDATOR_ORACLE = keccak256("VALIDATOR_ORACLE");
-
-    /**
-     * @dev mapping funds by jots contract
-     */
-    mapping(address => uint256) private _fundsByJotContract;
-
-    /**
-     * @notice the address of the Protocol Router
-     */
-    address public syntheticProtocolRouterAddress;
-
-    /**
-     * @notice the protocol parameters
-     */
-    ProtocolParameters public protocol;
-
-    /**
-     * @notice funding token address
-     */
+    /// @notice the address of the funding token used
     address public fundingTokenAddress;
 
+    /// @notice the total value in funding token available to redeem
+    uint256 public totalLiquidityToRedeeem;
+
+    /// @notice the total value in jots available to redeem
+    uint256 public jotsToRedeem;
+
+    /// @dev the initializer modifier is to lock the implementation initialization
+    constructor() initializer {} // solhint-disable-line
+
     /**
-     * @notice events
+     * @dev initialize the proxy contract
+     * @param jot_ the address of the jot corresponding token
+     * @param fundingToken_ the address of the funding token
      */
+    function initialize(
+        address jot_,
+        address fundingToken_,
+        address syntheticCollection_
+    ) external initializer {
+        require(jot_ != address(0), "Invalid Jot token");
+        require(fundingToken_ != address(0), "Invalid funding token");
 
-    event BuyBackFundsReceived(address indexed jotsContract, uint256 funds);
+        jotAddress = jot_;
+        fundingTokenAddress = fundingToken_;
 
-
-    constructor() {
+        // setup the roles for the access control
+        _setupRole(MANAGER, syntheticCollection_);
     }
 
-    function addRedemptionToPool(address jotContract_, uint256 funds_) public {
-        _fundsByJotContract[jotContract_] = funds_;
-        emit BuyBackFundsReceived(jotContract_, funds_);
+    /**
+     * @dev setter for redeemable values updates (only from collection manager)
+     * @param liquidity_ the increase on redeemable liquidity
+     * @param jots_ the increase on redeemable jots
+     */
+    function addRedeemableBalance(uint256 liquidity_, uint256 jots_) external onlyRole(MANAGER) {
+        totalLiquidityToRedeeem += liquidity_;
+        jotsToRedeem += jots_;
     }
-
 }
