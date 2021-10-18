@@ -133,10 +133,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     event LiquidityRemoved(uint256 jotAmount, uint256 fundingAmount);
 
-    constructor(
-        address randomConsumerAddress, 
-        address validatorAddress
-    ) {
+    constructor(address randomConsumerAddress, address validatorAddress) {
         _randomConsumerAddress = randomConsumerAddress;
         _validatorAddress = validatorAddress;
     }
@@ -448,29 +445,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
-     * @dev remove liquidity on exitProtocol
-     */
-    function _removeLiquidityOnExitProtocol(
-        uint256 tokenId, address caller
-    ) internal {
-
-        uint256 jotLiquidity;
-        uint256 fundingLiquidity;
-
-        (jotLiquidity, fundingLiquidity) = _removeLiquidityFromPool(tokenId);
-
-         // Burn received jots
-        if(jotLiquidity > 0) {
-            Jot(jotAddress).burn(address(this), jotLiquidity);
-        }
-
-        if(fundingLiquidity > 0) {
-            IERC20(fundingTokenAddress).transfer(caller, fundingLiquidity);    
-        }
-        
-    } 
-
-    /**
      * @notice Remove liquidity from pool only callable by AuctionsManager
      */
     function removeLiquidityFromPool(uint256 tokenId) external onlyRole(AUCTION_MANAGER) {
@@ -479,7 +453,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 jotLiquidity;
         uint256 fundingLiquidity;
 
-        (jotLiquidity, fundingLiquidity) =_removeLiquidityFromPool(tokenId);
+        (jotLiquidity, fundingLiquidity) = _removeLiquidityFromPool(tokenId);
         tokens[tokenId].ownerSupply += jotLiquidity;
         // transfer funding token balance to caller
         IERC20(fundingTokenAddress).transfer(tokenOwner, fundingLiquidity);
@@ -724,25 +698,92 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
-     * @notice allows to exit the protocol (retrieve the token)
+     * @notice Buy token back.
+     * Caller needs to pre-approve a transaction worth the amount
+     * returned by the getRequiredFundingForBuyBack(uint256 tokenId) function
      */
-    function exitProtocol(uint256 tokenId) public {
-        TokenData storage token = tokens[tokenId];
-        uint256 ownerSupply = token.ownerSupply;
-
+    function buyBack(uint256 tokenId) public {
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
-        require(token.state == State.VERIFIED, "Only verified tokens");
-        require(ownerSupply >= ProtocolConstants.JOT_SUPPLY, "Insufficient jot supply in the token");
+        require(!lockedNFT(tokenId), "Token is locked!");
+
+        // execute the buyback if needed and remove the liquidity
+        _executeBuyBack(tokenId);
+
+        // exit the protocol
+        _exitProtocol(tokenId);
+    }
+
+    /**
+     * @dev helper for the buyback function
+     */
+    function _executeBuyBack(uint256 tokenId) internal {
+        TokenData storage token = tokens[tokenId];
+
+        // buyback fund address
+        address buybackAddress = address(0);
+
+        // get available liquidity (owner + selling + liquidity + uniswap )
+        (uint256 jotLiquidity, uint256 fundingLiquidity) = _removeLiquidityFromPool(tokenId);
+
+        // TODO: get PerpetualPoolLite.getLiquidity
+        //uint256 perpetualPoolLiteLiquidity;
+
+        uint256 total = token.ownerSupply + token.sellingSupply + token.liquiditySupply + jotLiquidity;
+
+        (uint256 fundingLeft, uint256 buybackAmount) = _getFundingLeftAndBuybackAmount(
+            total,
+            fundingLiquidity
+        );
+
+        // burn the jots
+        Jot(jotAddress).burn(address(this), total);
+
+        if (buybackAmount > 0) {
+            IERC20(fundingTokenAddress).transferFrom(msg.sender, buybackAddress, buybackAmount);
+        }
+
+        if (fundingLeft > 0) {
+            IERC20(fundingTokenAddress).transfer(msg.sender, fundingLeft);
+        }
+    }
+
+    /**
+     * @dev helper for the execute buyback function
+     */
+    function _getFundingLeftAndBuybackAmount(uint256 total_, uint256 fundingLiquidity_)
+        internal
+        view
+        returns (uint256 fundingLeft, uint256 buybackAmount)
+    {
+        // funding left (outstanding amount from uniswap)
+        fundingLeft = (ProtocolConstants.JOT_SUPPLY >= total_) ? 0 : total_ - ProtocolConstants.JOT_SUPPLY;
+
+        // if user has enough balance the buyback amount is 0
+        buybackAmount = fundingLeft == 0
+            ? ((ProtocolConstants.JOT_SUPPLY - total_) * buyBackPrice) / 10**18
+            : 0;
+
+        // update amounts
+        if (buybackAmount == 0) {
+            fundingLeft += fundingLiquidity_;
+        } else if (buybackAmount >= fundingLiquidity_) {
+            buybackAmount -= fundingLiquidity_;
+        } else {
+            fundingLeft += fundingLiquidity_ - buybackAmount;
+        }
+    }
+
+    /**
+     * @dev allows to exit the protocol (retrieve the token)
+     */
+    function _exitProtocol(uint256 tokenId) internal {
+        TokenData storage token = tokens[tokenId];
 
         // increase nonce to avoid double verification
         uint256 currentNonce = nonces[token.originalTokenID];
         ownersByNonce[tokenId][currentNonce] = msg.sender;
         nonces[token.originalTokenID] = currentNonce + 1;
 
-        _removeLiquidityOnExitProtocol(tokenId, msg.sender);
-
-        // burn the jots
-        Jot(jotAddress).burn(address(this), ownerSupply);
         // Burn synthetic token
         safeBurn(tokenId);
 
@@ -752,77 +793,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
-     * @notice Buy token back. 
-     * Caller needs to pre-approve a transaction worth the amount
-     * returned by the getRequiredFundingForBuyBack(uint256 tokenId) function
+     * @notice returns funds owned by token, in Jots and Funding, in contract and in UniSwap
      */
-    function buyBack(uint256 tokenId) public {
-        address buybackAddress = address(this);
-        
-        //requirements
-        require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
-        require(!lockedNFT(tokenId), "Token is locked!");
-        _executeBuyBack(tokenId);
-    }
-
-    /**
-     * @notice buyBack function
-     */
-    function _executeBuyBack(uint256 tokenId) internal returns(uint256) {
-        //Buyback fund address
-        address buybackAddress = address(0);
-        
-        
-        // get available liquidity (owner + selling + liquidity + uniswap )
-        uint256 jotLiquidity;
-        uint256 fundingLiquidity;
-        (jotLiquidity, fundingLiquidity) = _removeLiquidityFromPool(tokenId);
-
-        // TODO: get PerpetualPoolLite.getLiquidity
-        //uint256 perpetualPoolLiteLiquidity;            
-
-        uint256 ownerSupply = tokens[tokenId].ownerSupply;
-        uint256 sellingSupply = tokens[tokenId].sellingSupply;
-        uint256 liquiditySupply = tokens[tokenId].liquiditySupply;
-        uint256 total = ownerSupply + sellingSupply + liquiditySupply + jotLiquidity;
-
-        
-
-         // Get required funding required and execute transfer and buyback
-        uint256 buybackAmount = (ProtocolConstants.JOT_SUPPLY - total) * buyBackPrice/10**18;
-        uint256 fundingLeft = 0;
-        if buybackAmount >= fundingLiquidity {
-            buybackAmount -= fundingLiquidity;
-        } else {
-            buybackAmount = 0;
-            fundingLeft = fundingLiquidity-buybackAmount;
-        }
-
-
-        IERC20(fundingTokenAddress).transferFrom(msg.sender, buybackAddress, buybackAmount);
-
-        // burn the jots
-        //Jot(jotAddress).burn(address(this), total);
-
-        // Update balances
-        tokens[tokenId].ownerSupply = 0;
-        tokens[tokenId].sellingSupply = 0;
-        tokens[tokenId].liquiditySupply = 0;
-        // TODO: check that liquidityTokenBalance is correct
-        tokens[tokenId].liquidityTokenBalance = 0;
-        tokens[tokenId].UniswapFundingLiquidity -= fundingLiquidity;
-        tokens[tokenId].UniswapJotLiquidity -= jotLiquidity;
-
-        //send user funds to buyback pool        
-        if(fundingLeft > 0) {
-            IERC20(fundingTokenAddress).transfer(msg.sender, fundingLeft);
-        }
-    }
-
-    /**
-    * @notice returns funds owned by token, in Jots and Funding, in contract and in UniSwap
-     */
-    function getAvailableBuyback(uint256 tokenId) public returns (uint256, uint256) {
+    function getAvailableBuyback(uint256 tokenId) public view returns (uint256, uint256) {
         // Funds already in contract
         uint256 ownerSupply = tokens[tokenId].ownerSupply;
         uint256 sellingSupply = tokens[tokenId].sellingSupply;
@@ -840,7 +813,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 totalJot = ownerSupply + sellingSupply + liquiditySupply + uint256(jotReserves);
         uint256 totalFunding = uint256(fundingReserves);
         return (totalJot, totalFunding);
-
     }
 
     /**
@@ -962,7 +934,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 amount = (buyAmount * tokens[tokenId].fractionPrices);
         return amount;
     }
-/*
+
+    /*
     function getFundingTokenAllowance() public view returns (uint256) {
         return IERC20(fundingTokenAddress).allowance(msg.sender, address(this));
     }
