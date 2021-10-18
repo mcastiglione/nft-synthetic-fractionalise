@@ -71,7 +71,7 @@ contract RedemptionPool is Initializable, AccessControl {
         totalLiquidityToRedeeem -= amountToGive;
         jotsToRedeem -= amountOfJots_;
 
-        IERC20(fundingTokenAddress).transfer(msg.sender, amountOfJots_);
+        IERC20(fundingTokenAddress).transfer(msg.sender, amountToGive);
         Jot(jotAddress).burnFrom(managerAddress, amountOfJots_);
     }
 }
