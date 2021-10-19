@@ -706,7 +706,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         view
         returns (uint256 buybackAmount, uint256 fundingLeft)
     {
-        require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
         require(!lockedNFT(tokenId), "Token is locked!");
 
         (uint256 total, uint256 fundingLiquidity) = getAvailableJotsForBuyback(tokenId);
