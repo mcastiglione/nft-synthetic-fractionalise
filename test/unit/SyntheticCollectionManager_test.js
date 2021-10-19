@@ -83,28 +83,28 @@ describe('SyntheticCollectionManager', async function () {
     });
   });
 
-  describe('depositJots', async () => {
+  describe('depositJotTokens', async () => {
     it('Non existent token ID', async () => {
       const tokenCounter = (await manager.tokenCounter()).toNumber();
-      await expect(manager.depositJots(tokenCounter + 1, 300)).to.be.revertedWith(
+      await expect(manager.depositJotTokens(tokenCounter + 1, 300)).to.be.revertedWith(
         'ERC721: owner query for nonexistent token'
       );
     });
 
     it('Amount is zero', async () => {
       await router.verifyNFT(NFT, tokenId);
-      await expect(manager.depositJots(tokenId, 0)).to.be.revertedWith("Amount can't be zero!");
+      await expect(manager.depositJotTokens(tokenId, 0)).to.be.revertedWith("Amount can't be zero!");
     });
 
     it('Caller is not token owner', async () => {
       await router.verifyNFT(NFT, tokenId);
-      await expect(manager.connect(address1).depositJots(tokenId, 10)).to.be.revertedWith(
+      await expect(manager.connect(address1).depositJotTokens(tokenId, 10)).to.be.revertedWith(
         'you are not the owner of the NFT!'
       );
     });
 
     it('Token is not verified', async () => {
-      await expect(manager.depositJots(tokenId, 10)).to.be.revertedWith('Token is locked!');
+      await expect(manager.depositJotTokens(tokenId, 10)).to.be.revertedWith('Token is locked!');
     });
 
     it('Deposit more than Jot Supply Limit', async () => {
@@ -114,7 +114,7 @@ describe('SyntheticCollectionManager', async function () {
 
       await router.verifyNFT(NFT, tokenId);
 
-      await expect(manager.depositJots(tokenId, newValue)).to.be.revertedWith(
+      await expect(manager.depositJotTokens(tokenId, newValue)).to.be.revertedWith(
         "You can't deposit more than the Jot Supply limit"
       );
     });
@@ -126,7 +126,7 @@ describe('SyntheticCollectionManager', async function () {
 
       await router.verifyNFT(NFT, tokenId);
 
-      await manager.depositJots(tokenId, amount);
+      await manager.depositJotTokens(tokenId, amount);
     });
 
     it('Deposit more than allowance', async () => {
@@ -136,7 +136,7 @@ describe('SyntheticCollectionManager', async function () {
 
       await router.verifyNFT(NFT, tokenId);
 
-      await expect(manager.depositJots(tokenId, 5000)).to.revertedWith('ERC20: transfer amount exceeds balance');
+      await expect(manager.depositJotTokens(tokenId, 5000)).to.revertedWith('ERC20: transfer amount exceeds balance');
     });
 
     it('Verify that the SyntheticCollectionManager balance increases correctly', async () => {
@@ -150,7 +150,7 @@ describe('SyntheticCollectionManager', async function () {
 
       await router.verifyNFT(NFT, tokenId);
 
-      await manager.depositJots(tokenId, amount);
+      await manager.depositJotTokens(tokenId, amount);
 
       const afterBalance = (await manager.tokens(tokenId)).ownerSupply.toNumber();
 
@@ -397,7 +397,7 @@ describe('SyntheticCollectionManager', async function () {
       await jot.approve(managerAddress, parseAmount('100000'));
       await fundingToken.mint(owner.address, parseAmount('100000'));
       await fundingToken.approve(managerAddress, parseAmount('100000'));
-      await manager.depositJots(tokenId, parseAmount('1000'));
+      await manager.depositJotTokens(tokenId, parseAmount('1000'));
       await manager.increaseSellingSupply(tokenId, parseAmount('1000'));
       await manager.buyJotTokens(tokenId, amount);
       const liquiditySold = await manager.getliquiditySold(tokenId);
@@ -420,7 +420,7 @@ describe('SyntheticCollectionManager', async function () {
       await fundingToken.mint(owner.address, parseAmount('100000'));
       await fundingToken.approve(managerAddress, parseAmount('100000'));
 
-      await manager.depositJots(tokenId, parseAmount('1000'));
+      await manager.depositJotTokens(tokenId, parseAmount('1000'));
 
       await manager.increaseSellingSupply(tokenId, parseAmount('1000'));
 
@@ -515,7 +515,7 @@ describe('SyntheticCollectionManager', async function () {
       // mint and approve and deposit remaining jots to reach JOTS_SUPPLY (1000)
       await jot.mint(owner.address, parseAmount('1000'));
       await jot.approve(manager.address, parseAmount('1000'));
-      await manager.depositJots(tokenID, parseAmount('1000'));
+      await manager.depositJotTokens(tokenID, parseAmount('1000'));
 
       const managerAfterDepositBalance = parseReverse(await jot.balanceOf(managerAddress));
 
@@ -565,7 +565,7 @@ describe('SyntheticCollectionManager', async function () {
       // mint and approve and deposit remaining jots to reach JOTS_SUPPLY (1000)
       await jot.mint(owner.address, parseAmount('1000'));
       await jot.approve(manager.address, parseAmount('1000'));
-      await manager.depositJots(tokenID, parseAmount('1000'));
+      await manager.depositJotTokens(tokenID, parseAmount('1000'));
 
       // Now exit protocol
       await manager.exitProtocol(tokenID);

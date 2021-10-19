@@ -136,6 +136,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         uint256 priceFraction,
         RegistrationMetadata calldata registrationMetadata
     ) external {
+        require(priceFraction > 0, "Price fraction can't be zero");
         require(collection != address(0), "Invalid collection");
 
         address collectionAddress;

@@ -192,19 +192,17 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function reassignNFT(uint256 nftId_, address newOwner_) external onlyRole(AUCTION_MANAGER) {
         string memory metadata = ISyntheticNFT(erc721address).tokenURI(nftId_);
 
-        TokenData storage data = tokens[nftId_];
-
-        // the auction could only be started if ownerSupply is 0
-        assert(data.ownerSupply == 0);
+        TokenData storage token = tokens[nftId_];
 
         // Get original token ID
-        uint256 originalID = tokens[nftId_].originalTokenID;
+        uint256 originalID = token.originalTokenID;
 
         // Burn synthetic NFT
         ISyntheticNFT(erc721address).safeBurn(nftId_);
 
         // Get new synthetic ID
         uint256 newSyntheticID = tokenCounter.current();
+        tokenCounter.increment();
 
         // Mint new one
         ISyntheticNFT(erc721address).safeMint(newOwner_, newSyntheticID, metadata);
@@ -235,174 +233,145 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
-     * @notice First
-     * it updates counter syntheticID++. Then:
-     * • generateSyntheticNFT(address, id)
-     * • Interacts with JOT contract for that address and:
-     * (a) Mints JotSupply (governance parameter)
-     * (b) Register ownerSupply (DO NOT SEND HIM/HER)
-     * (c) Register sellingSupply = (JotSupply-supplyToKeep)/2
-     * (d) Register soldSupply = 0
-     * (e) Register liquiditySupply = (JotSupply-supplyToKeep)/2.
-     * (f) Register liquiditySold = 0
-     *
+     * @dev through this the router can register tokens
+     * @param tokenId_ the original token id
+     * @param supplyToKeep_ the supply that the owner decides to keep
+     * @param priceFraction_ the price fraction for buying
+     * @param nftOwner_ the owner of the synthetic nft
+     * @param metadata_ the metadata (the ipfs url) of the nft
+     * @return syntheticId the id of the newly registered token
      */
     function register(
-        uint256 tokenId,
-        uint256 supplyToKeep,
-        uint256 priceFraction,
-        address nftOwner,
-        string memory metadata
-    ) public onlyRole(ROUTER) returns (uint256) {
-        require(priceFraction > 0, "priceFraction can't be zero");
-        require(isSyntheticNFTCreated(tokenId) == false, "Synthetic NFT already generated!");
+        uint256 tokenId_,
+        uint256 supplyToKeep_,
+        uint256 priceFraction_,
+        address nftOwner_,
+        string memory metadata_
+    ) public onlyRole(ROUTER) returns (uint256 syntheticId) {
+        require(isSyntheticNFTCreated(tokenId_), "Synthetic NFT already generated!");
 
-        uint256 syntheticID = tokenCounter.current();
+        syntheticId = tokenCounter.current();
+        tokenCounter.increment();
 
-        ISyntheticNFT(erc721address).safeMint(nftOwner, syntheticID, metadata);
+        ISyntheticNFT(erc721address).safeMint(nftOwner_, syntheticId, metadata_);
 
         Jot(jotAddress).mint(address(this), ProtocolConstants.JOT_SUPPLY);
 
-        uint256 sellingSupply = (ProtocolConstants.JOT_SUPPLY - supplyToKeep) / 2;
-        uint256 liquiditySupply = (ProtocolConstants.JOT_SUPPLY - supplyToKeep) / 2;
+        uint256 sellingSupply = (ProtocolConstants.JOT_SUPPLY - supplyToKeep_) / 2;
+        uint256 liquiditySupply = (ProtocolConstants.JOT_SUPPLY - supplyToKeep_) / 2;
 
         TokenData memory data = TokenData({
-            originalTokenID: tokenId,
-            ownerSupply: supplyToKeep,
+            originalTokenID: tokenId_,
+            ownerSupply: supplyToKeep_,
             sellingSupply: sellingSupply,
             soldSupply: 0,
             liquiditySupply: liquiditySupply,
             liquiditySold: 0,
-            fractionPrices: priceFraction,
+            fractionPrices: priceFraction_,
             lastFlipTime: 0,
             liquidityTokenBalance: 0,
-            UniswapJotLiquidity: 0,
-            UniswapFundingLiquidity: 0,
+            uniswapJotLiquidity: 0,
+            uniswapFundingLiquidity: 0,
             state: State.NEW
         });
 
-        tokens[syntheticID] = data;
+        tokens[syntheticId] = data;
 
         // lock the nft and make it auctionable
-        if (supplyToKeep == 0) {
-            AuctionsManager(auctionsManagerAddress).whitelistNFT(syntheticID);
+        if (supplyToKeep_ == 0) {
+            AuctionsManager(auctionsManagerAddress).whitelistNFT(syntheticId);
         }
-
-        tokenCounter.increment();
-
-        return syntheticID;
     }
 
     /**
-     * @notice allows the caller to buy jots using the Funding token
+     * @notice allows the caller to buy jots using the funding token
+     * @param tokenId_ the id of the synthetic nft
+     * @param amountToBuy_ the amount of jots to buy
      */
-    function buyJotTokens(uint256 tokenId, uint256 buyAmount) public {
-        TokenData storage token = tokens[tokenId];
-        require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
-        require(!lockedNFT(tokenId), "Token is locked!");
-        require(buyAmount > 0, "Buy amount can't be zero!");
+    function buyJotTokens(uint256 tokenId_, uint256 amountToBuy_) external {
+        TokenData storage token = tokens[tokenId_];
+        require(ISyntheticNFT(erc721address).exists(tokenId_), "Token not registered");
 
-        // Calculate amount left
-        uint256 amountLeft = token.sellingSupply - token.soldSupply;
+        uint256 amountToPay = token.buyJotTokens(amountToBuy_);
 
-        // If amount left is lesser than buying amount
-        // then buying amount = amount left
-        if (amountLeft < buyAmount) {
-            buyAmount = amountLeft;
-        }
-
-        uint256 amount = (buyAmount * token.fractionPrices) / 10**18;
-        // Can't sell zero tokens
-        require(amount != 0, "No tokens left!");
-
-        // Transfer funding tokens
-        IERC20(fundingTokenAddress).transferFrom(msg.sender, address(this), amount);
-
-        // Transfer Jots
-        IJot(jotAddress).transfer(msg.sender, buyAmount);
-
-        //Increase sold supply (amount in token) and liquidity sold (amount in ether)
-        token.soldSupply += buyAmount;
-        token.liquiditySold += amount;
+        // make the transfers
+        IERC20(fundingTokenAddress).transferFrom(msg.sender, address(this), amountToPay);
+        IJot(jotAddress).transfer(msg.sender, amountToBuy_);
     }
 
-    function depositJots(uint256 tokenId, uint256 amount) public {
-        require(amount > 0, "Amount can't be zero!");
-        ISyntheticNFT nft = ISyntheticNFT(erc721address);
-        address nftOwner = nft.ownerOf(tokenId);
-        require(nftOwner == msg.sender, "you are not the owner of the NFT!");
-        require(!lockedNFT(tokenId), "Token is locked!");
-        uint256 result = tokens[tokenId].ownerSupply + amount;
-        require(result <= ProtocolConstants.JOT_SUPPLY, "You can't deposit more than the Jot Supply limit");
-        IJot(jotAddress).transferFrom(msg.sender, address(this), amount);
-        tokens[tokenId].ownerSupply += amount;
+    /**
+     * @notice allows the caller to deposit jots
+     * @param tokenId_ the id of the synthetic nft
+     * @param amountToDeposit_ the amount of jots to deposit
+     */
+    function depositJotTokens(uint256 tokenId_, uint256 amountToDeposit_) external {
+        TokenData storage token = tokens[tokenId_];
+        require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner can deposit");
+
+        token.depositJotTokens(amountToDeposit_);
+
+        // transfer the balance (the Jot is ours, don't need to check)
+        IJot(jotAddress).transferFrom(msg.sender, address(this), amountToDeposit_);
     }
 
-    function withdrawJots(uint256 tokenId, uint256 amount) public {
-        ISyntheticNFT nft = ISyntheticNFT(erc721address);
-        address nftOwner = nft.ownerOf(tokenId);
-        require(nftOwner == msg.sender, "you are not the owner of the NFT!");
-        require(!lockedNFT(tokenId), "Token is locked!");
-        require(amount <= tokens[tokenId].ownerSupply, "Not enough balance");
-        tokens[tokenId].ownerSupply -= amount;
-        IJot(jotAddress).transfer(msg.sender, amount);
-        if (tokens[tokenId].ownerSupply == 0) {
-            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId);
+    function withdrawJotTokens(uint256 tokenId_, uint256 amountToWithdraw_) public {
+        TokenData storage token = tokens[tokenId_];
+        require(!lockedNFT(tokenId_), "Token is locked!");
+        require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner can withdraw");
+
+        require(amountToWithdraw_ <= token.ownerSupply, "Not enough balance");
+        token.ownerSupply -= amountToWithdraw_;
+
+        IJot(jotAddress).transfer(msg.sender, amountToWithdraw_);
+        if (token.ownerSupply == 0) {
+            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId_);
         }
     }
 
     /**
      * @notice increase selling supply for a given NFT
-     * caller must be the owner of the NFT
+     * @dev caller must be the owner of the NFT
+     * @param tokenId_ the id of the synthetic nft
+     * @param amount_ the amount of jots to transfer from supply
      */
+    function increaseSellingSupply(uint256 tokenId_, uint256 amount_) public {
+        TokenData storage token = tokens[tokenId_];
+        require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner can increase");
 
-    function increaseSellingSupply(uint256 tokenId, uint256 amount) public {
-        TokenData storage token = tokens[tokenId];
-        require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
-        require(amount > 0, "Amount can't be zero!");
-        require(!lockedNFT(tokenId), "Token is locked!");
-
-        token.increaseSellingSupply(amount);
+        // delegate to the external library
+        token.increaseSellingSupply(amount_);
 
         // lock the nft and make it auctionable
         if (token.ownerSupply == 0) {
-            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId);
+            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId_);
         }
     }
 
     /**
      * @notice decrease selling supply for a given NFT
-     * caller must be the owner of the NFT
+     * @dev caller must be the owner of the NFT
+     * @param tokenId_ the id of the synthetic nft
+     * @param amount_ the amount of jots to transfer to supply
      */
-    function decreaseSellingSupply(uint256 tokenId, uint256 amount) public {
-        TokenData storage token = tokens[tokenId];
+    function decreaseSellingSupply(uint256 tokenId_, uint256 amount_) public {
+        TokenData storage token = tokens[tokenId_];
 
-        require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
-        require(amount > 0, "Amount can't be zero!");
+        require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner allowed");
 
-        require(!lockedNFT(tokenId), "Token is locked!");
-
-        require(token.liquiditySupply >= amount / 2, "You do not have enough liquidity left");
-        require(token.sellingSupply >= amount / 2, "You do not have enough selling supply left");
-
-        token.ownerSupply += amount;
-        token.sellingSupply -= amount / 2;
-        token.liquiditySupply -= amount / 2;
+        token.decreaseSellingSupply(amount_);
     }
 
     /**
      * @notice update the price of a fraction for a given NFT
-     * caller must be the owner
+     * @dev caller must be the owner of the NFT
+     * @param tokenId_ the id of the synthetic nft
+     * @param newFractionPrice_ the new value of the fraction price
      */
-    function updatePriceFraction(uint256 tokenId, uint256 newFractionPrice) public {
-        require(ISyntheticNFT(erc721address).exists(tokenId), "Token not registered");
-        require(newFractionPrice > 0, "Fraction price must be greater than zero");
-        require(msg.sender == getSyntheticNFTOwner(tokenId), "You are not the owner of the NFT!");
-        require(!lockedNFT(tokenId), "Token is locked!");
+    function updatePriceFraction(uint256 tokenId_, uint256 newFractionPrice_) public {
+        TokenData storage token = tokens[tokenId_];
+        require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner allowed");
 
-        TokenData storage token = tokens[tokenId];
-
-        token.fractionPrices = newFractionPrice;
+        token.updatePriceFraction(newFractionPrice_);
     }
 
     /**
@@ -412,7 +381,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
 
         TokenData storage token = tokens[tokenId];
-        require(tokens[tokenId].soldSupply > 0, "soldSupply is zero");
+        require(token.soldSupply > 0, "soldSupply is zero");
         uint256 liquiditySupply = token.liquiditySupply;
         uint256 liquiditySold = token.liquiditySold;
 
@@ -437,20 +406,20 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         );
 
         if (amountB < liquiditySold) {
-            uint256 funding_remaining = liquiditySold - amountB;
+            uint256 fundingRemaining = liquiditySold - amountB;
 
-            IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, funding_remaining);
-            IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(funding_remaining);
+            IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, fundingRemaining);
+            IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(fundingRemaining);
         }
 
         unchecked {
-            tokens[tokenId].liquiditySupply -= amountA;
-            tokens[tokenId].liquiditySold -= liquiditySold;
-            tokens[tokenId].sellingSupply -= amountA;
-            tokens[tokenId].soldSupply -= liquiditySold;
-            tokens[tokenId].liquidityTokenBalance += liquidity;
-            tokens[tokenId].UniswapJotLiquidity += amountA;
-            tokens[tokenId].UniswapFundingLiquidity += amountB;
+            token.liquiditySupply -= amountA;
+            token.liquiditySold -= liquiditySold;
+            token.sellingSupply -= amountA;
+            token.soldSupply -= liquiditySold;
+            token.liquidityTokenBalance += liquidity;
+            token.uniswapJotLiquidity += amountA;
+            token.uniswapFundingLiquidity += amountB;
         }
     }
 
@@ -476,8 +445,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(Jot(jotAddress).uniswapV2Pair());
 
         // get added liquidity
-        uint256 jotLiquidity = token.UniswapJotLiquidity;
-        uint256 fundingLiquidity = token.UniswapFundingLiquidity;
+        uint256 jotLiquidity = token.uniswapJotLiquidity;
+        uint256 fundingLiquidity = token.uniswapFundingLiquidity;
         uint256 liquidityTokenBalance = token.liquidityTokenBalance;
 
         if (liquidityTokenBalance == 0 || jotLiquidity == 0 || fundingLiquidity == 0) {
@@ -855,7 +824,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     function safeBurn(uint256 tokenId) private {
         ISyntheticNFT(erc721address).safeBurn(tokenId);
-        tokenCounter.decrement();
     }
 
     function setMetadata(uint256 tokenId, string memory metadata) public {
@@ -911,11 +879,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
-     * @notice Get the owner of the NFT
+     * @notice get the owner of the NFT
+     * @param tokenId_ the id of the NFT
      */
-    function getSyntheticNFTOwner(uint256 tokenId) public view returns (address) {
-        //TODO: get owner from Oracle
-        return IERC721(erc721address).ownerOf(tokenId);
+    function getSyntheticNFTOwner(uint256 tokenId_) public view returns (address) {
+        return IERC721(erc721address).ownerOf(tokenId_);
     }
 
     /**
@@ -970,7 +938,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function lockedNFT(uint256 tokenId) public view returns (bool) {
         TokenData storage token = tokens[tokenId];
-        return !isVerified(tokenId) || token.ownerSupply == 0;
+        return token.state != State.VERIFIED || token.ownerSupply == 0;
     }
 
     /**
