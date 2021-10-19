@@ -1,12 +1,9 @@
-const { network } = require('hardhat');
-const { networkConfig } = require('../../helper-hardhat-config');
-
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
-  const chainId = await getChainId();
 
   // get the previously deployed contracts
+  const syntheticTokenLibrary = await ethers.getContract('SyntheticTokenLibrary');
   const randomConsumer = await ethers.getContract('RandomNumberConsumer');
   const validator = await ethers.getContract('PolygonValidatorOracle');
 
@@ -14,8 +11,11 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     log: true,
     args: [randomConsumer.address, validator.address],
+    libraries: {
+      SyntheticTokenLibrary: syntheticTokenLibrary.address,
+    },
   });
 };
 
 module.exports.tags = ['synthetic_manager_implementation'];
-module.exports.dependencies = ['chainlink_random_consumer', 'validator_oracle'];
+module.exports.dependencies = ['chainlink_random_consumer', 'validator_oracle', 'synthetic_token_library'];

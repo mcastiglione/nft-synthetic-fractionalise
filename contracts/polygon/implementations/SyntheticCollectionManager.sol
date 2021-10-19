@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../libraries/SyntheticTokenLibrary.sol";
 import "../extensions/IERC20ManagedAccounts.sol";
 import "../chainlink/RandomNumberConsumer.sol";
 import "../chainlink/PolygonValidatorOracle.sol";
@@ -31,6 +32,7 @@ import {AuctionsManager} from "../auctions/AuctionsManager.sol";
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
+    using SyntheticTokenLibrary for TokenData;
 
     /// @notice role of the router contract
     bytes32 public constant ROUTER = keccak256("ROUTER");
@@ -360,10 +362,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(amount > 0, "Amount can't be zero!");
         require(!lockedNFT(tokenId), "Token is locked!");
 
-        require(token.ownerSupply >= amount, "You do not have enough tokens left");
-        token.ownerSupply -= amount;
-        token.sellingSupply += amount / 2;
-        token.liquiditySupply += amount / 2;
+        token.increaseSellingSupply(amount);
 
         // lock the nft and make it auctionable
         if (token.ownerSupply == 0) {
@@ -456,16 +455,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
-     * @notice Remove liquidity from pool only callable by AuctionsManager
+     * @dev remove liquidity from pool only callable by AuctionsManager
      */
     function removeLiquidityFromPool(uint256 tokenId) external onlyRole(AUCTION_MANAGER) {
         address tokenOwner = ISyntheticNFT(erc721address).ownerOf(tokenId);
 
-        uint256 jotLiquidity;
-        uint256 fundingLiquidity;
-
-        (jotLiquidity, fundingLiquidity) = _removeLiquidityFromPool(tokenId);
+        (uint256 jotLiquidity, uint256 fundingLiquidity) = _removeLiquidityFromPool(tokenId);
         tokens[tokenId].ownerSupply += jotLiquidity;
+
         // transfer funding token balance to caller
         IERC20(fundingTokenAddress).transfer(tokenOwner, fundingLiquidity);
     }
@@ -631,9 +628,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
-     * @notice This method calls chainlink oracle and
-     * verifies if the NFT has been locked on NFTVaultManager. In addition
-     * gets the metadata of the NFT
+     * @notice this method calls chainlink oracle and
+     *         verifies if the NFT has been locked on NFTVaultManager. In addition
+     *         gets the metadata of the NFT
      */
     function verify(uint256 tokenId) external {
         TokenData storage token = tokens[tokenId];

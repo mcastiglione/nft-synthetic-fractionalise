@@ -108,7 +108,7 @@ describe('SyntheticCollectionManager', async function () {
     });
 
     it('Deposit more than Jot Supply Limit', async () => {
-      const JOT_SUPPLY = await manager.jotsSupply();
+      const JOT_SUPPLY = web3.utils.toWei('10000');
       const value = parseInt(parseReverse(JOT_SUPPLY)) + 10;
       const newValue = parseAmount(value.toString());
 
