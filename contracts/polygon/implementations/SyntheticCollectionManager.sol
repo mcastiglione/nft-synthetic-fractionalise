@@ -22,6 +22,7 @@ import "./JotPool.sol";
 import "./RedemptionPool.sol";
 import "./Structs.sol";
 import "./Enums.sol";
+import "hardhat/console.sol";
 
 import {AuctionsManager} from "../auctions/AuctionsManager.sol";
 
@@ -46,9 +47,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /// @notice role of the polygon validator chainlink oracle for verifications
     bytes32 public constant VALIDATOR_ORACLE = keccak256("VALIDATOR_ORACLE");
 
-    // the price to buyback an NFT (buying Jots) and exit the protocol
-    uint256 public buybackPrice;
-
     // address of the vrf chainlink oracle contract
     address private immutable _randomConsumerAddress;
 
@@ -56,6 +54,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     address private immutable _validatorAddress;
 
     Counters.Counter public tokenCounter;
+
+    // the price to buyback an NFT (buying Jots) and exit the protocol
+    uint256 public buybackPrice;
 
     /// @notice the address of the auctions manager fabric contract
     address public auctionsManagerAddress;
@@ -248,7 +249,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address nftOwner_,
         string memory metadata_
     ) public onlyRole(ROUTER) returns (uint256 syntheticId) {
-        require(isSyntheticNFTCreated(tokenId_), "Synthetic NFT already generated!");
+        require(!isSyntheticNFTCreated(tokenId_), "Synthetic NFT already generated!");
 
         syntheticId = tokenCounter.current();
         tokenCounter.increment();
@@ -385,16 +386,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 liquiditySupply = token.liquiditySupply;
         uint256 liquiditySold = token.liquiditySold;
 
+        // approve the transfers
         IJot(jotAddress).approve(_swapAddress, liquiditySupply);
-
         IERC20(fundingTokenAddress).approve(_swapAddress, liquiditySold);
 
-        uint256 amountA;
-        uint256 amountB;
-        uint256 liquidity;
-
         // add the liquidity
-        (amountA, amountB, liquidity) = uniswapV2Router.addLiquidity(
+        (uint256 amountA, uint256 amountB, uint256 liquidity) = uniswapV2Router.addLiquidity(
             jotAddress,
             fundingTokenAddress,
             liquiditySupply,
@@ -412,15 +409,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(fundingRemaining);
         }
 
-        unchecked {
-            token.liquiditySupply -= amountA;
-            token.liquiditySold -= liquiditySold;
-            token.sellingSupply -= amountA;
-            token.soldSupply -= liquiditySold;
-            token.liquidityTokenBalance += liquidity;
-            token.uniswapJotLiquidity += amountA;
-            token.uniswapFundingLiquidity += amountB;
-        }
+        token.liquiditySupply -= amountA;
+        token.liquiditySold -= liquiditySold;
+        token.sellingSupply -= amountA;
+        token.soldSupply -= liquiditySold;
+        token.liquidityTokenBalance += liquidity;
+        token.uniswapJotLiquidity += amountA;
+        token.uniswapFundingLiquidity += amountB;
     }
 
     /**
@@ -796,6 +791,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         } else if (buybackAmount >= fundingLiquidity_) {
             buybackAmount -= fundingLiquidity_;
         } else {
+            buybackAmount = 0;
             fundingLeft += fundingLiquidity_ - buybackAmount;
         }
     }

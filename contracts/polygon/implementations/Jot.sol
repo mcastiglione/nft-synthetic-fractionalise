@@ -46,10 +46,7 @@ contract Jot is ERC20, IERC20ManagedAccounts, ERC20Burnable, AccessControl, Init
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(swapAddress);
         uniswapV2Router = _uniswapV2Router;
 
-        IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
-            address(this),
-            fundingTokenAddress
-        );
+        IUniswapV2Factory(_uniswapV2Router.factory()).createPair(address(this), fundingTokenAddress);
 
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory()).getPair(
             address(this),

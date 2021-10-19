@@ -138,6 +138,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     ) external {
         require(priceFraction > 0, "Price fraction can't be zero");
         require(collection != address(0), "Invalid collection");
+        require(supplyToKeep <= ProtocolConstants.JOT_SUPPLY, "Invalid supply to keep");
 
         address collectionAddress;
         // Checks whether a collection is registered or not

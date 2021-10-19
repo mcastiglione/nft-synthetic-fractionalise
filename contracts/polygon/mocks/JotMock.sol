@@ -4,11 +4,11 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "../extensions/IERC20ManagedAccounts.sol";
 import "../Interfaces.sol";
-import "hardhat/console.sol";
 
-contract JotMock is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
+contract JotMock is ERC20, IERC20ManagedAccounts, ERC20Burnable, AccessControl, Initializable {
     bytes32 public constant ROUTER = keccak256("ROUTER");
     bytes32 public constant MINTER = keccak256("MINTER");
 
@@ -48,16 +48,12 @@ contract JotMock is ERC20, IERC20ManagedAccounts, AccessControl, Initializable {
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(swapAddress);
         uniswapV2Router = _uniswapV2Router;
 
-        IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
-            address(this),
-            fundingTokenAddress
-        );
+        IUniswapV2Factory(_uniswapV2Router.factory()).createPair(address(this), fundingTokenAddress);
 
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory()).getPair(
             address(this),
             fundingTokenAddress
         );
-
     }
 
     function mint(address account, uint256 amount) public {

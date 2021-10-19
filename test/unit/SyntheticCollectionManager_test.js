@@ -448,18 +448,18 @@ describe('SyntheticCollectionManager', async function () {
     });
   });
 
-  describe('exitProtocol', async () => {
+  describe('buyback', async () => {
     it('Not existent token', async () => {
-      await expect(manager.exitProtocol(355)).to.be.revertedWith('ERC721: owner query for nonexistent token');
+      await expect(manager.buyback(355)).to.be.revertedWith('ERC721: owner query for nonexistent token');
     });
 
     it('Not verified token', async () => {
-      await expect(manager.exitProtocol(tokenId)).to.be.revertedWith('Only verified tokens');
+      await expect(manager.buyback(tokenId)).to.be.revertedWith('Only verified tokens');
     });
 
     it('Caller is not owner', async () => {
       await router.verifyNFT(NFT, tokenId);
-      await expect(manager.connect(address1).exitProtocol(tokenId)).to.be.revertedWith('Only owner allowed');
+      await expect(manager.connect(address1).buyback(tokenId)).to.be.revertedWith('Only owner allowed');
     });
 
     it('Insufficient jot supply', async () => {
@@ -467,7 +467,7 @@ describe('SyntheticCollectionManager', async function () {
 
       await manager.withdrawJots(tokenId, 10);
 
-      await expect(manager.exitProtocol(tokenId)).to.be.revertedWith('Insufficient jot supply in the token');
+      await expect(manager.buyback(tokenId)).to.be.revertedWith('Insufficient jot supply in the token');
     });
 
     it('case ok', async () => {
@@ -520,7 +520,7 @@ describe('SyntheticCollectionManager', async function () {
       const managerAfterDepositBalance = parseReverse(await jot.balanceOf(managerAddress));
 
       // Now exit protocol
-      await manager.exitProtocol(tokenID);
+      await manager.buyback(tokenID);
 
       const managerAfterExitProtocolBalance = parseReverse(await jot.balanceOf(managerAddress));
 
@@ -568,7 +568,7 @@ describe('SyntheticCollectionManager', async function () {
       await manager.depositJotTokens(tokenID, parseAmount('1000'));
 
       // Now exit protocol
-      await manager.exitProtocol(tokenID);
+      await manager.buyback(tokenID);
 
       const managerAfterExitProtocolBalanceJot = parseReverse(await jot.balanceOf(managerAddress));
       expect(managerBeforeRegisterBalanceJot).to.be.equal(managerAfterExitProtocolBalanceJot);
