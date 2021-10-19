@@ -24,69 +24,67 @@ import "./Enums.sol";
 
 import {AuctionsManager} from "../auctions/AuctionsManager.sol";
 
+/**
+ * @title synthetic collection abstraction contract
+ * @author priviprotocol
+ */
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
 
+    /// @notice role of the router contract
     bytes32 public constant ROUTER = keccak256("ROUTER");
+
+    /// @notice role of the auctions manager fabric contract
     bytes32 public constant AUCTION_MANAGER = keccak256("AUCTION_MANAGER");
+
+    /// @notice role of the vrf chainlink oracle
     bytes32 public constant RANDOM_ORACLE = keccak256("RANDOM_ORACLE");
+
+    /// @notice role of the polygon validator chainlink oracle for verifications
     bytes32 public constant VALIDATOR_ORACLE = keccak256("VALIDATOR_ORACLE");
 
-    uint256 public immutable buybackPrice = 1000000000000000000;
+    // the price to buyback an NFT (buying Jots) and exit the protocol
+    uint256 public buybackPrice;
+
+    // address of the vrf chainlink oracle contract
     address private immutable _randomConsumerAddress;
+
+    // address of the polygon validator chainlink oracle contract
     address private immutable _validatorAddress;
+
+    Counters.Counter public tokenCounter;
+
+    /// @notice the address of the auctions manager fabric contract
     address public auctionsManagerAddress;
+
+    /// @notice the address of the protocol router
+    address public syntheticProtocolRouterAddress;
 
     address private _perpetualPoolLiteAddress;
 
-    /**
-     * @dev ERC20 totalSupply (governance) parameter
-     * TODO: get from governance
-     */
-    uint256 public jotsSupply;
+    address private _swapAddress;
 
-    /**
-     * @dev mapping the request id with the flip input data
-     */
+    /// @dev mapping the request id from Chainlink with the flip input data
     mapping(bytes32 => Flip) private _flips;
 
     mapping(uint256 => uint256) private _originalToSynthetic;
 
-    address private _swapAddress;
-
-    Counters.Counter public tokenCounter;
-
-    /**
-     * @notice the address of the Protocol Router
-     */
-    address public syntheticProtocolRouterAddress;
-
     ProtocolParameters public protocol;
 
-    /**
-     * @notice address of the original collection
-     */
+    /// @notice address of the original collection
     address public originalCollectionAddress;
 
-    /**
-     * @notice jot Address for this collection
-     */
+    /// @notice jot Address for this collection
     address public jotAddress;
 
-    /**
-     * @notice funding token address
-     */
+    /// @notice funding token address
     address public fundingTokenAddress;
 
-    /**
-     * @notice data for each token
-     */
+    /// @notice data for each token
     mapping(uint256 => TokenData) public tokens;
 
-    /**
-     * @dev the nonce to avoid double verification (quantity of exits for original token id)
-     */
+    /// @dev the nonce to avoid double verification (quantity of exits for original token id)
     mapping(uint256 => uint256) public nonces;
 
     /**
@@ -97,9 +95,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     mapping(uint256 => mapping(uint256 => address)) public ownersByNonce;
 
-    /**
-     * @notice Synthetic NFT Address  for this collection
-     */
+    /// @notice Synthetic NFT Address  for this collection
     address public erc721address;
 
     address public jotPool;
@@ -133,31 +129,52 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     event LiquidityRemoved(uint256 jotAmount, uint256 fundingAmount);
 
-    constructor(address randomConsumerAddress, address validatorAddress) {
-        _randomConsumerAddress = randomConsumerAddress;
-        _validatorAddress = validatorAddress;
+    /**
+     * @dev initializes some immutable variables and lock the implementation contract
+     *      for further initializations (with the initializer modifier)
+     *
+     * @param randomConsumerAddress_ the address of the vrf Chainlink node
+     * @param validatorAddress_ the address of the polygon validator Chainlink node
+     */
+    constructor(address randomConsumerAddress_, address validatorAddress_) initializer {
+        _randomConsumerAddress = randomConsumerAddress_;
+        _validatorAddress = validatorAddress_;
     }
 
+    /**
+     * @dev initialize the proxy contract
+     * @param jotAddress_ the address of the jot contract for this collection
+     * @param originalCollectionAddress_ the original collection address
+     * @param erc721address_ the address of the synthetic erc721 contract handled by this
+     * @param auctionManagerAddress_ the auctions manager fabric address
+     * @param protocol_ the address of the protocol parameters contract (governance parameters)
+     * @param jotPool_ the address of the corresponding jot pool
+     * @param redemptionPool_ the address of the corresponding redemption pool
+     * @param swapAddress_ the address of the uniswapV2Pair
+     */
     function initialize(
-        address _jotAddress,
+        address jotAddress_,
         address originalCollectionAddress_,
-        address _erc721address,
+        address erc721address_,
         address auctionManagerAddress_,
         address protocol_,
         address jotPool_,
         address redemptionPool_,
         address swapAddress_
     ) external initializer {
-        jotAddress = _jotAddress;
-        erc721address = _erc721address;
+        jotAddress = jotAddress_;
+        erc721address = erc721address_;
         originalCollectionAddress = originalCollectionAddress_;
         syntheticProtocolRouterAddress = msg.sender;
         auctionsManagerAddress = auctionManagerAddress_;
         protocol = ProtocolParameters(protocol_);
         jotPool = jotPool_;
         redemptionPool = redemptionPool_;
+        buybackPrice = 10**18;
+
         _swapAddress = swapAddress_;
-        jotsSupply = ProtocolConstants.JOT_SUPPLY;
+
+        // we need to initialize this member here because we need to continue using this if governance changes it
         fundingTokenAddress = ProtocolParameters(protocol_).fundingTokenAddress();
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -165,6 +182,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _setupRole(AUCTION_MANAGER, auctionManagerAddress_);
     }
 
+    /**
+     * @dev allows the callback after finishing an auction to reassign the NFT to the winner
+     * @param nftId_ the id of the auctioned synthetic token
+     * @param newOwner_ the winner of the auction account
+     */
     function reassignNFT(uint256 nftId_, address newOwner_) external onlyRole(AUCTION_MANAGER) {
         string memory metadata = ISyntheticNFT(erc721address).tokenURI(nftId_);
 
@@ -192,10 +214,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, State.NEW);
 
         // Fill new ID
-        uint256 tokenSupply = ProtocolConstants.JOT_SUPPLY;
         tokens[newSyntheticID] = TokenData(
             originalID,
-            tokenSupply,
+            ProtocolConstants.JOT_SUPPLY,
             0,
             0,
             0,
@@ -209,18 +230,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         );
 
         emit TokenReassigned(newSyntheticID, newOwner_);
-    }
-
-    /**
-     * @notice Checks isSyntheticNFTCreated(address, id) is False.
-     * Then it mints a new NFT with: ”to”, ”id” and ”metadata”
-     */
-    function generateSyntheticNFT(
-        address to,
-        uint256 tokenId,
-        string memory metadata
-    ) private {
-        ISyntheticNFT(erc721address).safeMint(to, tokenId, metadata);
     }
 
     /**
@@ -248,12 +257,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         uint256 syntheticID = tokenCounter.current();
 
-        generateSyntheticNFT(nftOwner, syntheticID, metadata);
+        ISyntheticNFT(erc721address).safeMint(nftOwner, syntheticID, metadata);
 
-        Jot(jotAddress).mint(address(this), jotsSupply);
+        Jot(jotAddress).mint(address(this), ProtocolConstants.JOT_SUPPLY);
 
-        uint256 sellingSupply = (jotsSupply - supplyToKeep) / 2;
-        uint256 liquiditySupply = (jotsSupply - supplyToKeep) / 2;
+        uint256 sellingSupply = (ProtocolConstants.JOT_SUPPLY - supplyToKeep) / 2;
+        uint256 liquiditySupply = (ProtocolConstants.JOT_SUPPLY - supplyToKeep) / 2;
 
         TokenData memory data = TokenData({
             originalTokenID: tokenId,
@@ -833,6 +842,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // free space and get refunds
         delete _originalToSynthetic[token.originalTokenID];
         delete tokens[tokenId];
+    }
+
+    function getAvailableJotToBuyback() {
+        token.ownerSupply + token.sellingSupply + token.liquiditySupply + jotLiquidity;
     }
 
     /**
