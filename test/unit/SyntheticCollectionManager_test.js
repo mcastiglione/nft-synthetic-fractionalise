@@ -66,7 +66,7 @@ describe('SyntheticCollectionManager', async function () {
     });
     it('should fail if amount is zero', async () => {
       await router.verifyNFT(NFT, tokenId);
-      await expect(manager.buyJotTokens(tokenId, 0)).to.be.revertedWith("Buy amount can't be zero!");
+      await expect(manager.buyJotTokens(tokenId, 0)).to.be.revertedWith("Amount can't be zero!");
     });
     it('should fail if amount is not approved in funding token', async () => {
       await router.verifyNFT(NFT, tokenId);
@@ -99,7 +99,7 @@ describe('SyntheticCollectionManager', async function () {
     it('Caller is not token owner', async () => {
       await router.verifyNFT(NFT, tokenId);
       await expect(manager.connect(address1).depositJotTokens(tokenId, 10)).to.be.revertedWith(
-        'you are not the owner of the NFT!'
+        'Only owner can deposit'
       );
     });
 
@@ -174,7 +174,7 @@ describe('SyntheticCollectionManager', async function () {
       await router.verifyNFT(NFT, tokenId);
 
       await expect(manager.connect(address1).increaseSellingSupply(tokenId, 1)).to.be.revertedWith(
-        'You are not the owner of the NFT!'
+        'Only owner can increase'
       );
     });
 
@@ -209,7 +209,7 @@ describe('SyntheticCollectionManager', async function () {
       await router.verifyNFT(NFT, tokenId);
 
       await expect(manager.connect(address1).decreaseSellingSupply(tokenId, 1)).to.be.revertedWith(
-        'You are not the owner of the NFT!'
+        'Only owner allowed'
       );
     });
 
@@ -360,7 +360,7 @@ describe('SyntheticCollectionManager', async function () {
   describe('updatePriceFraction', async () => {
     it('tokenId not registered', async () => {
       await expect(manager.updatePriceFraction(tokenId + 1, parseAmount('1'))).to.be.revertedWith(
-        'Token not registered'
+        'ERC721: owner query for nonexistent token'
       );
     });
 
@@ -376,7 +376,7 @@ describe('SyntheticCollectionManager', async function () {
 
     it('caller is not nft owner', async () => {
       await expect(manager.connect(address1).updatePriceFraction(tokenId, parseAmount('1'))).to.be.revertedWith(
-        'You are not the owner of the NFT!'
+        'Only owner allowed'
       );
     });
 
@@ -437,7 +437,7 @@ describe('SyntheticCollectionManager', async function () {
 
       await router.verifyNFT(NFT, tokenId);
 
-      await manager.withdrawJots(tokenId, 1);
+      await manager.withdrawJotTokens(tokenId, 1);
 
       const new_balance = await manager.getOwnerSupply(tokenId);
 
@@ -454,20 +454,12 @@ describe('SyntheticCollectionManager', async function () {
     });
 
     it('Not verified token', async () => {
-      await expect(manager.buyback(tokenId)).to.be.revertedWith('Only verified tokens');
+      await expect(manager.buyback(tokenId)).to.be.revertedWith('Token is locked!');
     });
 
     it('Caller is not owner', async () => {
       await router.verifyNFT(NFT, tokenId);
       await expect(manager.connect(address1).buyback(tokenId)).to.be.revertedWith('Only owner allowed');
-    });
-
-    it('Insufficient jot supply', async () => {
-      await router.verifyNFT(NFT, tokenId);
-
-      await manager.withdrawJots(tokenId, 10);
-
-      await expect(manager.buyback(tokenId)).to.be.revertedWith('Insufficient jot supply in the token');
     });
 
     it('case ok', async () => {
