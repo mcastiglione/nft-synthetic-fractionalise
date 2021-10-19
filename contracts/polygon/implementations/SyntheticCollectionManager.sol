@@ -708,23 +708,19 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         ISyntheticNFT(erc721address).setMetadata(syntheticId, metadata);
     }
 
-    function buybackRequiredAmount(uint256 tokenId)
+    /**
+     * @notice returns funds owned by token, in Jots and Funding, in contract and in UniSwap
+     */
+    function getAvailableJotsForBuyback(uint256 tokenId)
         public
         view
-        returns (uint256 buybackAmount, uint256 fundingLeft)
+        returns (uint256 totalJots, uint256 totalFunding)
     {
-        require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
-        require(!lockedNFT(tokenId), "Token is locked!");
-
         TokenData storage token = tokens[tokenId];
 
         IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(Jot(jotAddress).uniswapV2Pair());
 
         uint256 liquidity = token.liquidityTokenBalance;
-
-        if (liquidity == 0) {
-            return (0, 0);
-        }
 
         uint256 liquidityUniswap = uniswapV2Pair.balanceOf(address(this));
 
@@ -737,9 +733,22 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 totalSupply = uniswapV2Pair.totalSupply();
 
         uint256 jotLiquidity = (liquidity * jotReserves) / totalSupply;
-        uint256 fundingLiquidity = (liquidity * fundingReserves) / totalSupply;
 
-        uint256 total = token.ownerSupply + token.sellingSupply + token.liquiditySupply + jotLiquidity;
+        // the funding liquidity is the total funding
+        totalFunding = (liquidity * fundingReserves) / totalSupply;
+
+        totalJots = token.ownerSupply + token.sellingSupply + token.liquiditySupply + jotLiquidity;
+    }
+
+    function buybackRequiredAmount(uint256 tokenId)
+        public
+        view
+        returns (uint256 buybackAmount, uint256 fundingLeft)
+    {
+        require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
+        require(!lockedNFT(tokenId), "Token is locked!");
+
+        (uint256 total, uint256 fundingLiquidity) = getAvailableJotsForBuyback(tokenId);
 
         (fundingLeft, buybackAmount) = _getFundingLeftAndBuybackAmount(total, fundingLiquidity);
     }
@@ -804,7 +813,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     function _getFundingLeftAndBuybackAmount(uint256 total_, uint256 fundingLiquidity_)
         internal
-        pure
+        view
         returns (uint256 fundingLeft, uint256 buybackAmount)
     {
         // funding left (outstanding amount from uniswap)
@@ -842,10 +851,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // free space and get refunds
         delete _originalToSynthetic[token.originalTokenID];
         delete tokens[tokenId];
-    }
-
-    function getAvailableJotToBuyback() {
-        token.ownerSupply + token.sellingSupply + token.liquiditySupply + jotLiquidity;
     }
 
     /**
