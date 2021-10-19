@@ -165,7 +165,7 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
                     tokenFrom_.toString(),
                     "&tokenTo=",
                     tokenTo_.toString(),
-                    "&caller=",
+                    "&caller=0x",
                     caller_.toString(),
                     "&nonce=",
                     nonce_.toString()
