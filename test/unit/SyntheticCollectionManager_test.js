@@ -560,9 +560,7 @@ describe('SyntheticCollectionManager', async function () {
       await jot.approve(manager.address, parseAmount('1000'));
       await manager.depositJotTokens(tokenID, parseAmount('1000'));
       console.log("h");
-      await fundingToken.mint(owner.address, parseAmount('1000'));
-      await fundingToken.approve(managerAddress, parseAmount('1000'));
-      
+        
       const buybackRequiredAmount = (await manager.buybackRequiredAmount(tokenID)).toString();
       console.log(buybackRequiredAmount);
       // Now exit protocol

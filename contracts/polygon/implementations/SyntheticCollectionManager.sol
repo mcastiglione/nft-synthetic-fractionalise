@@ -777,7 +777,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         fundingLeft = fundingLiquidity_;
 
         // If owner has enough balance buybackAmount is zero
-        if (ProtocolConstants.JOT_SUPPLY >= total_) {
+        if (ProtocolConstants.JOT_SUPPLY < total_) {
             buybackAmount = 0;
         } else {
             // If owner has some funding tokens left
