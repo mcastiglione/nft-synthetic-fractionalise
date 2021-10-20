@@ -85,7 +85,7 @@ describe('AuctionsManager', async function () {
 
     const fundingBalanceBefore = await fundingToken.balanceOf(deployer);
 
-    await collectionContract.withdrawJots(localNFTID, parseAmount('9000'));
+    await collectionContract.withdrawJotTokens(localNFTID, parseAmount('9000'));
 
     const jotOwnerSupplyBefore = await collectionContract.getOwnerSupply(localNFTID);
 

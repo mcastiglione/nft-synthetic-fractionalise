@@ -448,12 +448,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             return (0, 0);
         }
 
-        uint256 liquidityTokenBalanceUniswap = uniswapV2Pair.balanceOf(address(this));
-
-        if (liquidityTokenBalanceUniswap < liquidityTokenBalance) {
-            liquidityTokenBalance = liquidityTokenBalanceUniswap;
-        }
-
         // approve liquidity transfer
         uniswapV2Pair.approve(_swapAddress, liquidityTokenBalance);
 
@@ -683,20 +677,19 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         uint256 liquidity = token.liquidityTokenBalance;
 
-        uint256 liquidityUniswap = uniswapV2Pair.balanceOf(address(this));
-
-        if (liquidityUniswap < liquidity) {
-            liquidity = liquidityUniswap;
-        }
-
         (uint112 jotReserves, uint112 fundingReserves, ) = uniswapV2Pair.getReserves();
 
         uint256 totalSupply = uniswapV2Pair.totalSupply();
 
-        uint256 jotLiquidity = (liquidity * jotReserves) / totalSupply;
+        uint256 jotLiquidity;
 
-        // the funding liquidity is the total funding
-        totalFunding = (liquidity * fundingReserves) / totalSupply;
+        if (totalSupply > 0) {
+            jotLiquidity = (liquidity * jotReserves) / totalSupply;
+            // the funding liquidity is the total funding
+            totalFunding = (liquidity * fundingReserves) / totalSupply;
+        } else {
+            totalFunding = fundingReserves;
+        }
 
         totalJots = token.ownerSupply + token.sellingSupply + token.liquiditySupply + jotLiquidity;
     }
