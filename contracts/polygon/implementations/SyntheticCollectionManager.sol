@@ -730,7 +730,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // get available liquidity (owner + selling + liquidity + uniswap )
         (uint256 jotLiquidity, uint256 fundingLiquidity) = _removeLiquidityFromPool(tokenId);
-
+        console.log(fundingLiquidity, 'fundingLiquidity');
         // TODO: get PerpetualPoolLite.getLiquidity
         //uint256 perpetualPoolLiteLiquidity;
 
@@ -740,6 +740,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             total,
             fundingLiquidity
         );
+
+        console.log('fundingLeft', fundingLeft);
 
         uint256 burned = total < ProtocolConstants.JOT_SUPPLY ? total : ProtocolConstants.JOT_SUPPLY;
 
@@ -755,6 +757,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
             IERC20(fundingTokenAddress).transferFrom(msg.sender, redemptionPool, buybackAmount);
         }
+        console.log('fundingBalance', IERC20(fundingTokenAddress).balanceOf(address(this)));
+        console.log('fundingLeft', fundingLeft);
 
         if (fundingLeft > 0) {
             IERC20(fundingTokenAddress).transfer(msg.sender, fundingLeft);
@@ -769,22 +773,37 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         view
         returns (uint256 fundingLeft, uint256 buybackAmount)
     {
-        // funding left (outstanding amount from uniswap)
-        fundingLeft = (ProtocolConstants.JOT_SUPPLY >= total_) ? 0 : total_ - ProtocolConstants.JOT_SUPPLY;
+        // Starting funding left
+        fundingLeft = fundingLiquidity_;
 
-        // if user has enough balance the buyback amount is 0
-        buybackAmount = fundingLeft == 0
-            ? ((ProtocolConstants.JOT_SUPPLY - total_) * buybackPrice) / 10**18
-            : 0;
-
-        // update amounts
-        if (buybackAmount == 0) {
-            fundingLeft += fundingLiquidity_;
-        } else if (buybackAmount >= fundingLiquidity_) {
-            buybackAmount -= fundingLiquidity_;
-        } else {
+        // If owner has enough balance buybackAmount is zero
+        if (ProtocolConstants.JOT_SUPPLY >= total_) {
             buybackAmount = 0;
-            fundingLeft += fundingLiquidity_ - buybackAmount;
+        } else {
+            // If owner has some funding tokens left
+            if (fundingLeft > 0) {
+                // How many jots you can buy with the funding tokens
+                uint256 fundingToJots = (fundingLeft * buybackPrice) / 10**18;
+                // if there's enough funding for buyback
+                // then return 0 as buybackAmount and the remaining funding
+                if (
+                    (fundingToJots + total_) > ProtocolConstants.JOT_SUPPLY
+                ) {
+                    console.log(total_, 'total');
+                    console.log(ProtocolConstants.JOT_SUPPLY, 'ProtocolConstants.JOT_SUPPLY');
+                    uint256 remainingJots = total_ - ProtocolConstants.JOT_SUPPLY;
+                    uint256 requiredFunding = (remainingJots * buybackPrice) / 10**18;
+                    fundingLeft -= requiredFunding;
+                    buybackAmount = 0;
+                
+                } // if there isn't enough funding for buyback
+                else {
+                    buybackAmount = (ProtocolConstants.JOT_SUPPLY - total_ - fundingToJots); 
+                    fundingLeft = 0;
+                }
+            } else {
+                buybackAmount = ((ProtocolConstants.JOT_SUPPLY - total_) * buybackPrice) / 10**18;
+            }
         }
     }
 
