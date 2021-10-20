@@ -551,15 +551,15 @@ describe('SyntheticCollectionManager', async function () {
       // verify NFT
       await router.verifyNFT(NFT, tokenID);
 
-      // Mint and approve funding to buy 500 jots
-      // Now mint and approve 1000 jots 5000 funding tokens
+      // mint and approve funding to buy 500 jots
+      // now mint and approve 1000 jots 5000 funding tokens
       await fundingToken.mint(owner.address, parseAmount('500'));
       await fundingToken.approve(managerAddress, parseAmount('500'));
 
       await manager.buyJotTokens(tokenID, parseAmount('500'));
 
-      // Now addLiquidity to Uniswap
-      // Should be 500 Jots and 500 funding Tokens
+      // now addLiquidity to Uniswap
+      // should be 500 Jots and 500 funding Tokens
       await manager.addLiquidityToPool(tokenID);
 
       // mint and approve and deposit remaining jots to reach JOTS_SUPPLY (1000)
@@ -567,7 +567,8 @@ describe('SyntheticCollectionManager', async function () {
       await jot.approve(manager.address, parseAmount('1000'));
       await manager.depositJotTokens(tokenID, parseAmount('1000'));
 
-      // Now exit protocol
+      // now exit protocol
+      console.log(await manager.buybackRequiredAmount(tokenID));
       await manager.buyback(tokenID);
 
       const managerAfterExitProtocolBalanceJot = parseReverse(await jot.balanceOf(managerAddress));
