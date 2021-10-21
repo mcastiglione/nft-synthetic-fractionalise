@@ -730,7 +730,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // get available liquidity (owner + selling + liquidity + uniswap )
         (uint256 jotLiquidity, uint256 fundingLiquidity) = _removeLiquidityFromPool(tokenId);
-        console.log(fundingLiquidity, 'fundingLiquidity');
         // TODO: get PerpetualPoolLite.getLiquidity
         //uint256 perpetualPoolLiteLiquidity;
 
@@ -740,8 +739,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             total,
             fundingLiquidity
         );
-
-        console.log('fundingLeft', fundingLeft);
 
         uint256 burned = total < ProtocolConstants.JOT_SUPPLY ? total : ProtocolConstants.JOT_SUPPLY;
 
@@ -757,8 +754,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
             IERC20(fundingTokenAddress).transferFrom(msg.sender, redemptionPool, buybackAmount);
         }
-        console.log('fundingBalance', IERC20(fundingTokenAddress).balanceOf(address(this)));
-        console.log('fundingLeft', fundingLeft);
 
         if (fundingLeft > 0) {
             IERC20(fundingTokenAddress).transfer(msg.sender, fundingLeft);
@@ -789,8 +784,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                 if (
                     (fundingToJots + total_) > ProtocolConstants.JOT_SUPPLY
                 ) {
-                    console.log(total_, 'total');
-                    console.log(ProtocolConstants.JOT_SUPPLY, 'ProtocolConstants.JOT_SUPPLY');
                     uint256 remainingJots = total_ - ProtocolConstants.JOT_SUPPLY;
                     uint256 requiredFunding = (remainingJots * buybackPrice) / 10**18;
                     fundingLeft -= requiredFunding;
