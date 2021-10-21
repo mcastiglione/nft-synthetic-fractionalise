@@ -33,7 +33,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         chainlinkNode = _oracleInfo.chainlinkNode;
         jobId = stringToBytes32(_oracleInfo.jobId);
         nodeFee = _oracleInfo.nodeFee;
-        apiURL = "https://nft-validator-hwk7x.ondigitalocean.app/verify";
+        apiURL = "https://nft-validator-o24ig.ondigitalocean.app/verify";
 
         setChainlinkToken(linkToken);
     }
