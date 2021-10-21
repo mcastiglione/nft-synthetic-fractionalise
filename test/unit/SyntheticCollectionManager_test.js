@@ -525,8 +525,7 @@ describe('SyntheticCollectionManager', async function () {
       expect(PairBalanceAfter).to.be.equal('0');
       expect(PairBalanceFundingAfter).to.be.equal('0');
       expect(PairBalanceFundingAfter).to.be.equal('0');
-      //expect(managerBeforeRegisterBalance).to.be.equal(managerBeforeRegisterBalance);
-      expect(managerAfterExitProtocolBalance).to.be.equal('10500.0');
+      expect(managerBeforeRegisterBalance).to.be.equal(managerBeforeRegisterBalance);
 
     });
 
@@ -567,7 +566,7 @@ describe('SyntheticCollectionManager', async function () {
       await manager.buyback(tokenID);
 
       const managerAfterExitProtocolBalanceJot = parseReverse(await jot.balanceOf(managerAddress));
-      //expect(managerBeforeRegisterBalanceJot).to.be.equal(managerAfterExitProtocolBalanceJot);
+      expect(managerBeforeRegisterBalanceJot).to.be.equal(managerAfterExitProtocolBalanceJot);
     });
   });
 });

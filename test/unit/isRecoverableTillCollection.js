@@ -18,7 +18,7 @@ describe('isRecoverableTillCollection', async function () {
     nftID = 1;
     NFT = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
 
-    const tx = await router.registerNFT(NFT, nftID, 0, 5, 'My Collection', 'MYC', '');
+    const tx = await router.registerNFT(NFT, nftID, 0, 5, ['My Collection', 'MYC', '']);
     await expect(tx).to.emit(router, 'TokenRegistered');
     const args = await getEventArgs(tx, 'TokenRegistered', router);
     tokenId = args.syntheticTokenId;
