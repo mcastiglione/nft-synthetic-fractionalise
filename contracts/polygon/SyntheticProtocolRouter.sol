@@ -26,9 +26,6 @@ import {AuctionsManager} from "./auctions/AuctionsManager.sol";
 contract SyntheticProtocolRouter is AccessControl, Ownable {
     using Counters for Counters.Counter;
 
-    /**
-     * @dev implementation addresses for proxies
-     */
     address private _jot;
     address private _jotPool;
     address private _redemptionPool;
