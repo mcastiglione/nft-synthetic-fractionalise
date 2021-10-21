@@ -697,13 +697,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function buybackRequiredAmount(uint256 tokenId)
         public
         view
-        returns (uint256 buybackAmount, uint256 fundingLeft)
+        returns (uint256 buybackAmount, uint256 fundingLeft, uint256 jotsLeft)
     {
         require(!lockedNFT(tokenId), "Token is locked!");
 
         (uint256 total, uint256 fundingLiquidity) = getAvailableJotsForBuyback(tokenId);
 
-        (fundingLeft, buybackAmount) = _getFundingLeftAndBuybackAmount(total, fundingLiquidity);
+        (jotsLeft, fundingLeft, buybackAmount) = _getFundingLeftAndBuybackAmount(total, fundingLiquidity);
     }
 
     /**
@@ -735,7 +735,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         uint256 total = token.ownerSupply + token.sellingSupply + token.liquiditySupply + jotLiquidity;
 
-        (uint256 fundingLeft, uint256 buybackAmount) = _getFundingLeftAndBuybackAmount(
+        (uint256 jotsLeft, uint256 fundingLeft, uint256 buybackAmount) = _getFundingLeftAndBuybackAmount(
             total,
             fundingLiquidity
         );
@@ -758,6 +758,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         if (fundingLeft > 0) {
             IERC20(fundingTokenAddress).transfer(msg.sender, fundingLeft);
         }
+
+        if (jotsLeft > 0) {
+            IJot(jotAddress).transfer(msg.sender, jotsLeft);
+        }
     }
 
     /**
@@ -766,7 +770,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function _getFundingLeftAndBuybackAmount(uint256 total_, uint256 fundingLiquidity_)
         internal
         view
-        returns (uint256 fundingLeft, uint256 buybackAmount)
+        returns (uint256 jotsLeft, uint256 fundingLeft, uint256 buybackAmount)
     {
         // Starting funding left
         fundingLeft = fundingLiquidity_;
@@ -774,6 +778,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // If owner has enough balance buybackAmount is zero
         if (ProtocolConstants.JOT_SUPPLY < total_) {
             buybackAmount = 0;
+            jotsLeft = total_ - ProtocolConstants.JOT_SUPPLY;
         } else {
             // If owner has some funding tokens left
             if (fundingLeft > 0) {
