@@ -5,6 +5,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
+  const parseAmount = (amount) => ethers.utils.parseEther(amount);
+
   const name = 'OZ-Governor';
   const tokenName = 'MockToken';
   const tokenSymbol = 'MTKN';
@@ -41,12 +43,17 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     flippingReward: 5,
     flippingAmount: 20,
     auctionDuration: String(time.duration.weeks(1)),
+    governanceContractAddress: timelock.address, 
+    fundingTokenAddress: fundingTokenAddress,
+    liquidityPerpetualPercentage: "50", 
+    liquidityUniswapPercentage: "50",
+    buybackPrice: parseAmount('1')
   };
 
   await deploy('ProtocolParameters', {
     from: deployer,
     log: true,
-    args: [...Object.values(defaultParameters), timelock.address, fundingTokenAddress],
+    args: [...Object.values(defaultParameters)],
   });
 
   timelock = await ethers.getContractAt('TimelockController', timelock.address);
