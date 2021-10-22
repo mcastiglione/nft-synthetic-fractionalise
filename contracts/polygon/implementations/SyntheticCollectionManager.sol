@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./LiquidityManager.sol";
 import "../libraries/SyntheticTokenLibrary.sol";
 import "../extensions/IERC20ManagedAccounts.sol";
 import "../chainlink/RandomNumberConsumer.sol";
@@ -64,6 +65,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     address private _perpetualPoolLiteAddress;
 
     address private _swapAddress;
+
+    address private _liquidityManagerAddress;
 
     /// @dev mapping the request id from Chainlink with the flip input data
     mapping(bytes32 => Flip) private _flips;
@@ -160,7 +163,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address protocol_,
         address jotPool_,
         address redemptionPool_,
-        address swapAddress_
+        address swapAddress_,
+        address liquidityManagerAddress_
     ) external initializer {
         jotAddress = jotAddress_;
         erc721address = erc721address_;
@@ -172,6 +176,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         redemptionPool = redemptionPool_;
 
         _swapAddress = swapAddress_;
+
+        _liquidityManagerAddress = liquidityManagerAddress_;
 
         // we need to initialize this member here because we need to continue using this if governance changes it
         fundingTokenAddress = ProtocolParameters(protocol_).fundingTokenAddress();
@@ -372,41 +378,52 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         token.updatePriceFraction(newFractionPrice_);
     }
+    /**
+    * @notice add available liquidity to Perpetual Pool
+     */
+    function addLiquidityToPerpetualPool(uint256 tokenId) public {
+        TokenData storage token = tokens[tokenId];
+        uint256 perpetualFundingLiquidity = LiquidityManager(_liquidityManagerAddress).getAvailableFundingPerpetual(token);
+        if (perpetualFundingLiquidity > 0) {
+            IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, perpetualFundingLiquidity);
+            IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(perpetualFundingLiquidity);
+            tokens[tokenId].soldSupply - perpetualFundingLiquidity;
+        }
+    }
 
     /**
      * @notice add available liquidity for a given token to UniSwap pool
      */
     function addLiquidityToPool(uint256 tokenId) public {
+
         TokenData storage token = tokens[tokenId];
+        
         require(token.soldSupply > 0, "soldSupply is zero");
 
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
         
-        // Token jots liquidity for Uniswap
-        uint256 liquiditySupply = token.liquiditySupply;
-        // Token funding tokens owned by nft owner
-        uint256 liquiditySold = token.liquiditySold;
-
-        uint256 lShares;
+        (uint256 jotsValue, uint256 fundingValue ) = LiquidityManager(
+            _liquidityManagerAddress
+        ).getAvailableFundingUniswap(token);
 
         // Approve Uniswap address
-        IJot(jotAddress).approve(_swapAddress, liquiditySupply);
-        IERC20(fundingTokenAddress).approve(_swapAddress, liquiditySold);
+        IJot(jotAddress).approve(_swapAddress, jotsValue);
+        IERC20(fundingTokenAddress).approve(_swapAddress, fundingValue);
 
         // add the liquidity to Uniswapp
         (uint256 amountA, uint256 amountB, uint256 liquidity) = uniswapV2Router.addLiquidity(
             jotAddress,
             fundingTokenAddress,
-            liquiditySupply,
-            liquiditySold,
+            jotsValue,
+            fundingValue,
             0, // slippage is unavoidable
             0, // slippage is unavoidable
             address(this),
             block.timestamp // solhint-disable-line
         );
         // If there is a remaining, add as liquidity to PerpetualPool 
-        if (amountB < liquiditySold) {
-            uint256 fundingRemaining = liquiditySold - amountB;
+        if (amountB < fundingValue) {
+            uint256 fundingRemaining = fundingValue - amountB;
 
             IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, fundingRemaining);
 
@@ -415,12 +432,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // Update balances
         token.liquiditySupply -= amountA;
-        token.liquiditySold -= liquiditySold;
+        token.liquiditySold -= fundingValue;
         token.sellingSupply -= amountA;
-        token.soldSupply -= liquiditySold;
+        token.soldSupply -= fundingValue;
         token.liquidityTokenBalance += liquidity;
         token.uniswapJotLiquidity += amountA;
         token.uniswapFundingLiquidity += amountB;
+
+        addLiquidityToPerpetualPool(tokenId);
     }
 
     /**

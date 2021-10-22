@@ -8,6 +8,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   // get the previously deployed contracts
   let jot = await ethers.getContract('Jot');
   let jotPool = await ethers.getContract('JotPool');
+  let liquidityManager = await ethers.getContract('LiquidityManager');
   let redemptionPool = await ethers.getContract('RedemptionPool');
   let collectionManager = await ethers.getContract('SyntheticCollectionManager');
   let auctionsManager = await ethers.getContract('AuctionsManager');
@@ -22,7 +23,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   let pToken = await ethers.getContract('PTokenLite');
   let auctionBeacon = await ethers.getContract('NFTAuctionBeacon');
   let governance = await ethers.getContract('TimelockController');
-
+  
   let swapAddress;
 
   if (chainId == 1337 || chainId == 31337) {
@@ -57,15 +58,19 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     from: deployer,
     log: true,
     args: [
-      swapAddress,
-      jot.address,
-      jotPool.address,
-      redemptionPool.address,
-      collectionManager.address,
-      syntheticNFT.address,
-      auctionsManager.address,
-      randomConsumer.address,
-      validator.address,
+      [
+        swapAddress, 
+        jot.address, 
+        jotPool.address, 
+        liquidityManager.address,
+        redemptionPool.address,
+        collectionManager.address,
+        syntheticNFT.address,
+        auctionsManager.address,
+        randomConsumer.address,
+        validator.address,
+      ],
+      
       {
         lTokenLite_: lToken.address,
         pTokenLite_: pToken.address,

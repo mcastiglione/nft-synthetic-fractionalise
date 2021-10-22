@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./chainlink/RandomNumberConsumer.sol";
 import "./chainlink/PolygonValidatorOracle.sol";
 import "./implementations/SyntheticCollectionManager.sol";
+import "./implementations/LiquidityManager.sol";
 import "./implementations/Jot.sol";
 import "./implementations/JotPool.sol";
 import "./implementations/RedemptionPool.sol";
@@ -42,6 +43,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     address private _lTokenLite;
     address private _pTokenLite;
     address private _poolInfo;
+    address private _liquidityManager;
 
     /**
      * @dev collections map.
@@ -90,29 +92,35 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     event TokenChanged(address collectionAddress, uint256 syntheticID, uint256 newID);
 
     constructor(
-        address swapAddress_,
-        address jot_,
-        address jotPool_,
-        address redemptionPoolAddress_,
-        address collectionManager_,
-        address syntheticNFT_,
-        address auctionManager_,
-        address randomConsumerAddress_,
-        address validatorAddress_,
+        /* array composed by:
+            swapAddress, 
+            jot.address, 
+            jotPool.address, 
+            liquidityManager.address,
+            redemptionPool.address,
+            collectionManager.address,
+            syntheticNFT.address,
+            auctionsManager.address,
+            randomConsumer.address,
+            validator.address,
+         */
+        address[10] memory addresses_,
         FuturesParametersContracts memory futuresParameters,
         ProtocolParametersContracts memory protocolParameters
     ) {
-        swapAddress = swapAddress_;
-        _jot = jot_;
-        _jotPool = jotPool_;
-        _redemptionPool = redemptionPoolAddress_;
-        _collectionManager = collectionManager_;
-        _syntheticNFT = syntheticNFT_;
-        _auctionManager = auctionManager_;
+        swapAddress = addresses_[0];
+        _jot = addresses_[1];
+        _jotPool = addresses_[2];
+        //_liquidityManager = liquidityManager_;
+        _liquidityManager = addresses_[3];
+        _redemptionPool = addresses_[4];
+        _collectionManager = addresses_[5];
+        _syntheticNFT = addresses_[6];
+        _auctionManager = addresses_[7];
         _protocol = protocolParameters.fractionalizeProtocol;
         _futuresProtocol = protocolParameters.futuresProtocol;
-        _randomConsumerAddress = randomConsumerAddress_;
-        _validatorAddress = validatorAddress_;
+        _randomConsumerAddress = addresses_[8];
+        _validatorAddress = addresses_[9];
         _lTokenLite = futuresParameters.lTokenLite_;
         _pTokenLite = futuresParameters.pTokenLite_;
         _perpetualPoolLiteAddress = futuresParameters.perpetualPoolLiteAddress_;
@@ -287,8 +295,20 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address syntheticNFTAddress_,
         address collection_
     ) private returns (address collectionAddress) {
+
         // deploys a minimal proxy contract from the collectionManager contract implementation
         collectionAddress = Clones.clone(_collectionManager);
+
+        address liquidityManagerAddress = Clones.clone(_liquidityManager);
+        LiquidityManager(liquidityManagerAddress).initialize(
+            collectionAddress,
+            swapAddress,
+            _protocol,
+            _perpetualPoolLiteAddress,
+            ProtocolParameters(_protocol).fundingTokenAddress(),
+            jotAddress_
+        );
+        
         SyntheticCollectionManager(collectionAddress).initialize(
             jotAddress_,
             collection_,
@@ -297,7 +317,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             _protocol,
             jotPoolAddress_,
             redemptionPoolAddress_,
-            swapAddress
+            swapAddress,
+            liquidityManagerAddress
         );
     }
 

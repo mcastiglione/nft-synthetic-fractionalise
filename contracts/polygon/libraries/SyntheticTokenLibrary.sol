@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import "../governance/ProtocolParameters.sol";
 import "../implementations/Structs.sol";
 import "./ProtocolConstants.sol";
 
@@ -55,6 +56,8 @@ library SyntheticTokenLibrary {
      * @param amount the quantity of jots to buy
      */
     function buyJotTokens(TokenData storage token, uint256 amount) external returns (uint256 amountToPay) {
+
+        uint256 amountAux;
         require(amount > 0, "Amount can't be zero!");
         require(!isLocked(token.state, token.ownerSupply), "Token is locked!");
 
@@ -64,10 +67,12 @@ library SyntheticTokenLibrary {
         // if amount left is lesser than buying amount
         // then buying amount = amount left
         if (amountLeft < amount) {
-            amount = amountLeft;
+            amountAux = amountLeft;
+        } else {
+            amountAux = amount;
         }
 
-        amountToPay = (amount * token.fractionPrices) / 10**18;
+        amountToPay = (amountAux * token.fractionPrices) / 10**18;
 
         // Can't sell zero tokens
         require(amountToPay > 0, "No tokens left!");

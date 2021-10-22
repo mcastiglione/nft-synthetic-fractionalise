@@ -33,8 +33,8 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
     auctionDuration: String(time.duration.weeks(1)),
     governanceContractAddress: owner, 
     fundingTokenAddress: fundingTokenAddress, 
-    liquidityPerpetualPercentage: "50", 
-    liquidityUniswapPercentage: "50",
+    liquidityPerpetualPercentage: "0", 
+    liquidityUniswapPercentage: "100",
     buybackPrice: parseAmount('1')
   };
 
