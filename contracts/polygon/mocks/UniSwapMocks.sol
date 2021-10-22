@@ -20,7 +20,7 @@ function sqrt(uint y) pure returns (uint z) {
 
 contract UniswapPairMock is ERC20 {
 
-    constructor() ERC20('UNISWAP V2 PAIR', 'LP') {}
+    constructor() ERC20("UNISWAP V2 PAIR", "LP") {}
 
     uint112 private _reserve0;
     uint112 private _reserve1;
