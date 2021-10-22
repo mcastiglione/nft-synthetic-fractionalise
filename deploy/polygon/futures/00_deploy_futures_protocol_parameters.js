@@ -11,10 +11,10 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
 
   if (network.tags.local) {
     symbolOracle = await deploy('SymbolOracleOffChain', {
-       contract: 'SymbolOracleOffChainMock',
-       from: deployer, 
-       log: true, 
-       args: [deployer] 
+      contract: 'SymbolOracleOffChainMock',
+      from: deployer,
+      log: true,
+      args: [deployer],
     });
   } else {
     symbolOracle = await deploy('SymbolOracleOffChain', { from: deployer, log: true, args: [deployer] });
@@ -33,9 +33,9 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
   const defaultProtocolParameters = {
     mainParams,
     futuresOracleAddress: symbolOracle.address,
-    futuresMultiplier: 1,
-    futuresFeeRatio: 1,
-    futuresFundingRateCoefficient: 1,
+    futuresMultiplier: web3.utils.toWei('1'),
+    futuresFeeRatio: web3.utils.toWei('1'),
+    futuresFundingRateCoefficient: web3.utils.toWei('1'),
     oracleDelay: 6000,
   };
 
