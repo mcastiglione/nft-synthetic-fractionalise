@@ -55,9 +55,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     Counters.Counter public tokenCounter;
 
-    // the price to buyback an NFT (buying Jots) and exit the protocol
-    uint256 public buybackPrice;
-
     /// @notice the address of the auctions manager fabric contract
     address public auctionsManagerAddress;
 
@@ -173,7 +170,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         protocol = ProtocolParameters(protocol_);
         jotPool = jotPool_;
         redemptionPool = redemptionPool_;
-        buybackPrice = 10**18;
 
         _swapAddress = swapAddress_;
 
@@ -212,12 +208,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _originalToSynthetic[originalID] = newSyntheticID;
 
         // Empty previous id
-        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, State.NEW);
+        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, State.NEW);
 
         // Fill new ID
         tokens[newSyntheticID] = TokenData(
             originalID,
             ProtocolConstants.JOT_SUPPLY,
+            0,
             0,
             0,
             0,
@@ -273,6 +270,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             liquidityTokenBalance: 0,
             uniswapJotLiquidity: 0,
             uniswapFundingLiquidity: 0,
+            perpetualFuturesLShares: 0,
             state: State.NEW
         });
 
@@ -379,36 +377,67 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice add available liquidity for a given token to UniSwap pool
      */
     function addLiquidityToPool(uint256 tokenId) public {
-        IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
-
         TokenData storage token = tokens[tokenId];
         require(token.soldSupply > 0, "soldSupply is zero");
+
+        IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
+        
+        // Perpetual Pool and Uniswap liquidity percentages
+        uint256 liquidityPerpetualPercentage = protocol.liquidityPerpetualPercentage();
+        uint256 liquidityUniswapPercentage = protocol.liquidityUniswapPercentage();
+        // Token jots liquidity for Uniswap
         uint256 liquiditySupply = token.liquiditySupply;
+        // Token funding tokens owned by nft owner
         uint256 liquiditySold = token.liquiditySold;
+        // Amount in Funding that will go to PerpetualPoolLite
+        uint256 perpetualFundingLiquidity = liquiditySold / 100 * liquidityPerpetualPercentage;
 
-        // approve the transfers
-        IJot(jotAddress).approve(_swapAddress, liquiditySupply);
-        IERC20(fundingTokenAddress).approve(_swapAddress, liquiditySold);
+        // Perpetual Pool Lite
+        // get lTokenAddress
+        ( , address lTokenAddress, , , , , ) = IPerpetualPoolLite(_perpetualPoolLiteAddress).getAddresses();
 
-        // add the liquidity
+        // balance of lShares
+        uint256 futuresBalanceBefore = IERC20(lTokenAddress).balanceOf(address(this));
+
+        // Approve add liquidity and execute
+        IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, perpetualFundingLiquidity);
+        IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(perpetualFundingLiquidity);
+
+        // balance of lShares after
+        uint256 futuresBalanceAfter = IERC20(lTokenAddress).balanceOf(address(this));
+
+        // difference is lShares added
+        uint256 lShares = futuresBalanceAfter - futuresBalanceBefore;
+
+        // Approve Uniswap address
+        IJot(jotAddress).approve(_swapAddress, (liquiditySupply / 100 * liquidityUniswapPercentage));
+        IERC20(fundingTokenAddress).approve(_swapAddress, (liquiditySold / 100 * liquidityUniswapPercentage));
+
+        // add the liquidity to Uniswapp
         (uint256 amountA, uint256 amountB, uint256 liquidity) = uniswapV2Router.addLiquidity(
             jotAddress,
             fundingTokenAddress,
-            liquiditySupply,
+            (liquiditySupply / 100 * liquidityUniswapPercentage),
             liquiditySold,
             0, // slippage is unavoidable
             0, // slippage is unavoidable
             address(this),
             block.timestamp // solhint-disable-line
         );
-
+        // If there is a remaining, add as liquidity to PerpetualPool 
         if (amountB < liquiditySold) {
             uint256 fundingRemaining = liquiditySold - amountB;
 
             IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, fundingRemaining);
+
+            futuresBalanceBefore = IERC20(lTokenAddress).balanceOf(address(this));
             IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(fundingRemaining);
+            futuresBalanceAfter = IERC20(lTokenAddress).balanceOf(address(this));
+
+            lShares += (futuresBalanceAfter - futuresBalanceBefore);
         }
 
+        // Update balances
         token.liquiditySupply -= amountA;
         token.liquiditySold -= liquiditySold;
         token.sellingSupply -= amountA;
@@ -416,6 +445,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         token.liquidityTokenBalance += liquidity;
         token.uniswapJotLiquidity += amountA;
         token.uniswapFundingLiquidity += amountB;
+        token.perpetualFuturesLShares += lShares;
     }
 
     /**
@@ -750,7 +780,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             Jot(jotAddress).increaseAllowance(redemptionPool, ProtocolConstants.JOT_SUPPLY - burned);
 
             // update redemption pool balance trackers
-            RedemptionPool(redemptionPool).addRedemableBalance(buybackAmount, (buybackAmount / buybackPrice));
+            RedemptionPool(redemptionPool).addRedemableBalance(buybackAmount, (buybackAmount / buybackPrice()));
 
             IERC20(fundingTokenAddress).transferFrom(msg.sender, redemptionPool, buybackAmount);
         }
@@ -783,14 +813,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             // If owner has some funding tokens left
             if (fundingLeft > 0) {
                 // How many jots you can buy with the funding tokens
-                uint256 fundingToJots = (fundingLeft * buybackPrice) / 10**18;
+                uint256 fundingToJots = (fundingLeft * buybackPrice()) / 10**18;
                 // if there's enough funding for buyback
                 // then return 0 as buybackAmount and the remaining funding
                 if (
                     (fundingToJots + total_) > ProtocolConstants.JOT_SUPPLY
                 ) {
                     uint256 remainingJots = total_ - ProtocolConstants.JOT_SUPPLY;
-                    uint256 requiredFunding = (remainingJots * buybackPrice) / 10**18;
+                    uint256 requiredFunding = (remainingJots * buybackPrice()) / 10**18;
                     fundingLeft -= requiredFunding;
                     buybackAmount = 0;
                 
@@ -800,7 +830,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                     fundingLeft = 0;
                 }
             } else {
-                buybackAmount = ((ProtocolConstants.JOT_SUPPLY - total_) * buybackPrice) / 10**18;
+                buybackAmount = ((ProtocolConstants.JOT_SUPPLY - total_) * buybackPrice()) / 10**18;
             }
         }
     }
@@ -963,5 +993,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function getliquiditySold(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].liquiditySold;
+    }
+
+    // the price to buyback an NFT (buying Jots) and exit the protocol
+    function buybackPrice() public view returns(uint256) {
+        return protocol.buybackPrice();
     }
 }

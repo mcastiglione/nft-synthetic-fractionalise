@@ -5,6 +5,8 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
+  const parseAmount = (amount) => ethers.utils.parseEther(amount);
+
   // get the previously deployed governance (actually the timelock controller)
   const governance = await ethers.getContract('TimelockController');
   let fundingTokenAddress;
@@ -17,24 +19,29 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
     fundingTokenAddress = networkConfig[chainId].fundingTokenAddress;
   }
 
-
-  const defaultParameters = {
-    flippingInterval: String(time.duration.minutes(20)),
-    flippingReward: "1000000000000000000",
-    flippingAmount: "10000000000000000000",
-    auctionDuration: String(time.duration.weeks(1)),
-  };
-
+  
   let owner = governance.address;
 
   if (network.tags.testnet) {
     owner = deployer;
   }
 
+  const defaultParameters = {
+    flippingInterval: String(time.duration.minutes(20)),
+    flippingReward: "1000000000000000000",
+    flippingAmount: "10000000000000000000",
+    auctionDuration: String(time.duration.weeks(1)),
+    governanceContractAddress: owner, 
+    fundingTokenAddress: fundingTokenAddress, 
+    liquidityPerpetualPercentage: "50", 
+    liquidityUniswapPercentage: "50",
+    buybackPrice: parseAmount('1')
+  };
+
   await deploy('ProtocolParameters', {
     from: deployer,
     log: true,
-    args: [...Object.values(defaultParameters), owner, fundingTokenAddress],
+    args: [...Object.values(defaultParameters)],
   });
 };
 
