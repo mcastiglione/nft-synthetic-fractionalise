@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./LiquidityManager.sol";
+import "./LiquidityCalculator.sol";
 import "../libraries/SyntheticTokenLibrary.sol";
 import "../extensions/IERC20ManagedAccounts.sol";
 import "../chainlink/RandomNumberConsumer.sol";
@@ -66,7 +66,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     address private _swapAddress;
 
-    address private _liquidityManagerAddress;
+    address private _liquidityCalculatorAddress;
 
     /// @dev mapping the request id from Chainlink with the flip input data
     mapping(bytes32 => Flip) private _flips;
@@ -164,7 +164,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address jotPool_,
         address redemptionPool_,
         address swapAddress_,
-        address liquidityManagerAddress_
+        address liquidityCalculatorAddress_
     ) external initializer {
         jotAddress = jotAddress_;
         erc721address = erc721address_;
@@ -177,7 +177,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         _swapAddress = swapAddress_;
 
-        _liquidityManagerAddress = liquidityManagerAddress_;
+        _liquidityCalculatorAddress = liquidityCalculatorAddress_;
 
         // we need to initialize this member here because we need to continue using this if governance changes it
         fundingTokenAddress = ProtocolParameters(protocol_).fundingTokenAddress();
@@ -383,7 +383,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     function addLiquidityToPerpetualPool(uint256 tokenId) public {
         TokenData storage token = tokens[tokenId];
-        uint256 perpetualFundingLiquidity = LiquidityManager(_liquidityManagerAddress).getAvailableFundingPerpetual(token);
+        uint256 perpetualFundingLiquidity = LiquidityCalculator(_liquidityCalculatorAddress).getAvailableFundingPerpetual(token);
         if (perpetualFundingLiquidity > 0) {
             IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, perpetualFundingLiquidity);
             IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(perpetualFundingLiquidity);
@@ -402,8 +402,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
         
-        (uint256 jotsValue, uint256 fundingValue ) = LiquidityManager(
-            _liquidityManagerAddress
+        (uint256 jotsValue, uint256 fundingValue ) = LiquidityCalculator(
+            _liquidityCalculatorAddress
         ).getAvailableFundingUniswap(token);
 
         // Approve Uniswap address

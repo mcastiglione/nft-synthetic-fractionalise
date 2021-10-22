@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./chainlink/RandomNumberConsumer.sol";
 import "./chainlink/PolygonValidatorOracle.sol";
 import "./implementations/SyntheticCollectionManager.sol";
-import "./implementations/LiquidityManager.sol";
+import "./implementations/LiquidityCalculator.sol";
 import "./implementations/Jot.sol";
 import "./implementations/JotPool.sol";
 import "./implementations/RedemptionPool.sol";
@@ -43,7 +43,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     address private _lTokenLite;
     address private _pTokenLite;
     address private _poolInfo;
-    address private _liquidityManager;
+    address private _liquidityCalculator;
 
     /**
      * @dev collections map.
@@ -96,7 +96,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             swapAddress, 
             jot.address, 
             jotPool.address, 
-            liquidityManager.address,
+            liquidityCalculator.address,
             redemptionPool.address,
             collectionManager.address,
             syntheticNFT.address,
@@ -111,8 +111,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         swapAddress = addresses_[0];
         _jot = addresses_[1];
         _jotPool = addresses_[2];
-        //_liquidityManager = liquidityManager_;
-        _liquidityManager = addresses_[3];
+        _liquidityCalculator = addresses_[3];
         _redemptionPool = addresses_[4];
         _collectionManager = addresses_[5];
         _syntheticNFT = addresses_[6];
@@ -299,8 +298,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         // deploys a minimal proxy contract from the collectionManager contract implementation
         collectionAddress = Clones.clone(_collectionManager);
 
-        address liquidityManagerAddress = Clones.clone(_liquidityManager);
-        LiquidityManager(liquidityManagerAddress).initialize(
+        address liquidityCalculatorAddress = Clones.clone(_liquidityCalculator);
+        LiquidityCalculator(liquidityCalculatorAddress).initialize(
             collectionAddress,
             swapAddress,
             _protocol,
@@ -318,7 +317,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             jotPoolAddress_,
             redemptionPoolAddress_,
             swapAddress,
-            liquidityManagerAddress
+            liquidityCalculatorAddress
         );
     }
 

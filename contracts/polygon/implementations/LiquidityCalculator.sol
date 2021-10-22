@@ -7,7 +7,7 @@ import "../governance/ProtocolParameters.sol";
 import "./Structs.sol";
 import "../Interfaces.sol";
 
-contract LiquidityManager is AccessControl, Initializable {
+contract LiquidityCalculator is AccessControl, Initializable {
 
     /// @notice role of the manager contract
     bytes32 public constant MANAGER = keccak256("MANAGER");

@@ -8,7 +8,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   // get the previously deployed contracts
   let jot = await ethers.getContract('Jot');
   let jotPool = await ethers.getContract('JotPool');
-  let liquidityManager = await ethers.getContract('LiquidityManager');
+  let liquidityCalculator = await ethers.getContract('LiquidityCalculator');
   let redemptionPool = await ethers.getContract('RedemptionPool');
   let collectionManager = await ethers.getContract('SyntheticCollectionManager');
   let auctionsManager = await ethers.getContract('AuctionsManager');
@@ -62,7 +62,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
         swapAddress, 
         jot.address, 
         jotPool.address, 
-        liquidityManager.address,
+        liquidityCalculator.address,
         redemptionPool.address,
         collectionManager.address,
         syntheticNFT.address,

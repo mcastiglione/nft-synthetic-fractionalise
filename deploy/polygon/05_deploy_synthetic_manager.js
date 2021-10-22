@@ -7,7 +7,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const randomConsumer = await ethers.getContract('RandomNumberConsumer');
   const validator = await ethers.getContract('PolygonValidatorOracle');
 
-  await deploy('LiquidityManager', {
+  await deploy('LiquidityCalculator', {
     from: deployer,
     log: true,
     args: [],
