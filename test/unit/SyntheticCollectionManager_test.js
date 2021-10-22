@@ -568,5 +568,49 @@ describe('SyntheticCollectionManager', async function () {
       const managerAfterExitProtocolBalanceJot = parseReverse(await jot.balanceOf(managerAddress));
       expect(managerBeforeRegisterBalanceJot).to.be.equal(managerAfterExitProtocolBalanceJot);
     });
+
+    it('buybackRequiredAmount and buyback', async () => {
+      const managerBeforeRegisterBalanceJot = parseReverse(await jot.balanceOf(managerAddress));
+      
+      const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
+        'My Collection',
+        'MYC',
+        '',
+      ]);
+      
+      await expect(TX).to.emit(router, 'TokenRegistered');
+      const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+      tokenID = ARGS.syntheticTokenId;
+      
+      // verify NFT
+      await router.verifyNFT(NFT, tokenID);
+      
+      // Mint and approve funding to buy 500 jots
+      // Now mint and approve 1000 jots 5000 funding tokens
+      await fundingToken.mint(owner.address, parseAmount('500'));
+      await fundingToken.approve(managerAddress, parseAmount('500'));
+      
+      await manager.buyJotTokens(tokenID, parseAmount('500'));
+      
+      // Now addLiquidity to Uniswap
+      // Should be 500 Jots and 500 funding Tokens
+      await manager.addLiquidityToPool(tokenID);
+
+      await manager.withdrawJotTokens(tokenID, parseAmount('1000'));
+
+      const buybackRequiredAmount = await manager.buybackRequiredAmount(tokenID);
+
+      // mint and approve and deposit remaining jots to reach JOTS_SUPPLY (1000)
+      await fundingToken.mint(owner.address, buybackRequiredAmount[0]);
+      await fundingToken.approve(manager.address, buybackRequiredAmount[0]);
+
+      // Now exit protocol
+      await manager.buyback(tokenID);
+
+      const managerAfterExitProtocolBalanceJot = parseReverse(await jot.balanceOf(managerAddress));
+      expect(managerBeforeRegisterBalanceJot).to.be.equal(managerAfterExitProtocolBalanceJot);
+    });
+
+
   });
 });

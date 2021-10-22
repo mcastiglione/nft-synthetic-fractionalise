@@ -421,7 +421,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         token.liquidityTokenBalance += liquidity;
         token.uniswapJotLiquidity += amountA;
         token.uniswapFundingLiquidity += amountB;
-        //token.perpetualFuturesLShares += lShares;
     }
 
     /**
