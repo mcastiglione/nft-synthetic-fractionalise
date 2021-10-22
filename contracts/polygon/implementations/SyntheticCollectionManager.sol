@@ -22,7 +22,7 @@ import "./JotPool.sol";
 import "./RedemptionPool.sol";
 import "./Structs.sol";
 import "./Enums.sol";
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 import {AuctionsManager} from "../auctions/AuctionsManager.sol";
 
@@ -382,42 +382,22 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
         
-        // Perpetual Pool and Uniswap liquidity percentages
-        uint256 liquidityPerpetualPercentage = protocol.liquidityPerpetualPercentage();
-        uint256 liquidityUniswapPercentage = protocol.liquidityUniswapPercentage();
         // Token jots liquidity for Uniswap
         uint256 liquiditySupply = token.liquiditySupply;
         // Token funding tokens owned by nft owner
         uint256 liquiditySold = token.liquiditySold;
-        // Amount in Funding that will go to PerpetualPoolLite
-        uint256 perpetualFundingLiquidity = liquiditySold / 100 * liquidityPerpetualPercentage;
 
-        // Perpetual Pool Lite
-        // get lTokenAddress
-        ( , address lTokenAddress, , , , , ) = IPerpetualPoolLite(_perpetualPoolLiteAddress).getAddresses();
-
-        // balance of lShares
-        uint256 futuresBalanceBefore = IERC20(lTokenAddress).balanceOf(address(this));
-
-        // Approve add liquidity and execute
-        IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, perpetualFundingLiquidity);
-        IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(perpetualFundingLiquidity);
-
-        // balance of lShares after
-        uint256 futuresBalanceAfter = IERC20(lTokenAddress).balanceOf(address(this));
-
-        // difference is lShares added
-        uint256 lShares = futuresBalanceAfter - futuresBalanceBefore;
+        uint256 lShares;
 
         // Approve Uniswap address
-        IJot(jotAddress).approve(_swapAddress, (liquiditySupply / 100 * liquidityUniswapPercentage));
-        IERC20(fundingTokenAddress).approve(_swapAddress, (liquiditySold / 100 * liquidityUniswapPercentage));
+        IJot(jotAddress).approve(_swapAddress, liquiditySupply);
+        IERC20(fundingTokenAddress).approve(_swapAddress, liquiditySold);
 
         // add the liquidity to Uniswapp
         (uint256 amountA, uint256 amountB, uint256 liquidity) = uniswapV2Router.addLiquidity(
             jotAddress,
             fundingTokenAddress,
-            (liquiditySupply / 100 * liquidityUniswapPercentage),
+            liquiditySupply,
             liquiditySold,
             0, // slippage is unavoidable
             0, // slippage is unavoidable
@@ -430,11 +410,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
             IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, fundingRemaining);
 
-            futuresBalanceBefore = IERC20(lTokenAddress).balanceOf(address(this));
             IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(fundingRemaining);
-            futuresBalanceAfter = IERC20(lTokenAddress).balanceOf(address(this));
-
-            lShares += (futuresBalanceAfter - futuresBalanceBefore);
         }
 
         // Update balances
@@ -445,7 +421,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         token.liquidityTokenBalance += liquidity;
         token.uniswapJotLiquidity += amountA;
         token.uniswapFundingLiquidity += amountB;
-        token.perpetualFuturesLShares += lShares;
+        //token.perpetualFuturesLShares += lShares;
     }
 
     /**
@@ -999,4 +975,5 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function buybackPrice() public view returns(uint256) {
         return protocol.buybackPrice();
     }
+
 }

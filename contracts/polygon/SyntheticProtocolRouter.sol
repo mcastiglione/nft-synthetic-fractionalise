@@ -480,4 +480,5 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     function getCollectionUniswapPair(address collection) public view returns (address) {
         return _collections[collection].jotPairAddress;
     }
+
 }
