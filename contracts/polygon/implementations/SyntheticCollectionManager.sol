@@ -402,7 +402,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
         
-        (uint256 jotsValue, uint256 fundingValue ) = LiquidityCalculator(
+        (uint256 jotsValue, uint256 fundingValue, uint256 remainingJots ) = LiquidityCalculator(
             _liquidityCalculatorAddress
         ).getAvailableFundingUniswap(token);
 
@@ -431,13 +431,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         }
 
         // Update balances
-        token.liquiditySupply -= amountA;
+        token.liquiditySupply -= (amountA + remainingJots);
         token.liquiditySold -= fundingValue;
-        token.sellingSupply -= amountA;
+        token.sellingSupply -= (amountA + remainingJots);
         token.soldSupply -= fundingValue;
         token.liquidityTokenBalance += liquidity;
         token.uniswapJotLiquidity += amountA;
         token.uniswapFundingLiquidity += amountB;
+        token.ownerSupply += remainingJots;
 
         addLiquidityToPerpetualPool(tokenId);
     }
