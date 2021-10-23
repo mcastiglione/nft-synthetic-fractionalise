@@ -33,9 +33,9 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
   const defaultProtocolParameters = {
     mainParams,
     futuresOracleAddress: symbolOracle.address,
-    futuresMultiplier: web3.utils.toWei('1'),
-    futuresFeeRatio: web3.utils.toWei('1'),
-    futuresFundingRateCoefficient: web3.utils.toWei('1'),
+    futuresMultiplier: one(1,3),
+    futuresFeeRatio: one(1, 3),
+    futuresFundingRateCoefficient: one(5, 5),
     oracleDelay: 6000,
   };
 
