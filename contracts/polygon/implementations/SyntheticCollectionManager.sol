@@ -378,6 +378,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         token.updatePriceFraction(newFractionPrice_);
     }
+
     /**
     * @notice add available liquidity to Perpetual Pool
      */
@@ -386,8 +387,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 perpetualFundingLiquidity = LiquidityCalculator(_liquidityCalculatorAddress).getAvailableFundingPerpetual(token);
         if (perpetualFundingLiquidity > 0) {
             IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, perpetualFundingLiquidity);
-            IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(perpetualFundingLiquidity);
+            uint256 lShares = IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidityGetlShares(perpetualFundingLiquidity);
             tokens[tokenId].soldSupply - perpetualFundingLiquidity;
+            tokens[tokenId].perpetualFuturesLShares += lShares;
         }
     }
 
@@ -454,6 +456,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // transfer funding token balance to caller
         IERC20(fundingTokenAddress).transfer(tokenOwner, fundingLiquidity);
+
+        if(tokens[tokenId].perpetualFuturesLShares != 0) {
+            IPerpetualPoolLite(_perpetualPoolLiteAddress).removeLiquidity(tokens[tokenId].perpetualFuturesLShares);
+        }
     }
 
     /**
