@@ -434,11 +434,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         token.liquiditySupply -= (amountA + remainingJots);
         token.liquiditySold -= fundingValue;
         token.sellingSupply -= amountA;
+        token.sellingSupply += remainingJots;
         token.soldSupply -= fundingValue;
         token.liquidityTokenBalance += liquidity;
         token.uniswapJotLiquidity += amountA;
         token.uniswapFundingLiquidity += amountB;
-        token.ownerSupply += remainingJots;
 
         addLiquidityToPerpetualPool(tokenId);
     }
