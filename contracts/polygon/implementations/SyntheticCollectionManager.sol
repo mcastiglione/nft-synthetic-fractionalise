@@ -468,7 +468,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function _removeLiquidityFromPool(uint256 tokenId) internal returns (uint256, uint256) {
         TokenData storage token = tokens[tokenId];
 
-        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(Jot(jotAddress).uniswapV2Pair());
+        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(poolAddress());
 
         // get added liquidity
         uint256 jotLiquidity = token.uniswapJotLiquidity;
@@ -704,7 +704,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     {
         TokenData storage token = tokens[tokenId];
 
-        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(Jot(jotAddress).uniswapV2Pair());
+        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(poolAddress());
 
         uint256 liquidity = token.liquidityTokenBalance;
 
@@ -980,8 +980,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice returns the accrued reward by QuickSwap pool LP for a given fractionalization
      */
-    function getAccruedReward(uint256 tokenId) public view returns (uint256) {
-        return tokens[tokenId].liquidityTokenBalance;
+    function getAccruedReward(uint256 tokenId) public view returns (uint256, uint256) {
+        return LiquidityCalculator(_liquidityCalculatorAddress).getAccruedReward(
+            poolAddress(),
+            tokens[tokenId].liquidityTokenBalance
+        );
     }
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {

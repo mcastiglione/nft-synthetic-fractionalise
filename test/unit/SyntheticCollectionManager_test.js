@@ -268,9 +268,9 @@ describe('SyntheticCollectionManager', async function () {
 
       await router.verifyNFT(NFT, tokenID);
 
-      const liquidity = await manager.getAccruedReward(tokenID);
+      liquidity  = await manager.getAccruedReward(tokenID);
 
-      expect(liquidity.toString()).to.be.equal('0');
+      expect(liquidity.toString()).to.be.equal('0,0');
     });
 
     it('getAccruedReward', async () => {
@@ -296,7 +296,8 @@ describe('SyntheticCollectionManager', async function () {
 
       const liquidity = await manager.getAccruedReward(tokenID);
 
-      expect(liquidity.toString()).to.be.equal(parseAmount('500'));
+      expect(liquidity[0].toString()).to.be.equal(parseAmount('500'));
+      expect(liquidity[1].toString()).to.be.equal(parseAmount('500'));
     });
     describe('claimLiquidityTokens', async () => {
       it('non existent token', async () => {
@@ -342,13 +343,13 @@ describe('SyntheticCollectionManager', async function () {
         // Should be 500 Jots and 500 funding Tokens
         await manager.addLiquidityToPool(tokenID);
 
-        const liquidity = await manager.getAccruedReward(tokenID);
-
-        await manager.claimLiquidityTokens(tokenID, liquidity.toString());
-
         const UniswapPairAddress = await jot.uniswapV2Pair();
 
         const UniswapV2Pair = await ethers.getContractAt('UniswapPairMock', UniswapPairAddress);
+
+        const liquidity = await UniswapV2Pair.balanceOf(manager.address);
+
+        await manager.claimLiquidityTokens(tokenID, liquidity.toString());
 
         const balance = await UniswapV2Pair.balanceOf(owner.address);
 
