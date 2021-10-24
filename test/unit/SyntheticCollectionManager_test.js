@@ -611,6 +611,36 @@ describe('SyntheticCollectionManager', async function () {
       expect(managerBeforeRegisterBalanceJot).to.be.equal(managerAfterExitProtocolBalanceJot);
     });
 
+    it('register, withdraw, approve and buyback', async () => {
+      const managerBeforeRegisterBalanceJot = parseReverse(await jot.balanceOf(managerAddress));
+      
+      const TX = await router.registerNFT(NFT, nftID, parseAmount('10000'), parseAmount('1'), [
+        'My Collection',
+        'MYC',
+        '',
+      ]);
+      
+      await expect(TX).to.emit(router, 'TokenRegistered');
+      const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+      tokenID = ARGS.syntheticTokenId;
+      
+      // verify NFT
+      await router.verifyNFT(NFT, tokenID);
+      
+      // Mint and approve funding to buy 500 jots
+      // Now mint and approve 1000 jots 5000 funding tokens
+      await fundingToken.mint(owner.address, parseAmount('500'));
+      await fundingToken.approve(managerAddress, parseAmount('500'));
+      
+      await manager.withdrawJotTokens(tokenID, parseAmount('500'));
+      
+      // Now exit protocol
+      await manager.buyback(tokenID);
+
+      const managerAfterExitProtocolBalanceJot = parseReverse(await jot.balanceOf(managerAddress));
+      expect(managerBeforeRegisterBalanceJot).to.be.equal(managerAfterExitProtocolBalanceJot);
+    });
+
 
   });
 });

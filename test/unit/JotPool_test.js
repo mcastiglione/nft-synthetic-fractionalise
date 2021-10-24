@@ -33,6 +33,17 @@ describe('JotPool', async function () {
       assert.equal(position.liquidity, 100);
     });
 
+    it('addLiquidity twice', async () => {
+      const amount = jotAmount('200');
+      await addLiquidity(amount);
+
+      await addLiquidity(amount);
+      const position = await pool.getPosition();
+
+      assert.equal(await pool.totalLiquidity(), 200);
+      assert.equal(position.liquidity, 200);
+    });
+
     it('should transfer proper amount of jot to pool', async () => {
       const amount = jotAmount('200');
       await addLiquidity(amount);
