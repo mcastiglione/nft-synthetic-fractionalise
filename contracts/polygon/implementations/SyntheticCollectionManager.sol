@@ -380,14 +380,17 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
-    * @notice add available liquidity to Perpetual Pool
+     * @notice add available liquidity to Perpetual Pool
      */
     function addLiquidityToPerpetualPool(uint256 tokenId) public {
         TokenData storage token = tokens[tokenId];
-        uint256 perpetualFundingLiquidity = LiquidityCalculator(_liquidityCalculatorAddress).getAvailableFundingPerpetual(token);
+        uint256 perpetualFundingLiquidity = LiquidityCalculator(_liquidityCalculatorAddress)
+            .getAvailableFundingPerpetual(token);
         if (perpetualFundingLiquidity > 0) {
             IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, perpetualFundingLiquidity);
-            uint256 lShares = IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidityGetlShares(perpetualFundingLiquidity);
+            uint256 lShares = IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidityGetlShares(
+                perpetualFundingLiquidity
+            );
             tokens[tokenId].soldSupply - perpetualFundingLiquidity;
             tokens[tokenId].perpetualFuturesLShares += lShares;
         }
@@ -397,14 +400,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice add available liquidity for a given token to UniSwap pool
      */
     function addLiquidityToPool(uint256 tokenId) public {
-
         TokenData storage token = tokens[tokenId];
-        
+
         require(token.soldSupply > 0, "soldSupply is zero");
 
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
-        
-        (uint256 jotsValue, uint256 fundingValue, uint256 remainingJots ) = LiquidityCalculator(
+
+        (uint256 jotsValue, uint256 fundingValue, uint256 remainingJots) = LiquidityCalculator(
             _liquidityCalculatorAddress
         ).getAvailableFundingUniswap(token);
 
@@ -423,7 +425,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             address(this),
             block.timestamp // solhint-disable-line
         );
-        // If there is a remaining, add as liquidity to PerpetualPool 
+        // If there is a remaining, add as liquidity to PerpetualPool
         if (amountB < fundingValue) {
             uint256 fundingRemaining = fundingValue - amountB;
 
@@ -457,8 +459,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // transfer funding token balance to caller
         IERC20(fundingTokenAddress).transfer(tokenOwner, fundingLiquidity);
 
-        if(tokens[tokenId].perpetualFuturesLShares != 0) {
-            IPerpetualPoolLite(_perpetualPoolLiteAddress).removeLiquidity(tokens[tokenId].perpetualFuturesLShares);
+        if (tokens[tokenId].perpetualFuturesLShares != 0) {
+            IPerpetualPoolLite(_perpetualPoolLiteAddress).removeLiquidity(
+                tokens[tokenId].perpetualFuturesLShares
+            );
         }
     }
 
@@ -584,14 +588,18 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                 IERC20(jotAddress).safeTransfer(jotPool, poolAmount);
             }
         } else {
-            token.ownerSupply += fAmount;
             if (randomNumber != flip.prediction) {
                 poolAmount = fAmount;
             } else {
                 poolAmount = fAmount - fReward;
-                IERC20(jotAddress).safeTransfer(_flips[requestId].player, fReward);
+                IERC20ManagedAccounts(jotAddress).transferFromManaged(
+                    jotPool,
+                    _flips[requestId].player,
+                    fReward
+                );
             }
             if (poolAmount > 0) {
+                token.ownerSupply += poolAmount;
                 IERC20ManagedAccounts(jotAddress).transferFromManaged(jotPool, address(this), poolAmount);
             }
         }
@@ -728,7 +736,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function buybackRequiredAmount(uint256 tokenId)
         public
         view
-        returns (uint256 buybackAmount, uint256 fundingLeft, uint256 jotsLeft)
+        returns (
+            uint256 buybackAmount,
+            uint256 fundingLeft,
+            uint256 jotsLeft
+        )
     {
         require(!lockedNFT(tokenId), "Token is locked!");
 
@@ -781,7 +793,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             Jot(jotAddress).increaseAllowance(redemptionPool, ProtocolConstants.JOT_SUPPLY - burned);
 
             // update redemption pool balance trackers
-            RedemptionPool(redemptionPool).addRedemableBalance(buybackAmount, (buybackAmount / buybackPrice()));
+            RedemptionPool(redemptionPool).addRedemableBalance(
+                buybackAmount,
+                (buybackAmount / buybackPrice())
+            );
 
             IERC20(fundingTokenAddress).transferFrom(msg.sender, redemptionPool, buybackAmount);
         }
@@ -801,7 +816,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function _getFundingLeftAndBuybackAmount(uint256 total_, uint256 fundingLiquidity_)
         internal
         view
-        returns (uint256 jotsLeft, uint256 fundingLeft, uint256 buybackAmount)
+        returns (
+            uint256 jotsLeft,
+            uint256 fundingLeft,
+            uint256 buybackAmount
+        )
     {
         // Starting funding left
         fundingLeft = fundingLiquidity_;
@@ -817,17 +836,15 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                 uint256 fundingToJots = (fundingLeft * buybackPrice()) / 10**18;
                 // if there's enough funding for buyback
                 // then return 0 as buybackAmount and the remaining funding
-                if (
-                    (fundingToJots + total_) > ProtocolConstants.JOT_SUPPLY
-                ) {
+                if ((fundingToJots + total_) > ProtocolConstants.JOT_SUPPLY) {
                     uint256 remainingJots = total_ - ProtocolConstants.JOT_SUPPLY;
                     uint256 requiredFunding = (remainingJots * buybackPrice()) / 10**18;
                     fundingLeft -= requiredFunding;
                     buybackAmount = 0;
-                
-                } // if there isn't enough funding for buyback
+                }
+                // if there isn't enough funding for buyback
                 else {
-                    buybackAmount = (ProtocolConstants.JOT_SUPPLY - total_ - fundingToJots); 
+                    buybackAmount = (ProtocolConstants.JOT_SUPPLY - total_ - fundingToJots);
                     fundingLeft = 0;
                 }
             } else {
@@ -981,10 +998,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice returns the accrued reward by QuickSwap pool LP for a given fractionalization
      */
     function getAccruedReward(uint256 tokenId) public view returns (uint256, uint256) {
-        return LiquidityCalculator(_liquidityCalculatorAddress).getAccruedReward(
-            poolAddress(),
-            tokens[tokenId].liquidityTokenBalance
-        );
+        return
+            LiquidityCalculator(_liquidityCalculatorAddress).getAccruedReward(
+                poolAddress(),
+                tokens[tokenId].liquidityTokenBalance
+            );
     }
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {
@@ -1000,8 +1018,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     // the price to buyback an NFT (buying Jots) and exit the protocol
-    function buybackPrice() public view returns(uint256) {
+    function buybackPrice() public view returns (uint256) {
         return protocol.buybackPrice();
     }
-
 }
