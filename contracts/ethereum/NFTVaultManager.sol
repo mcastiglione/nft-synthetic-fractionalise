@@ -263,7 +263,7 @@ contract NFTVaultManager is AccessControl {
     }
 
     /**
-     * @notice allows to withdraw a token after a succesfull verification process
+     * @notice allows withdrawing a token after a successful verification process
      * @param collection_ the address of the nft collection
      * @param tokenId_ the nft token id to withdraw
      */
