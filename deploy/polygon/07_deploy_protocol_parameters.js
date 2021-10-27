@@ -17,6 +17,7 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
     fundingTokenAddress = jot.address;
   } else {
     fundingTokenAddress = networkConfig[chainId].fundingTokenAddress;
+    fundingTokenAddress = "0x2cA48b8c2d574b282FDAB69545646983A94a3286";
   }
 
   
@@ -32,7 +33,7 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
     flippingAmount: "10000000000000000000",
     auctionDuration: String(time.duration.weeks(1)),
     governanceContractAddress: owner, 
-    fundingTokenAddress: "0x2cA48b8c2d574b282FDAB69545646983A94a3286", 
+    fundingTokenAddress: fundingTokenAddress,
     liquidityPerpetualPercentage: "0", 
     liquidityUniswapPercentage: "100",
     buybackPrice: parseAmount('1')
