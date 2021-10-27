@@ -299,6 +299,32 @@ describe('SyntheticCollectionManager', async function () {
       expect(liquidity[0].toString()).to.be.equal(parseAmount('500'));
       expect(liquidity[1].toString()).to.be.equal(parseAmount('500'));
     });
+
+    it('addLiquidityToPool twice', async () => {
+      const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
+        'My Collection',
+        'MYC',
+        '',
+      ]);
+      await expect(TX).to.emit(router, 'TokenRegistered');
+      const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+      tokenID = ARGS.syntheticTokenId;
+
+      await router.verifyNFT(NFT, tokenID);
+
+      await fundingToken.mint(owner.address, parseAmount('500'));
+      await fundingToken.approve(managerAddress, parseAmount('500'));
+
+      await manager.buyJotTokens(tokenID, parseAmount('500'));
+
+      // Now addLiquidity to Uniswap
+      // Should be 500 Jots and 500 funding Tokens
+      await manager.addLiquidityToPool(tokenID);
+
+      await expect(manager.addLiquidityToPool(tokenID)).to.be.revertedWith('soldSupply is zero');
+    });
+
+
     describe('claimLiquidityTokens', async () => {
       it('non existent token', async () => {
         await expect(manager.claimLiquidityTokens(tokenId + 1, 1000)).to.be.revertedWith(

@@ -80,7 +80,7 @@ contract LiquidityCalculator is AccessControl, Initializable {
         uint256 totalSupply = uniswapV2Pair.totalSupply();
 
         if (totalSupply == 0) {
-            return (0,0);
+            return (0, 0);
         }
 
         if (reserve0 == 0) {
