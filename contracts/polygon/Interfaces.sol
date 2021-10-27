@@ -475,6 +475,8 @@ interface IPerpetualPoolLite {
 
     function addLiquidity(uint256 bAmount) external;
 
+    function addLiquidityGetlShares(uint256 bAmount) external returns(uint256);
+
     function removeLiquidity(uint256 lShares) external;
 
     function addMargin(uint256 bAmount) external;

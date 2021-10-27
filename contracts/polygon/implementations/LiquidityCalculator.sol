@@ -39,7 +39,7 @@ contract LiquidityCalculator is AccessControl, Initializable {
     }
 
 
-    function getAvailableFundingPerpetual(TokenData memory token) public view returns(uint256) {
+    function getAvailableFundingPerpetual(TokenData memory token) external view returns(uint256) {
 
         // Perpetual Pool and Uniswap liquidity percentages
         uint256 liquidityPerpetualPercentage = protocol.liquidityPerpetualPercentage();
@@ -51,7 +51,7 @@ contract LiquidityCalculator is AccessControl, Initializable {
         return perpetualFundingLiquidity;
     }
 
-    function getAvailableFundingUniswap(TokenData memory token) public view returns(
+    function getAvailableFundingUniswap(TokenData memory token) external view returns(
         uint256 jotsValue, uint256 fundingValue, uint256 remainingJots
     ) {
         uint256 liquidityPerpetualPercentage = protocol.liquidityPerpetualPercentage();
@@ -65,6 +65,35 @@ contract LiquidityCalculator is AccessControl, Initializable {
         jotsValue = (liquiditySupply / 100 * liquidityUniswapPercentage);
         fundingValue = (liquiditySold / 100 * liquidityUniswapPercentage);
         remainingJots = (liquiditySupply / 100 * liquidityPerpetualPercentage);
+
+    }
+
+    function getAccruedReward(address pairAddress, uint256 liquidityTokenBalance) external view returns(uint256 token0Reward, uint256 token1Reward) {
+        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(pairAddress);
+        
+        (
+            uint112 reserve0,
+            uint112 reserve1,
+            
+        ) =  uniswapV2Pair.getReserves();
+
+        uint256 totalSupply = uniswapV2Pair.totalSupply();
+
+        if (totalSupply == 0) {
+            return (0,0);
+        }
+
+        if (reserve0 == 0) {
+            token0Reward = 0;
+        } else {
+            token0Reward = uint256(reserve0) / totalSupply * liquidityTokenBalance;
+        }
+
+        if(reserve1 == 0) {
+            token1Reward = 0;
+        } else {
+            token1Reward = uint256(reserve1) / totalSupply * liquidityTokenBalance;
+        }
 
     }
 

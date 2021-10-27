@@ -268,9 +268,9 @@ describe('SyntheticCollectionManager', async function () {
 
       await router.verifyNFT(NFT, tokenID);
 
-      const liquidity = await manager.getAccruedReward(tokenID);
+      liquidity  = await manager.getAccruedReward(tokenID);
 
-      expect(liquidity.toString()).to.be.equal('0');
+      expect(liquidity.toString()).to.be.equal('0,0');
     });
 
     it('getAccruedReward', async () => {
@@ -296,7 +296,8 @@ describe('SyntheticCollectionManager', async function () {
 
       const liquidity = await manager.getAccruedReward(tokenID);
 
-      expect(liquidity.toString()).to.be.equal(parseAmount('500'));
+      expect(liquidity[0].toString()).to.be.equal(parseAmount('500'));
+      expect(liquidity[1].toString()).to.be.equal(parseAmount('500'));
     });
     describe('claimLiquidityTokens', async () => {
       it('non existent token', async () => {
@@ -342,13 +343,13 @@ describe('SyntheticCollectionManager', async function () {
         // Should be 500 Jots and 500 funding Tokens
         await manager.addLiquidityToPool(tokenID);
 
-        const liquidity = await manager.getAccruedReward(tokenID);
-
-        await manager.claimLiquidityTokens(tokenID, liquidity.toString());
-
         const UniswapPairAddress = await jot.uniswapV2Pair();
 
         const UniswapV2Pair = await ethers.getContractAt('UniswapPairMock', UniswapPairAddress);
+
+        const liquidity = await UniswapV2Pair.balanceOf(manager.address);
+
+        await manager.claimLiquidityTokens(tokenID, liquidity.toString());
 
         const balance = await UniswapV2Pair.balanceOf(owner.address);
 
@@ -604,6 +605,36 @@ describe('SyntheticCollectionManager', async function () {
       await fundingToken.mint(owner.address, buybackRequiredAmount[0]);
       await fundingToken.approve(manager.address, buybackRequiredAmount[0]);
 
+      // Now exit protocol
+      await manager.buyback(tokenID);
+
+      const managerAfterExitProtocolBalanceJot = parseReverse(await jot.balanceOf(managerAddress));
+      expect(managerBeforeRegisterBalanceJot).to.be.equal(managerAfterExitProtocolBalanceJot);
+    });
+
+    it('register, withdraw, approve and buyback', async () => {
+      const managerBeforeRegisterBalanceJot = parseReverse(await jot.balanceOf(managerAddress));
+      
+      const TX = await router.registerNFT(NFT, nftID, parseAmount('10000'), parseAmount('1'), [
+        'My Collection',
+        'MYC',
+        '',
+      ]);
+      
+      await expect(TX).to.emit(router, 'TokenRegistered');
+      const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+      tokenID = ARGS.syntheticTokenId;
+      
+      // verify NFT
+      await router.verifyNFT(NFT, tokenID);
+      
+      // Mint and approve funding to buy 500 jots
+      // Now mint and approve 1000 jots 5000 funding tokens
+      await fundingToken.mint(owner.address, parseAmount('500'));
+      await fundingToken.approve(managerAddress, parseAmount('500'));
+      
+      await manager.withdrawJotTokens(tokenID, parseAmount('500'));
+      
       // Now exit protocol
       await manager.buyback(tokenID);
 

@@ -147,7 +147,13 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
 
     function addLiquidity(uint256 bAmount) external override {
         require(bAmount > 0, "PerpetualPool: 0 bAmount");
-        _addLiquidity(msg.sender, bAmount);
+        uint256 lShares = _addLiquidity(msg.sender, bAmount);
+    }
+
+    function addLiquidityGetlShares(uint256 bAmount) external override returns (uint256) {
+        require(bAmount > 0, "PerpetualPool: 0 bAmount");
+        uint256 lShares = _addLiquidity(msg.sender, bAmount);
+        return lShares;
     }
 
     function removeLiquidity(uint256 lShares) external override {
@@ -235,7 +241,7 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
     // Core logics
     //================================================================================
 
-    function _addLiquidity(address account, uint256 bAmount) internal _lock_ {
+    function _addLiquidity(address account, uint256 bAmount) internal _lock_ returns(uint256) {
         (int256 totalDynamicEquity, ) = _updateSymbolPricesAndFundingRates();
         bAmount = _transferIn(account, bAmount);
         ILTokenLite lToken = ILTokenLite(_lTokenAddress);
@@ -253,6 +259,8 @@ contract PerpetualPoolLite is IPerpetualPoolLite, Initializable {
         _liquidity += bAmount.utoi();
 
         emit AddLiquidity(account, lShares, bAmount);
+
+        return lShares;
     }
 
     function _removeLiquidity(address account, uint256 lShares) internal _lock_ {
