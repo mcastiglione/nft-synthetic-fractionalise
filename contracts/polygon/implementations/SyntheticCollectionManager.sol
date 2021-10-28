@@ -62,7 +62,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /// @notice the address of the protocol router
     address public syntheticProtocolRouterAddress;
 
-    address private _perpetualPoolLiteAddress;
+    address public perpetualPoolLiteAddress;
 
     address private _swapAddress;
 
@@ -387,8 +387,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 perpetualFundingLiquidity = LiquidityCalculator(_liquidityCalculatorAddress)
             .getAvailableFundingPerpetual(token);
         if (perpetualFundingLiquidity > 0) {
-            IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, perpetualFundingLiquidity);
-            uint256 lShares = IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidityGetlShares(
+            IERC20(fundingTokenAddress).approve(perpetualPoolLiteAddress, perpetualFundingLiquidity);
+            uint256 lShares = IPerpetualPoolLite(perpetualPoolLiteAddress).addLiquidityGetlShares(
                 perpetualFundingLiquidity
             );
             tokens[tokenId].soldSupply - perpetualFundingLiquidity;
@@ -429,9 +429,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         if (amountB < fundingValue) {
             uint256 fundingRemaining = fundingValue - amountB;
 
-            IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, fundingRemaining);
+            IERC20(fundingTokenAddress).approve(perpetualPoolLiteAddress, fundingRemaining);
 
-            IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(fundingRemaining);
+            IPerpetualPoolLite(perpetualPoolLiteAddress).addLiquidity(fundingRemaining);
         }
 
         // Update balances
@@ -460,7 +460,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         IERC20(fundingTokenAddress).transfer(tokenOwner, fundingLiquidity);
 
         if (tokens[tokenId].perpetualFuturesLShares != 0) {
-            IPerpetualPoolLite(_perpetualPoolLiteAddress).removeLiquidity(
+            IPerpetualPoolLite(perpetualPoolLiteAddress).removeLiquidity(
                 tokens[tokenId].perpetualFuturesLShares
             );
         }
@@ -626,8 +626,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     /**
      * @notice this method calls chainlink oracle and
-     *         verifies if the NFT has been locked on NFTVaultManager. In addition
-     *         gets the metadata of the NFT
+     *  verifies if the NFT has been locked on NFTVaultManager. In addition
+     *  gets the metadata of the NFT
      */
     function verify(uint256 tokenId) external {
         TokenData storage token = tokens[tokenId];
@@ -912,7 +912,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function setPerpetualPoolLiteAddress(address perpetualPoolLiteAddress_) external onlyRole(ROUTER) {
-        _perpetualPoolLiteAddress = perpetualPoolLiteAddress_;
+        perpetualPoolLiteAddress = perpetualPoolLiteAddress_;
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
@@ -1021,4 +1021,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function buybackPrice() public view returns (uint256) {
         return protocol.buybackPrice();
     }
+
+    function getLiquidityTokens(uint256 tokenId) public view returns(uint256) {
+        return tokens[tokenId].liquidityTokenBalance;
+    }
+
 }

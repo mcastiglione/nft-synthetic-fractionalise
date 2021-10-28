@@ -64,16 +64,31 @@ describe('SyntheticCollectionManager', async function () {
     it('should fail if NFT is not registered ', async () => {
       await expect(manager.buyJotTokens(100, 1)).to.be.revertedWith('Token not registered');
     });
+
     it('should fail if amount is zero', async () => {
       await router.verifyNFT(NFT, tokenId);
       await expect(manager.buyJotTokens(tokenId, 0)).to.be.revertedWith("Amount can't be zero!");
     });
+
     it('should fail if amount is not approved in funding token', async () => {
       await router.verifyNFT(NFT, tokenId);
       await expect(manager.buyJotTokens(tokenId, parseAmount('1'))).to.be.revertedWith(
         'ERC20: transfer amount exceeds allowance'
       );
     });
+
+    it('If soldSupply is zero, will give error', async () => {
+      const tx = await router.registerNFT(NFT, nftID, 10000, 5, ['My Collection', 'MYC', '']);
+      await expect(tx).to.emit(router, 'TokenRegistered');
+      const args = await getEventArgs(tx, 'TokenRegistered', router);
+      tokenId = args.syntheticTokenId;
+      
+      await router.verifyNFT(NFT, tokenId);
+      await fundingToken.approve(managerAddress, parseAmount('1'));
+      await manager.buyJotTokens(tokenId, parseAmount('1'));
+
+    });
+
     it('if all previous conditions are met, should be ok', async () => {
       await router.verifyNFT(NFT, tokenId);
       await fundingToken.approve(managerAddress, parseAmount('1'));

@@ -7,7 +7,10 @@ module.exports = async ({ getNamedAccounts, deployments, network, getChainId }) 
   const chainId = await getChainId();
 
   // in local network for testing deploy the mock
-  if (network.tags.local) {
+  console.log('network tags', network.tags);
+
+  if (network.tags.local || network.tags.rinkeby_fork) {
+    console.log('mockito');
     await deploy('PolygonValidatorOracle', {
       contract: 'PolygonValidatorOracleMock',
       from: deployer,
@@ -15,6 +18,7 @@ module.exports = async ({ getNamedAccounts, deployments, network, getChainId }) 
       args: [],
     });
   } else {
+    console.log('not mockito')
     let oracleDefinition = {
       chainlinkNode: networkConfig[chainId].validatorChainlinkNode || constants.ZERO_ADDRESS,
       linkToken: networkConfig[chainId].linkToken || constants.ZERO_ADDRESS,

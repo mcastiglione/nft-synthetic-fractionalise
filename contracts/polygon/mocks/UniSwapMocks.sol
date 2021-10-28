@@ -59,6 +59,11 @@ contract UniswapPairMock is ERC20 {
     function mint(address account, uint256 amount) public {
         _mint(account, amount);
     }
+
+    function executeSwap(address token, address to, uint256 amountOut) public {
+        IERC20(token).transfer(to, amountOut);
+    }
+        
 }
 
 contract UniSwapFactoryMock {
@@ -133,5 +138,22 @@ contract UniSwapRouterMock {
         address pairAddress = UniSwapFactoryMock(_uniswapFactory).getPair(tokenA, tokenB);
 
         UniswapPairMock(pairAddress).executeRemoveLiquidity(tokenA, tokenB, amountAMin, amountBMin, to);
+    }
+
+    function swapTokensForExactTokens(
+        uint256 amountOut,
+        uint256 amountInMax,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts) {
+
+        address tokenA = path[0];
+        address tokenB = path[1];
+        address pairAddress = UniSwapFactoryMock(_uniswapFactory).getPair(tokenA, tokenB);
+
+        IERC20(tokenA).transferFrom(msg.sender, pairAddress, amountInMax);
+        UniswapPairMock(pairAddress).executeSwap(tokenB, to, amountOut);
+
     }
 }

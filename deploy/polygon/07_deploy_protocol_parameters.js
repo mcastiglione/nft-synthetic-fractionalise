@@ -1,9 +1,11 @@
 const { time } = require('@openzeppelin/test-helpers');
 const { networkConfig } = require('../../helper-hardhat-config');
 
-module.exports = async ({ getNamedAccounts, deployments, network }) => {
+module.exports = async ({ getNamedAccounts, deployments, getChainId, network }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
+
+  const chainId = await getChainId();
 
   const parseAmount = (amount) => ethers.utils.parseEther(amount);
 
@@ -11,7 +13,7 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
   const governance = await ethers.getContract('TimelockController');
   let fundingTokenAddress;
 
-  if (network.tags.local) {
+  if (network.tags.local || network.tags.rinkeby_fork) {
     const jot = await ethers.getContract('Jot');
 
     fundingTokenAddress = jot.address;

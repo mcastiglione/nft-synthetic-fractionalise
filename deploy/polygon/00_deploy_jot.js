@@ -3,7 +3,7 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
   const { deployer } = await getNamedAccounts();
 
   // in local network for testing deploy the mock
-  if (network.tags.local) {
+  if (network.tags.local || network.tags.rinkeby_fork) {
     await deploy('Jot', {
       contract: 'JotMock',
       from: deployer,
