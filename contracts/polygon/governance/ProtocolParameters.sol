@@ -84,7 +84,7 @@ contract ProtocolParameters is Ownable {
         liquidityPerpetualPercentage = liquidityPerpetualPercentage_;
         liquidityUniswapPercentage = liquidityUniswapPercentage_;
         buybackPrice = buybackPrice_;
-        stakerShare = 10;
+        stakerShare = 1e16;
 
         // transfer ownership
         transferOwnership(governanceContractAddress_);
@@ -135,7 +135,8 @@ contract ProtocolParameters is Ownable {
     }
 
     function setStakerShare(uint256 stakerShare_) external onlyOwner {
-        require(stakerShare > 0, "Staker share can't be 0");
+        require(stakerShare_ > 0, "Staker share can't be 0");
+        require(stakerShare_ <= 1e18, "Staker share too high");
         emit StakerShareUpdated(stakerShare, stakerShare_);
         stakerShare = stakerShare_;
     }

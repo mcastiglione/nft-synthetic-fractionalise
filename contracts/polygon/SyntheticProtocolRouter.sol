@@ -294,7 +294,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         address syntheticNFTAddress_,
         address collection_
     ) private returns (address collectionAddress) {
-
         // deploys a minimal proxy contract from the collectionManager contract implementation
         collectionAddress = Clones.clone(_collectionManager);
 
@@ -307,7 +306,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             ProtocolParameters(_protocol).fundingTokenAddress(),
             jotAddress_
         );
-        
+
         SyntheticCollectionManager(collectionAddress).initialize(
             jotAddress_,
             collection_,
@@ -500,5 +499,4 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     function getCollectionUniswapPair(address collection) public view returns (address) {
         return _collections[collection].jotPairAddress;
     }
-
 }

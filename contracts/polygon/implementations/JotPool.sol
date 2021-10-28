@@ -89,14 +89,8 @@ contract JotPool is ERC721, Initializable {
     function removeLiquidity(uint256 amount) external {
         require(positions[msg.sender].liquidity >= amount, "Remove amount exceeds balance");
         uint256 liquidityBurnt = (IERC20(jot).balanceOf(address(this)) * amount) / totalLiquidity;
-        if (totalLiquidity - amount > 0) {
-            positions[msg.sender].liquidity -= amount;
-            totalLiquidity -= amount;
-        } else {
-            uint256 jots = ProtocolConstants.JOT_SUPPLY;
-            positions[msg.sender].liquidity = jots;
-            totalLiquidity = jots;
-        }
+        positions[msg.sender].liquidity -= amount;
+        totalLiquidity -= amount;
 
         emit LiquidityRemoved(msg.sender, amount, liquidityBurnt);
 
@@ -155,9 +149,7 @@ contract JotPool is ERC721, Initializable {
         uint256 ftBalance = IERC20(fundingToken).balanceOf(address(this));
         uint256 x = ftBalance - lastReward;
         if (totalStaked != 0) {
-            totalShares +=
-                ((x * protocol.stakerShare()) * 10**18) /
-                (totalStaked * ProtocolConstants.STAKER_SHARE_DENOMINATOR);
+            totalShares += (x * protocol.stakerShare()) / totalStaked;
         }
 
         return (ftBalance, x);
