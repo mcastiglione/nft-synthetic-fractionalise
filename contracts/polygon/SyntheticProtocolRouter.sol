@@ -283,7 +283,8 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             jotAddress_,
             ProtocolParameters(_protocol).fundingTokenAddress(),
             string(abi.encodePacked("Privi JotPool ", originalName_)),
-            string(abi.encodePacked(" ", originalName_))
+            string(abi.encodePacked(" ", originalName_)),
+            1e17
         );
     }
 

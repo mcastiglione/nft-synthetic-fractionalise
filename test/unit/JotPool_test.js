@@ -16,7 +16,7 @@ describe('JotPool', async function () {
     jot = await ethers.getContract('JotMock');
     ft = await ethers.getContract('FundingTokenMock');
     pool = await ethers.getContract('JotPool');
-    await pool.initialize(jot.address, ft.address, '', '');
+    await pool.initialize(jot.address, ft.address, '', '', ethers.utils.parseEther('0.01'));
   });
 
   it('should be deployed', async () => {

@@ -33,8 +33,7 @@ contract JotPool is ERC721, Initializable {
     uint256 public totalShares;
     uint256 public totalStaked;
 
-    uint256 public stakerShare = 10;
-    uint256 public stakerShareDenominator = 1000;
+    uint256 public stakerShare;
 
     Counters.Counter private idGen;
 
@@ -55,14 +54,17 @@ contract JotPool is ERC721, Initializable {
         address _jot,
         address _fundingToken,
         string memory _name,
-        string memory _symbol
+        string memory _symbol,
+        uint256 _stakerShare
     ) external initializer {
         require(_jot != address(0), "Invalid Jot token");
         require(_fundingToken != address(0), "Invalid funding token");
+        require(_stakerShare <= 1e18, "Staker share too high");
         jot = _jot;
         fundingToken = _fundingToken;
         _proxyName = _name;
         _proxySymbol = _symbol;
+        stakerShare = _stakerShare;
     }
 
     function name() public view override returns (string memory) {
@@ -120,7 +122,6 @@ contract JotPool is ERC721, Initializable {
             return (IERC20(jot).balanceOf(address(this)) * amount) / totalLiquidity;
         }
         return 0;
-        
     }
 
     function getPosition() external view returns (Position memory) {
@@ -158,7 +159,7 @@ contract JotPool is ERC721, Initializable {
         uint256 ftBalance = IERC20(fundingToken).balanceOf(address(this));
         uint256 x = ftBalance - lastReward;
         if (totalStaked != 0) {
-            totalShares += ((x * stakerShare) * 10**18) / (totalStaked * stakerShareDenominator);
+            totalShares += (x * stakerShare) / totalStaked;
         }
 
         return (ftBalance, x);
@@ -209,5 +210,10 @@ contract JotPool is ERC721, Initializable {
 
     function _getReward(address owner) internal view returns (uint256 reward) {
         reward = ((totalShares - positions[owner].totalShares) * positions[owner].stake) / 10**18;
+    }
+
+    function setStakerShare(uint256 newStakerShare) external {
+        require(newStakerShare <= 1e18, "Staker share too high");
+        stakerShare = newStakerShare;
     }
 }
