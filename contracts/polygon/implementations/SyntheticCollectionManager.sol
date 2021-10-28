@@ -259,8 +259,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         ISyntheticNFT(erc721address).safeMint(nftOwner_, syntheticId, metadata_);
 
-        Jot(jotAddress).mint(address(this), ProtocolConstants.JOT_SUPPLY);
-
         uint256 sellingSupply = (ProtocolConstants.JOT_SUPPLY - supplyToKeep_) / 2;
         uint256 liquiditySupply = (ProtocolConstants.JOT_SUPPLY - supplyToKeep_) / 2;
 
@@ -655,6 +653,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         if (verified) {
             token.state = State.VERIFIED;
+
+            // mint the jots after verification
+            Jot(jotAddress).mint(address(this), ProtocolConstants.JOT_SUPPLY);
         } else {
             token.state = requestData.previousState;
         }

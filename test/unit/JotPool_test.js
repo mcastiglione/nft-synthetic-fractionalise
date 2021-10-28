@@ -151,7 +151,7 @@ describe('JotPool', async function () {
       const position = await pool.getPosition();
       assert.equal(position.id, '1');
       assert.deepEqual(position.stake, amount.add(amount));
-      assert.deepEqual(position.totalShares, jotAmount('0.01'));
+      assert.deepEqual(position.totalShares.toString(), jotAmount('0.01').toString());
     });
 
     it('should update NFT on partial unstaking', async () => {

@@ -120,7 +120,7 @@ contract NFTVaultManager is AccessControl {
     }
 
     /**
-     * @notice allows owner of locked tokens to request unlocking,
+     * @notice allows owners of locked tokens to request unlocking,
      *         validates the availability through the validator oracle
      *
      * @param collection_ the address of the nft collection
@@ -164,7 +164,7 @@ contract NFTVaultManager is AccessControl {
     }
 
     /**
-     * @notice allows owner of locked tokens to request changes,
+     * @notice allows owners of locked tokens to request changes,
      *         validates through the validator oracle
      *
      * @param collection_ the address of the nft collection
@@ -263,7 +263,7 @@ contract NFTVaultManager is AccessControl {
     }
 
     /**
-     * @notice allows to withdraw a token after a succesfull verification process
+     * @notice allows withdrawing a token after a successful verification process
      * @param collection_ the address of the nft collection
      * @param tokenId_ the nft token id to withdraw
      */

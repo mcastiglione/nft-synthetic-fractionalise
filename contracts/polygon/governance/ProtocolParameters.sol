@@ -28,6 +28,8 @@ contract ProtocolParameters is Ownable {
 
     uint256 public buybackPrice;
 
+    uint256 public stakerShare;
+
     uint256 public liquidityPerpetualPercentage;
 
     uint256 public liquidityUniswapPercentage;
@@ -39,10 +41,11 @@ contract ProtocolParameters is Ownable {
     event RecoveryThresholdUpdated(uint256 from, uint256 to);
     event FundingTokenAddressUpdated(address from, address to);
     event BuybackPriceUpdated(uint256 from, uint256 to);
+    event StakerShareUpdated(uint256 from, uint256 to);
     event LiquidityPercentagesUpdated(
-        uint256 perpetualFrom, 
-        uint256 uniswapFrom, 
-        uint256 perpetualTo, 
+        uint256 perpetualFrom,
+        uint256 uniswapFrom,
+        uint256 perpetualTo,
         uint256 uniswapTo
     );
 
@@ -68,15 +71,20 @@ contract ProtocolParameters is Ownable {
         require(auctionDuration_ > 1 hours, "Auction duration should be greater than 1 hour");
         require(fundingTokenAddress_ != address(0), "Funding token address can't be zero");
         require(buybackPrice_ > 0, "Buyback price can't be zero");
-        require((liquidityPerpetualPercentage_ + liquidityUniswapPercentage_ == 100), "uniswap and perpetual percentages must sum 100");
+        require(
+            (liquidityPerpetualPercentage_ + liquidityUniswapPercentage_ == 100),
+            "uniswap and perpetual percentages must sum 100"
+        );
+
         flippingInterval = flippingInterval_;
         flippingReward = flippingReward_;
         flippingAmount = flippingAmount_;
         auctionDuration = auctionDuration_;
         fundingTokenAddress = fundingTokenAddress_;
         liquidityPerpetualPercentage = liquidityPerpetualPercentage_;
-        liquidityUniswapPercentage = liquidityUniswapPercentage_; 
+        liquidityUniswapPercentage = liquidityUniswapPercentage_;
         buybackPrice = buybackPrice_;
+        stakerShare = 1e16;
 
         // transfer ownership
         transferOwnership(governanceContractAddress_);
@@ -126,8 +134,16 @@ contract ProtocolParameters is Ownable {
         buybackPrice = buybackPrice_;
     }
 
+    function setStakerShare(uint256 stakerShare_) external onlyOwner {
+        require(stakerShare_ > 0, "Staker share can't be 0");
+        require(stakerShare_ <= 1e18, "Staker share too high");
+        emit StakerShareUpdated(stakerShare, stakerShare_);
+        stakerShare = stakerShare_;
+    }
+
     function setLiquidityPercentages(
-        uint256 liquidityUniswapPercentage_, uint256 liquidityPerpetualPercentage_
+        uint256 liquidityUniswapPercentage_,
+        uint256 liquidityPerpetualPercentage_
     ) external onlyOwner {
         require((liquidityUniswapPercentage_ + liquidityPerpetualPercentage_) == 100, "Values must sum 100");
 
@@ -141,5 +157,4 @@ contract ProtocolParameters is Ownable {
         liquidityPerpetualPercentage = liquidityPerpetualPercentage_;
         liquidityUniswapPercentage = liquidityUniswapPercentage_;
     }
-
 }

@@ -14,6 +14,7 @@ import "hardhat/console.sol";
 contract PolygonValidatorOracle is ChainlinkClient, Ownable {
     using Stringify for uint256;
     using Stringify for address;
+    using Stringify for string;
 
     /**
      * @dev oracle configuration parameters
@@ -32,7 +33,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
     constructor(APIOracleInfo memory _oracleInfo) {
         linkToken = _oracleInfo.linkToken;
         chainlinkNode = _oracleInfo.chainlinkNode;
-        jobId = stringToBytes32(_oracleInfo.jobId);
+        jobId = _oracleInfo.jobId.toBytes32();
         nodeFee = _oracleInfo.nodeFee;
         apiURL = "https://nft-validator-o24ig.ondigitalocean.app/verify";
 
@@ -114,17 +115,5 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
      */
     function whitelistCollection(address collectionId) external onlyOwner {
         _whitelistedCollections[collectionId] = true;
-    }
-
-    function stringToBytes32(string memory source) private pure returns (bytes32 result) {
-        bytes memory tempEmptyStringTest = bytes(source);
-        if (tempEmptyStringTest.length == 0) {
-            return 0x0;
-        }
-
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            result := mload(add(source, 32))
-        }
     }
 }
