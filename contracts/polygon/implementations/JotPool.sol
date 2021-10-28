@@ -13,6 +13,8 @@ contract JotPool is ERC721, Initializable {
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
 
+    ProtocolParameters private immutable protocol;
+
     struct Position {
         uint256 id;
         uint256 liquidity;
@@ -22,19 +24,15 @@ contract JotPool is ERC721, Initializable {
 
     address public jot;
     address public fundingToken;
-    ProtocolParameters private immutable protocol;
     uint256 public totalLiquidity;
-
-    string private _proxyName;
-    string private _proxySymbol;
 
     uint256 public lastReward;
     uint256 public cumulativeRevenue;
     uint256 public totalShares;
     uint256 public totalStaked;
 
-    uint256 public stakerShare = 10;
-    uint256 public stakerShareDenominator = 1000;
+    string private _proxyName;
+    string private _proxySymbol;
 
     Counters.Counter private idGen;
 
@@ -120,7 +118,6 @@ contract JotPool is ERC721, Initializable {
             return (IERC20(jot).balanceOf(address(this)) * amount) / totalLiquidity;
         }
         return 0;
-        
     }
 
     function getPosition() external view returns (Position memory) {
@@ -158,7 +155,9 @@ contract JotPool is ERC721, Initializable {
         uint256 ftBalance = IERC20(fundingToken).balanceOf(address(this));
         uint256 x = ftBalance - lastReward;
         if (totalStaked != 0) {
-            totalShares += ((x * stakerShare) * 10**18) / (totalStaked * stakerShareDenominator);
+            totalShares +=
+                ((x * protocol.stakerShare()) * 10**18) /
+                (totalStaked * ProtocolConstants.STAKER_SHARE_DENOMINATOR);
         }
 
         return (ftBalance, x);
