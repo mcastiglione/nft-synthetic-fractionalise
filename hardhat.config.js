@@ -75,7 +75,7 @@ module.exports = {
     signatory: 2,
   },
   gasReporter: {
-    enabled: false,
+    enabled: true,
   },
   mocha: {
     timeout: 999999,
