@@ -862,7 +862,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // increase nonce to avoid double verification
         uint256 currentNonce = nonces[token.originalTokenID];
-        ownersByNonce[tokenId][currentNonce] = msg.sender;
+        ownersByNonce[token.originalTokenID][currentNonce] = msg.sender;
         nonces[token.originalTokenID] = currentNonce + 1;
 
         // Burn synthetic token
