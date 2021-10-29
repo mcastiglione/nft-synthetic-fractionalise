@@ -1,6 +1,6 @@
 const { networkConfig } = require('../../helper-hardhat-config');
 
-module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
+module.exports = async ({ getNamedAccounts, deployments, getChainId, network }) => {
   const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
   const chainId = await getChainId();
@@ -26,7 +26,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   
   let swapAddress;
 
-  if (chainId == 1337 || chainId == 31337) {
+  if (network.tags.local) {
     let UniswapPairMock = await deploy('UniswapPairMock', {
       from: deployer,
     });

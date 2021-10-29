@@ -13,6 +13,6 @@ contract AuctionsManagerMock is AuctionsManager {
         uint256 nftId_,
         address newOwner_
     ) external override {
-        SyntheticCollectionManager(collection_).reassignNFT(nftId_, newOwner_);
+        ISyntheticCollectionManager(collection_).reassignNFT(nftId_, newOwner_);
     }
 }

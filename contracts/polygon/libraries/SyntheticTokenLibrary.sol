@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "../governance/ProtocolParameters.sol";
 import "../implementations/Structs.sol";
 import "./ProtocolConstants.sol";
+import "hardhat/console.sol";
 
 /**
  * @title helpers for synthetic token operations
@@ -20,8 +21,7 @@ library SyntheticTokenLibrary {
         require(token.ownerSupply >= amount, "You do not have enough tokens left");
 
         token.ownerSupply -= amount;
-        token.sellingSupply += amount / 2;
-        token.liquiditySupply += amount / 2;
+        token.sellingSupply += amount;
     }
 
     /**
@@ -32,12 +32,10 @@ library SyntheticTokenLibrary {
         require(amount > 0, "Amount can't be zero!");
         require(!isLocked(token.state, token.ownerSupply), "Token is locked!");
 
-        require(token.liquiditySupply >= amount / 2, "You do not have enough liquidity left");
-        require(token.sellingSupply >= amount / 2, "You do not have enough selling supply left");
+        require(token.sellingSupply >= amount, "You do not have enough selling supply left");
 
         token.ownerSupply += amount;
-        token.sellingSupply -= amount / 2;
-        token.liquiditySupply -= amount / 2;
+        token.sellingSupply -= amount;
     }
 
     /**
@@ -56,23 +54,21 @@ library SyntheticTokenLibrary {
      * @param amount the quantity of jots to buy
      */
     function buyJotTokens(TokenData storage token, uint256 amount) external returns (uint256 amountToPay) {
-
-        uint256 amountAux;
         require(amount > 0, "Amount can't be zero!");
         require(!isLocked(token.state, token.ownerSupply), "Token is locked!");
 
         // calculate amount left
         uint256 amountLeft = token.sellingSupply - token.soldSupply;
 
-        // if amount left is lesser than buying amount
-        // then buying amount = amount left
-        if (amountLeft < amount) {
-            amountAux = amountLeft;
-        } else {
-            amountAux = amount;
-        }
+        require(amountLeft > 0, "No available tokens for sale");
+        require(amount <= amountLeft, "Not enough available tokens");
 
-        amountToPay = (amountAux * token.fractionPrices) / 10**18;
+        console.log('amount', amount);
+        console.log('amountLeft', amountLeft);
+        console.log('token.soldSupply', token.soldSupply);
+        console.log('token.sellingSupply', token.sellingSupply  );
+
+        amountToPay = (amount * token.fractionPrices) / 10**18;
 
         // Can't sell zero tokens
         require(amountToPay > 0, "No tokens left!");

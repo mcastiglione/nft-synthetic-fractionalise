@@ -1,31 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./LiquidityCalculator.sol";
 import "../libraries/SyntheticTokenLibrary.sol";
 import "../extensions/IERC20ManagedAccounts.sol";
-import "../chainlink/RandomNumberConsumer.sol";
-import "../chainlink/PolygonValidatorOracle.sol";
-import "../chainlink//OracleStructs.sol";
+import "../chainlink/OracleStructs.sol";
 import "../libraries/ProtocolConstants.sol";
 import "../governance/ProtocolParameters.sol";
-import "../SyntheticProtocolRouter.sol";
 import "../Interfaces.sol";
 import "./Jot.sol";
 import "./JotPool.sol";
 import "./RedemptionPool.sol";
 import "./Structs.sol";
 import "./Enums.sol";
-//import "hardhat/console.sol";
 
-import {AuctionsManager} from "../auctions/AuctionsManager.sol";
+import "hardhat/console.sol";
 
 /**
  * @title synthetic collection abstraction contract
@@ -33,7 +25,6 @@ import {AuctionsManager} from "../auctions/AuctionsManager.sol";
  */
 contract SyntheticCollectionManager is AccessControl, Initializable {
     using SafeERC20 for IERC20;
-    using Counters for Counters.Counter;
     using SyntheticTokenLibrary for TokenData;
 
     /// @notice role of the router contract
@@ -54,15 +45,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     // address of the polygon validator chainlink oracle contract
     address private immutable _validatorAddress;
 
-    Counters.Counter public tokenCounter;
-
     /// @notice the address of the auctions manager fabric contract
-    address public auctionsManagerAddress;
+    address public AuctionsManagerAddress;
 
     /// @notice the address of the protocol router
     address public syntheticProtocolRouterAddress;
 
-    address private _perpetualPoolLiteAddress;
+    address public perpetualPoolLiteAddress;
 
     address private _swapAddress;
 
@@ -176,7 +165,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         erc721address = erc721address_;
         originalCollectionAddress = originalCollectionAddress_;
         syntheticProtocolRouterAddress = msg.sender;
-        auctionsManagerAddress = auctionManagerAddress_;
+        AuctionsManagerAddress = auctionManagerAddress_;
         protocol = ProtocolParameters(protocol_);
         jotPool = jotPool_;
         redemptionPool = redemptionPool_;
@@ -209,26 +198,19 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // Burn synthetic NFT
         ISyntheticNFT(erc721address).safeBurn(nftId_);
 
-        // Get new synthetic ID
-        uint256 newSyntheticID = tokenCounter.current();
-        tokenCounter.increment();
-
         // Mint new one
-        ISyntheticNFT(erc721address).safeMint(newOwner_, newSyntheticID, metadata);
+        uint256 newSyntheticID = ISyntheticNFT(erc721address).safeMint(newOwner_, metadata);
 
         // Update original to synthetic mapping
         _originalToSynthetic[originalID] = newSyntheticID;
 
         // Empty previous id
-        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, State.NEW);
+        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, 0, State.NEW);
 
         // Fill new ID
         tokens[newSyntheticID] = TokenData(
             originalID,
             ProtocolConstants.JOT_SUPPLY,
-            0,
-            0,
-            0,
             0,
             0,
             0,
@@ -260,26 +242,21 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     ) public onlyRole(ROUTER) returns (uint256 syntheticId) {
         require(!isSyntheticNFTCreated(tokenId_), "Synthetic NFT already generated!");
 
-        syntheticId = tokenCounter.current();
-        tokenCounter.increment();
-
-        ISyntheticNFT(erc721address).safeMint(nftOwner_, syntheticId, metadata_);
-
-        uint256 sellingSupply = (ProtocolConstants.JOT_SUPPLY - supplyToKeep_) / 2;
-        uint256 liquiditySupply = (ProtocolConstants.JOT_SUPPLY - supplyToKeep_) / 2;
+        uint256 syntheticId = ISyntheticNFT(erc721address).safeMint(nftOwner_, metadata_);
+        console.log(ProtocolConstants.JOT_SUPPLY, 'ProtocolConstants.JOT_SUPPLY');
+        console.log(supplyToKeep_, 'supplyToKeep_');
+        uint256 sellingSupply = ProtocolConstants.JOT_SUPPLY - supplyToKeep_;
+        console.log(sellingSupply, 'sellingSupply');
 
         TokenData memory data = TokenData({
             originalTokenID: tokenId_,
             ownerSupply: supplyToKeep_,
             sellingSupply: sellingSupply,
             soldSupply: 0,
-            liquiditySupply: liquiditySupply,
             liquiditySold: 0,
             fractionPrices: priceFraction_,
             lastFlipTime: 0,
             liquidityTokenBalance: 0,
-            uniswapJotLiquidity: 0,
-            uniswapFundingLiquidity: 0,
             perpetualFuturesLShares: 0,
             state: State.NEW
         });
@@ -288,7 +265,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // lock the nft and make it auctionable
         if (supplyToKeep_ == 0) {
-            AuctionsManager(auctionsManagerAddress).whitelistNFT(syntheticId);
+            IAuctionsManager(AuctionsManagerAddress).whitelistNFT(syntheticId);
         }
     }
 
@@ -302,10 +279,22 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(ISyntheticNFT(erc721address).exists(tokenId_), "Token not registered");
 
         uint256 amountToPay = token.buyJotTokens(amountToBuy_);
-
+        console.log(amountToPay, 'amountToPay');
         // make the transfers
         IERC20(fundingTokenAddress).transferFrom(msg.sender, address(this), amountToPay);
         IJot(jotAddress).transfer(msg.sender, amountToBuy_);
+    }
+
+    function withdrawFundingTokens(uint256 tokenId, uint256 amount) external {
+        TokenData storage token = tokens[tokenId];
+        require(!lockedNFT(tokenId), "Token is locked!");
+        require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner can withdraw");
+
+        require(amount <= token.liquiditySold, "Not enough balance");
+        
+        IERC20(fundingTokenAddress).transfer(msg.sender, amount);
+
+        token.liquiditySold -= amount;
     }
 
     /**
@@ -328,12 +317,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(!lockedNFT(tokenId_), "Token is locked!");
         require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner can withdraw");
 
+        console.log(token.ownerSupply, 'token.ownerSupply');
+
         require(amountToWithdraw_ <= token.ownerSupply, "Not enough balance");
         token.ownerSupply -= amountToWithdraw_;
 
         IJot(jotAddress).transfer(msg.sender, amountToWithdraw_);
         if (token.ownerSupply == 0) {
-            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId_);
+            IAuctionsManager(AuctionsManagerAddress).whitelistNFT(tokenId_);
         }
     }
 
@@ -344,15 +335,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @param amount_ the amount of jots to transfer from supply
      */
     function increaseSellingSupply(uint256 tokenId_, uint256 amount_) public {
-        TokenData storage token = tokens[tokenId_];
         require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner can increase");
 
         // delegate to the external library
-        token.increaseSellingSupply(amount_);
+        tokens[tokenId_].increaseSellingSupply(amount_);
 
         // lock the nft and make it auctionable
-        if (token.ownerSupply == 0) {
-            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId_);
+        if (tokens[tokenId_].ownerSupply == 0) {
+            IAuctionsManager(AuctionsManagerAddress).whitelistNFT(tokenId_);
         }
     }
 
@@ -363,11 +353,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @param amount_ the amount of jots to transfer to supply
      */
     function decreaseSellingSupply(uint256 tokenId_, uint256 amount_) public {
-        TokenData storage token = tokens[tokenId_];
-
         require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner allowed");
 
-        token.decreaseSellingSupply(amount_);
+        tokens[tokenId_].decreaseSellingSupply(amount_);
     }
 
     /**
@@ -377,159 +365,120 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @param newFractionPrice_ the new value of the fraction price
      */
     function updatePriceFraction(uint256 tokenId_, uint256 newFractionPrice_) public {
-        TokenData storage token = tokens[tokenId_];
         require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner allowed");
-
-        token.updatePriceFraction(newFractionPrice_);
+        tokens[tokenId_].updatePriceFraction(newFractionPrice_);
     }
 
     /**
      * @notice add available liquidity to Perpetual Pool
      */
-    function addLiquidityToPerpetualPool(uint256 tokenId) public {
-        TokenData storage token = tokens[tokenId];
-        uint256 perpetualFundingLiquidity = LiquidityCalculator(_liquidityCalculatorAddress)
-            .getAvailableFundingPerpetual(token);
-        if (perpetualFundingLiquidity > 0) {
-            IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, perpetualFundingLiquidity);
-            uint256 lShares = IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidityGetlShares(
-                perpetualFundingLiquidity
-            );
-            tokens[tokenId].soldSupply - perpetualFundingLiquidity;
-            tokens[tokenId].perpetualFuturesLShares += lShares;
-        }
+    function AddLiquidityToFuturePool(uint256 tokenId, uint256 amount) public {
+        require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
+        require(amount > 0, "Amount can't be zero!");
+        require(amount >= tokens[tokenId].liquiditySold, "Amount is greater than available funding");
+        
+        IERC20(fundingTokenAddress).approve(perpetualPoolLiteAddress, amount);
+        uint256 lShares = IPerpetualPoolLite(perpetualPoolLiteAddress).addLiquidityGetlShares(amount);
+        tokens[tokenId].liquiditySold -= amount;
+        tokens[tokenId].perpetualFuturesLShares += lShares;
+        
     }
 
     /**
      * @notice add available liquidity for a given token to UniSwap pool
      */
-    function addLiquidityToPool(uint256 tokenId) public {
+    function addLiquidityToQuickswap(uint256 tokenId, uint256 amount) public {
         TokenData storage token = tokens[tokenId];
-
+        require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
         require(token.soldSupply > 0, "soldSupply is zero");
+        require(amount >= token.liquiditySold, "Amount is greater than available funding");
+        require(amount >= token.ownerSupply, "Amount is greater than available funding");
 
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
 
-        (uint256 jotsValue, uint256 fundingValue, uint256 remainingJots) = LiquidityCalculator(
-            _liquidityCalculatorAddress
-        ).getAvailableFundingUniswap(token);
-
         // Approve Uniswap address
-        IJot(jotAddress).approve(_swapAddress, jotsValue);
-        IERC20(fundingTokenAddress).approve(_swapAddress, fundingValue);
+        IJot(jotAddress).approve(_swapAddress, amount);
+        IERC20(fundingTokenAddress).approve(_swapAddress, amount);
 
         // add the liquidity to Uniswapp
         (uint256 amountA, uint256 amountB, uint256 liquidity) = uniswapV2Router.addLiquidity(
             jotAddress,
             fundingTokenAddress,
-            jotsValue,
-            fundingValue,
+            amount,
+            amount,
             0, // slippage is unavoidable
             0, // slippage is unavoidable
             address(this),
             block.timestamp // solhint-disable-line
         );
-        // If there is a remaining, add as liquidity to PerpetualPool
-        if (amountB < fundingValue) {
-            uint256 fundingRemaining = fundingValue - amountB;
-
-            IERC20(fundingTokenAddress).approve(_perpetualPoolLiteAddress, fundingRemaining);
-
-            IPerpetualPoolLite(_perpetualPoolLiteAddress).addLiquidity(fundingRemaining);
-        }
 
         // Update balances
-        token.liquiditySupply -= (amountA + remainingJots);
-        token.liquiditySold -= fundingValue;
-        token.sellingSupply -= amountA;
-        token.sellingSupply += remainingJots;
-        token.soldSupply -= fundingValue;
+        token.ownerSupply -= amountA;
+        token.liquiditySold -= amountB;
         token.liquidityTokenBalance += liquidity;
-        token.uniswapJotLiquidity += amountA;
-        token.uniswapFundingLiquidity += amountB;
-
-        addLiquidityToPerpetualPool(tokenId);
     }
 
-    /**
-     * @dev remove liquidity from pool only callable by AuctionsManager
-     */
     function removeLiquidityFromPool(uint256 tokenId) external onlyRole(AUCTION_MANAGER) {
-        address tokenOwner = ISyntheticNFT(erc721address).ownerOf(tokenId);
-
-        (uint256 jotLiquidity, uint256 fundingLiquidity) = _removeLiquidityFromPool(tokenId);
-        tokens[tokenId].ownerSupply += jotLiquidity;
-
-        // transfer funding token balance to caller
-        IERC20(fundingTokenAddress).transfer(tokenOwner, fundingLiquidity);
-
-        if (tokens[tokenId].perpetualFuturesLShares != 0) {
-            IPerpetualPoolLite(_perpetualPoolLiteAddress).removeLiquidity(
-                tokens[tokenId].perpetualFuturesLShares
-            );
-        }
+        uint256 lShares = tokens[tokenId].perpetualFuturesLShares;
+        _withdrawLiquidityFromFuturePool(tokenId, lShares);
+        uint256 liquidityAvailable = tokens[tokenId].liquidityTokenBalance;
+        _withdrawLiquidityFromQuickswap(tokenId, liquidityAvailable);
     }
 
-    /**
-     * @dev remove liquidity from Pool
-     */
-    function _removeLiquidityFromPool(uint256 tokenId) internal returns (uint256, uint256) {
+    function withdrawLiquidityFromFuturePool(uint256 tokenId, uint256 amount) external {
+        require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
+        _withdrawLiquidityFromFuturePool(tokenId, amount);
+    }
+
+
+    function _withdrawLiquidityFromFuturePool(uint256 tokenId, uint256 amount) internal {
+        require(amount > 0, "Amount can't be zero");
+        require(amount <= tokens[tokenId].perpetualFuturesLShares, "Not enough balance");
+
+        uint256 balanceBefore = IERC20(fundingTokenAddress).balanceOf(address(this));
+
+        IPerpetualPoolLite(perpetualPoolLiteAddress).removeLiquidity(amount);
+
+        uint256 balanceAfter = IERC20(fundingTokenAddress).balanceOf(address(this));
+
+        tokens[tokenId].liquiditySold += (balanceAfter - balanceBefore);
+        tokens[tokenId].perpetualFuturesLShares -= amount;
+    }
+
+    function withdrawLiquidityFromQuickswap(uint256 tokenId, uint256 amount) external {
+        require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
+        _withdrawLiquidityFromQuickswap(tokenId, amount);
+    }
+
+
+    function _withdrawLiquidityFromQuickswap(uint256 tokenId, uint256 amount) internal returns (
+        uint256 jotAmountExecuted, 
+        uint256 fundingAmountExecuted
+    ) {
         TokenData storage token = tokens[tokenId];
 
-        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(poolAddress());
-
-        // get added liquidity
-        uint256 jotLiquidity = token.uniswapJotLiquidity;
-        uint256 fundingLiquidity = token.uniswapFundingLiquidity;
-        uint256 liquidityTokenBalance = token.liquidityTokenBalance;
-
-        if (liquidityTokenBalance == 0 || jotLiquidity == 0 || fundingLiquidity == 0) {
-            return (0, 0);
-        }
-
-        // approve liquidity transfer
-        uniswapV2Pair.approve(_swapAddress, liquidityTokenBalance);
-
-        // pair reserves in Uniswap Pair
-        uint112 jotReserves;
-        uint112 fundingReserves;
-        uint32 blockTimestampLast;
-
-        (jotReserves, fundingReserves, blockTimestampLast) = uniswapV2Pair.getReserves();
-
-        // handle low balance edge cases
-        if (jotLiquidity > jotReserves) {
-            jotLiquidity = jotReserves;
-        }
-
-        if (fundingLiquidity > fundingReserves) {
-            fundingLiquidity = fundingReserves;
-        }
-
-        if (jotReserves == 0 || fundingReserves == 0) {
-            return (0, 0);
-        }
+        require(amount > 0, "Amount can't be zero");
+        require(token.liquidityTokenBalance >= amount, "There's not enough liquidity available");
 
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
+        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(poolAddress());
 
-        // actual liquidity removed
-        uint256 jotAmountExecuted;
-        uint256 fundingAmountExecuted;
+        uniswapV2Pair.approve(_swapAddress, amount);
 
-        // call Uniswap to remove liquidity
         (jotAmountExecuted, fundingAmountExecuted) = uniswapV2Router.removeLiquidity(
             jotAddress,
             fundingTokenAddress,
-            liquidityTokenBalance,
-            jotLiquidity,
-            fundingLiquidity,
+            amount,
+            0,
+            0,
             address(this),
             block.timestamp // solhint-disable-line
         );
 
-        emit LiquidityRemoved(jotAmountExecuted, fundingAmountExecuted);
-
-        return (jotAmountExecuted, fundingAmountExecuted);
+        // Update balances
+        token.ownerSupply += jotAmountExecuted;
+        token.liquiditySold += fundingAmountExecuted;
+        token.liquidityTokenBalance += amount;
     }
 
     /**
@@ -550,6 +499,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function flipJot(uint256 tokenId, uint64 prediction) external {
+        
         TokenData storage token = tokens[tokenId];
 
         require(isAllowedToFlip(tokenId), "Flip is not allowed yet");
@@ -557,13 +507,15 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         token.lastFlipTime = block.timestamp; // solhint-disable-line
 
-        bytes32 requestId = RandomNumberConsumer(_randomConsumerAddress).getRandomNumber();
+        bytes32 requestId = IRandomNumberConsumer(_randomConsumerAddress).getRandomNumber();
         _flips[requestId] = Flip({tokenId: tokenId, prediction: prediction, player: msg.sender});
 
         emit CoinFlipped(requestId, msg.sender, tokenId, prediction);
+        
     }
 
     function processFlipResult(uint256 randomNumber, bytes32 requestId) external onlyRole(RANDOM_ORACLE) {
+        /*
         uint256 poolAmount;
         uint256 fAmount = protocol.flippingAmount();
         uint256 fReward = protocol.flippingReward();
@@ -610,14 +562,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // lock the nft and make it auctionable
         if (token.ownerSupply == 0) {
-            AuctionsManager(auctionsManagerAddress).whitelistNFT(flip.tokenId);
+            IAuctionsManager(AuctionsManagerAddress).whitelistNFT(flip.tokenId);
         }
 
-        emit FlipProcessed(requestId, flip.tokenId, flip.prediction, randomNumber);
+        emit FlipProcessed(requestId, flip.tokenId, flip.prediction, randomNumber);*/
     }
 
     function recoverToken(uint256 tokenId) external {
-        require(AuctionsManager(auctionsManagerAddress).isRecoverable(tokenId), "Token is not recoverable");
+        require(IAuctionsManager(AuctionsManagerAddress).isRecoverable(tokenId), "Token is not recoverable");
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
 
         // reverts on failure
@@ -625,13 +577,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         tokens[tokenId].ownerSupply = ProtocolConstants.JOT_SUPPLY;
 
-        AuctionsManager(auctionsManagerAddress).blacklistNFT(tokenId);
+        IAuctionsManager(AuctionsManagerAddress).blacklistNFT(tokenId);
     }
 
     /**
      * @notice this method calls chainlink oracle and
-     *         verifies if the NFT has been locked on NFTVaultManager. In addition
-     *         gets the metadata of the NFT
+     *  verifies if the NFT has been locked on NFTVaultManager. In addition
+     *  gets the metadata of the NFT
      */
     function verify(uint256 tokenId) external {
         TokenData storage token = tokens[tokenId];
@@ -640,7 +592,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         token.state = State.VERIFYING;
 
-        bytes32 requestId = PolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(
+        bytes32 requestId = IPolygonValidatorOracle(_validatorAddress).verifyTokenInCollection(
             originalCollectionAddress,
             tokenId,
             uint256(token.state),
@@ -761,7 +713,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             totalFunding = fundingReserves;
         }
 
-        totalJots = token.ownerSupply + token.sellingSupply + token.liquiditySupply + jotLiquidity;
+        totalJots = token.ownerSupply + token.sellingSupply + jotLiquidity;
     }
 
     function buybackRequiredAmount(uint256 tokenId)
@@ -805,11 +757,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         TokenData storage token = tokens[tokenId];
 
         // get available liquidity (owner + selling + liquidity + uniswap )
-        (uint256 jotLiquidity, uint256 fundingLiquidity) = _removeLiquidityFromPool(tokenId);
+        (uint256 jotLiquidity, uint256 fundingLiquidity) = _withdrawLiquidityFromQuickswap(tokenId, token.liquidityTokenBalance);
         // TODO: get PerpetualPoolLite.getLiquidity
         //uint256 perpetualPoolLiteLiquidity;
 
-        uint256 total = token.ownerSupply + token.sellingSupply + token.liquiditySupply + jotLiquidity;
+        uint256 total = token.ownerSupply + token.sellingSupply;
 
         (uint256 jotsLeft, uint256 fundingLeft, uint256 buybackAmount) = _getFundingLeftAndBuybackAmount(
             total,
@@ -928,7 +880,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         tokens[tokenId].ownerSupply -= amount;
         if (tokens[tokenId].ownerSupply == 0) {
-            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId);
+            IAuctionsManager(AuctionsManagerAddress).whitelistNFT(tokenId);
         }
 
         uniswapV2Router.swapExactTokensForTokens(
@@ -942,7 +894,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function setPerpetualPoolLiteAddress(address perpetualPoolLiteAddress_) external onlyRole(ROUTER) {
-        _perpetualPoolLiteAddress = perpetualPoolLiteAddress_;
+        perpetualPoolLiteAddress = perpetualPoolLiteAddress_;
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
@@ -1046,4 +998,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function getliquiditySold(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].liquiditySold;
     }
+
+    // the price to buyback an NFT (buying Jots) and exit the protocol
+    function buybackPrice() public view returns (uint256) {
+        return protocol.buybackPrice();
+    }
+
+    function getLiquidityTokens(uint256 tokenId) public view returns(uint256) {
+        return tokens[tokenId].liquidityTokenBalance;
+    }
+
 }

@@ -19,7 +19,7 @@ describe('SyntheticCollectionManager', async function () {
     nftID = 1;
     NFT = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
 
-    const tx = await router.registerNFT(NFT, nftID, 5000, 5, ['My Collection', 'MYC', '']);
+    const tx = await router.registerNFT(NFT, nftID, parseAmount('5000'), parseAmount('5'), ['My Collection', 'MYC', '']);
     await expect(tx).to.emit(router, 'TokenRegistered');
     const args = await getEventArgs(tx, 'TokenRegistered', router);
     tokenId = args.syntheticTokenId;
@@ -64,16 +64,31 @@ describe('SyntheticCollectionManager', async function () {
     it('should fail if NFT is not registered ', async () => {
       await expect(manager.buyJotTokens(100, 1)).to.be.revertedWith('Token not registered');
     });
+
     it('should fail if amount is zero', async () => {
       await router.verifyNFT(NFT, tokenId);
       await expect(manager.buyJotTokens(tokenId, 0)).to.be.revertedWith("Amount can't be zero!");
     });
+
     it('should fail if amount is not approved in funding token', async () => {
       await router.verifyNFT(NFT, tokenId);
       await expect(manager.buyJotTokens(tokenId, parseAmount('1'))).to.be.revertedWith(
         'ERC20: transfer amount exceeds allowance'
       );
     });
+
+    it('If sellingSupply is zero, will give error', async () => {
+      const registerTx = await router.registerNFT(NFT, nftID+1, parseAmount('10000'), parseAmount('1'), ['My Collection', 'MYC', '']);
+      await expect(registerTx).to.emit(router, 'TokenRegistered');
+      const eventArgs = await getEventArgs(registerTx, 'TokenRegistered', router);
+      const tokenID = eventArgs.syntheticTokenId;
+      
+      await router.verifyNFT(NFT, tokenID);
+      await fundingToken.approve(managerAddress, parseAmount('1'));
+      await manager.buyJotTokens(tokenID, parseAmount('1'));
+
+    });
+
     it('if all previous conditions are met, should be ok', async () => {
       await router.verifyNFT(NFT, tokenId);
       await fundingToken.approve(managerAddress, parseAmount('1'));
@@ -85,8 +100,7 @@ describe('SyntheticCollectionManager', async function () {
 
   describe('depositJotTokens', async () => {
     it('Non existent token ID', async () => {
-      const tokenCounter = (await manager.tokenCounter()).toNumber();
-      await expect(manager.depositJotTokens(tokenCounter + 1, 300)).to.be.revertedWith(
+      await expect(manager.depositJotTokens(300, 300)).to.be.revertedWith(
         'ERC721: owner query for nonexistent token'
       );
     });
@@ -217,7 +231,7 @@ describe('SyntheticCollectionManager', async function () {
       await router.verifyNFT(NFT, tokenId);
 
       await expect(manager.decreaseSellingSupply(tokenId, parseAmount('10001'))).to.be.revertedWith(
-        'You do not have enough liquidity left'
+        'You do not have enough selling supply left'
       );
     });
 
@@ -290,9 +304,12 @@ describe('SyntheticCollectionManager', async function () {
 
       await manager.buyJotTokens(tokenID, parseAmount('500'));
 
+      console.log('fundingToken.balanceOf', (await fundingToken.balanceOf(manager.address)).toString());
+      console.log('jot.balanceOf', (await jot.balanceOf(manager.address)).toString());
+
       // Now addLiquidity to Uniswap
       // Should be 500 Jots and 500 funding Tokens
-      await manager.addLiquidityToPool(tokenID);
+      await manager.addLiquidityToQuickswap(tokenID, parseAmount('1'));
 
       const liquidity = await manager.getAccruedReward(tokenID);
 
@@ -658,7 +675,7 @@ describe('SyntheticCollectionManager', async function () {
       // Now mint and approve 1000 jots 5000 funding tokens
       await fundingToken.mint(owner.address, parseAmount('500'));
       await fundingToken.approve(managerAddress, parseAmount('500'));
-      
+
       await manager.withdrawJotTokens(tokenID, parseAmount('500'));
       
       // Now exit protocol

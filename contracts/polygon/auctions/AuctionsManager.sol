@@ -6,7 +6,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../governance/ProtocolParameters.sol";
-import "../implementations/SyntheticCollectionManager.sol";
+import "../Interfaces.sol";
+//import "../implementations/SyntheticCollectionManager.sol";
 import "../SyntheticProtocolRouter.sol";
 import "../libraries/ProtocolConstants.sol";
 
@@ -134,7 +135,7 @@ contract AuctionsManager is Initializable, AccessControlUpgradeable, UUPSUpgrade
         uint256 nftId_,
         address newOwner_
     ) external virtual onlyRole(AUCTION) {
-        SyntheticCollectionManager(collection_).reassignNFT(nftId_, newOwner_);
+        ISyntheticCollectionManager(collection_).reassignNFT(nftId_, newOwner_);
     }
 
     /**
@@ -150,7 +151,7 @@ contract AuctionsManager is Initializable, AccessControlUpgradeable, UUPSUpgrade
         uint256 nftId_,
         uint256 openingBid_
     ) external {
-        SyntheticCollectionManager manager = SyntheticCollectionManager(collection_);
+        ISyntheticCollectionManager manager = ISyntheticCollectionManager(collection_);
 
         require(_whitelistedTokens[collection_][nftId_], "Token can't be auctioned");
         require(_recoverableTillDate[collection_][nftId_] < block.timestamp, "Token is yet recoverable"); //solhint-disable-line

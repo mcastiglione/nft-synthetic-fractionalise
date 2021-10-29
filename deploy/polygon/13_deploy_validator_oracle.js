@@ -7,7 +7,9 @@ module.exports = async ({ getNamedAccounts, deployments, network, getChainId }) 
   const chainId = await getChainId();
 
   // in local network for testing deploy the mock
-  if (network.tags.local) {
+  console.log('network tags', network.tags);
+
+  if (network.tags.local || network.tags.rinkeby_fork) {
     await deploy('PolygonValidatorOracle', {
       contract: 'PolygonValidatorOracleMock',
       from: deployer,

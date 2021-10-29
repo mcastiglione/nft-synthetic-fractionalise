@@ -51,23 +51,6 @@ contract LiquidityCalculator is AccessControl, Initializable {
         return perpetualFundingLiquidity;
     }
 
-    function getAvailableFundingUniswap(TokenData memory token) external view returns(
-        uint256 jotsValue, uint256 fundingValue, uint256 remainingJots
-    ) {
-        uint256 liquidityPerpetualPercentage = protocol.liquidityPerpetualPercentage();
-        // Perpetual Pool and Uniswap liquidity percentages
-        uint256 liquidityUniswapPercentage = protocol.liquidityUniswapPercentage();
-        // Token jots liquidity for Uniswap
-        uint256 liquiditySupply = token.liquiditySupply;
-        // Token funding tokens owned by nft owner
-        uint256 liquiditySold = token.liquiditySold;
-
-        jotsValue = (liquiditySupply / 100 * liquidityUniswapPercentage);
-        fundingValue = (liquiditySold / 100 * liquidityUniswapPercentage);
-        remainingJots = (liquiditySupply / 100 * liquidityPerpetualPercentage);
-
-    }
-
     function getAccruedReward(address pairAddress, uint256 liquidityTokenBalance) external view returns(uint256 token0Reward, uint256 token1Reward) {
         IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(pairAddress);
         
