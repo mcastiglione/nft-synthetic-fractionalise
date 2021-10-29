@@ -7,6 +7,7 @@ struct APIOracleInfo {
     address linkToken;
     address chainlinkNode;
     string jobId;
+    string uintJobId;
     uint256 nodeFee;
 }
 
@@ -24,8 +25,6 @@ struct VerifyRequest {
     State previousState;
 }
 
-struct ChangeRequest {
+struct UpdateRequest {
     address syntheticCollection;
-    uint256 from;
-    uint256 to;
 }

@@ -19,10 +19,9 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId, network }) 
     fundingTokenAddress = jot.address;
   } else {
     fundingTokenAddress = networkConfig[chainId].fundingTokenAddress;
-    fundingTokenAddress = "0x2cA48b8c2d574b282FDAB69545646983A94a3286";
+    fundingTokenAddress = '0x2cA48b8c2d574b282FDAB69545646983A94a3286';
   }
 
-  
   let owner = governance.address;
 
   if (network.tags.testnet) {
@@ -31,17 +30,14 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId, network }) 
 
   const defaultParameters = {
     flippingInterval: String(time.duration.minutes(20)),
-    flippingReward: "1000000000000000000",
-    flippingAmount: "10000000000000000000",
+    flippingReward: '1000000000000000000',
+    flippingAmount: '10000000000000000000',
     auctionDuration: String(time.duration.weeks(1)),
-    governanceContractAddress: owner, 
+    governanceContractAddress: owner,
     fundingTokenAddress: fundingTokenAddress,
-    liquidityPerpetualPercentage: "0", 
-    liquidityUniswapPercentage: "100",
-    buybackPrice: parseAmount('1')
+    liquidityPerpetualPercentage: '0',
+    liquidityUniswapPercentage: '100',
   };
-
-  
 
   await deploy('ProtocolParameters', {
     from: deployer,

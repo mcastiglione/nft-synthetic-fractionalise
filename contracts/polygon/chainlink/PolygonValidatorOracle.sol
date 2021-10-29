@@ -22,18 +22,21 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
     string public token;
     string public apiURL;
     address public chainlinkNode;
-    bytes32 public jobId;
+    bytes32 public booleanjobId;
+    bytes32 public uint256JobId;
     uint256 public nodeFee;
     address public linkToken;
 
     mapping(bytes32 => VerifyRequest) private _verifyRequests;
-    mapping(bytes32 => ChangeRequest) private _changeRequests;
+    mapping(bytes32 => UpdateRequest) private _updateRequests;
+
     mapping(address => bool) private _whitelistedCollections;
 
     constructor(APIOracleInfo memory _oracleInfo) {
         linkToken = _oracleInfo.linkToken;
         chainlinkNode = _oracleInfo.chainlinkNode;
-        jobId = _oracleInfo.jobId.toBytes32();
+        booleanjobId = _oracleInfo.jobId.toBytes32();
+        uint256JobId = _oracleInfo.uintJobId.toBytes32();
         nodeFee = _oracleInfo.nodeFee;
         apiURL = "https://nft-validator-o24ig.ondigitalocean.app/verify";
 
@@ -42,7 +45,8 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
 
     /**
      * @dev call to verify if a token is locked in ethereum vault,
-     * this method can be called only from the collection manager contract
+     *      this method can be called only from the collection manager contract
+     *
      * @param ethereumCollection the collection address in ethereum
      * @param tokenId the id of the nft in the synthetic collection
      * @param currentState the current state
@@ -58,7 +62,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         require(_whitelistedCollections[msg.sender], "Invalid requester");
 
         Chainlink.Request memory request = buildChainlinkRequest(
-            jobId,
+            booleanjobId,
             address(this),
             this.processResponse.selector
         );
@@ -100,11 +104,56 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
     function processResponse(bytes32 requestId, bool verified) public recordChainlinkFulfillment(requestId) {
         VerifyRequest memory requestData = _verifyRequests[requestId];
 
-        // only call the synthetic collection contract if is locked
         SyntheticCollectionManager(requestData.syntheticCollection).processVerifyResponse(
             requestId,
             requestData,
             verified
+        );
+    }
+
+    /**
+     * @dev call to get the new buyback price
+     *      this method can be called only from the collection manager contract
+     *
+     * @return requestId the id of the request to the Chainlink oracle
+     */
+    function updateBuybackPrice() external returns (bytes32 requestId) {
+        require(_whitelistedCollections[msg.sender], "Invalid requester");
+
+        Chainlink.Request memory request = buildChainlinkRequest(
+            uint256JobId,
+            address(this),
+            this.processBuybackPriceResponse.selector
+        );
+
+        // set the request params
+        Chainlink.add(
+            request,
+            "get",
+            string(abi.encodePacked(apiURL, "?collection=0x", msg.sender.toString()))
+        );
+        Chainlink.add(request, "path", "buyback_price");
+
+        // Send the request
+        requestId = sendChainlinkRequestTo(chainlinkNode, request, nodeFee);
+
+        _updateRequests[requestId] = UpdateRequest({syntheticCollection: msg.sender});
+    }
+
+    /**
+     * @dev function to process the oracle response (only callable from oracle)
+     * @param requestId the id of the request to the Chainlink oracle
+     * @param buybackPrice the new buyback price
+     */
+    function processBuybackPriceResponse(bytes32 requestId, uint256 buybackPrice)
+        public
+        recordChainlinkFulfillment(requestId)
+    {
+        UpdateRequest memory requestData = _updateRequests[requestId];
+
+        SyntheticCollectionManager(requestData.syntheticCollection).processBuybackPriceResponse(
+            requestId,
+            buybackPrice
         );
     }
 

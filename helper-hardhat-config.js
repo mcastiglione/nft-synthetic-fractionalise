@@ -35,7 +35,7 @@ const networkConfig = {
     maticToken: constants.ZERO_ADDRESS,
     oracleAddress: constants.ZERO_ADDRESS,
     perpetualPoolLiteAddress: constants.ZERO_ADDRESS,
-    fundingTokenAddress: constants.ZERO_ADDRESS, 
+    fundingTokenAddress: constants.ZERO_ADDRESS,
   },
   1: {
     name: 'mainnet',
@@ -46,6 +46,7 @@ const networkConfig = {
     name: 'mumbai',
     validatorChainlinkNode: '0x0dc63a45c513bef5b84555d3fe56c227caa8e13e',
     validatorJobId: '531caa20390041ce8b05f5249b74776a',
+    validatorUint256JobId: '531caa20390041ce8b05f5249b74776a',
     validatorNodeFee: web3.utils.toWei('0.1'),
     linkToken: '0x326C977E6efc84E512bB9C30f76E30c160eD06FB',
     keyHash: '0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4',
@@ -55,7 +56,7 @@ const networkConfig = {
     maticToken: '0x101f4779090843bb394902a973D9bf1e37F00635',
     oracleAddress: '0xC5324aE5b70712F24602b5b2b13618356c44B965',
     perpetualPoolLiteAddress: '0xE409e138362Ea53125e46732f17d4E758c06dDEe',
-    fundingTokenAddress: '0x2cA48b8c2d574b282FDAB69545646983A94a3286', 
+    fundingTokenAddress: '0x2cA48b8c2d574b282FDAB69545646983A94a3286',
   },
   137: {
     name: 'polygon',

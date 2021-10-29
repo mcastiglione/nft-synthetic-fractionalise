@@ -73,6 +73,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /// @notice funding token address
     address public fundingTokenAddress;
 
+    uint256 public buybackPrice;
+    uint256 private _buybackPriceLastUpdate;
+
     /// @notice data for each token
     mapping(uint256 => TokenData) public tokens;
 
@@ -120,6 +123,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     event TokenReassigned(uint256 tokenID, address newOwner);
 
     event LiquidityRemoved(uint256 jotAmount, uint256 fundingAmount);
+
+    event BuybackPriceUpdateRequested(bytes32 requestId);
+    event BuybackPriceUpdated(bytes32 requestId, uint256 price);
 
     /**
      * @dev initializes some immutable variables and lock the implementation contract
@@ -656,6 +662,30 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
+     * @notice allows users to update buyback price for buyback
+     */
+    function updateBuybackPrice() external {
+        bytes32 requestId = PolygonValidatorOracle(_validatorAddress).updateBuybackPrice();
+
+        emit BuybackPriceUpdateRequested(requestId);
+    }
+
+    /**
+     * @dev processes the oracle response for buyback price updates
+     * @param requestId_ the id of the Chainlink request
+     * @param buybackPrice_ the new buyback price
+     */
+    function processBuybackPriceResponse(bytes32 requestId_, uint256 buybackPrice_)
+        external
+        onlyRole(VALIDATOR_ORACLE)
+    {
+        buybackPrice = buybackPrice_;
+        _buybackPriceLastUpdate = block.timestamp; // solhint-disable-line
+
+        emit BuybackPriceUpdated(requestId_, buybackPrice_);
+    }
+
+    /**
      * @notice returns funds owned by token, in Jots and Funding, in contract and in UniSwap
      */
     function getAvailableJotsForBuyback(uint256 tokenId)
@@ -708,6 +738,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * returned by the getRequiredFundingForBuyback(uint256 tokenId) function
      */
     function buyback(uint256 tokenId) public {
+        // solhint-disable-next-line
+        require(block.timestamp < _buybackPriceLastUpdate + 5 minutes, "Buyback price update required");
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
         require(!lockedNFT(tokenId), "Token is locked!");
 
@@ -746,10 +778,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             Jot(jotAddress).increaseAllowance(redemptionPool, ProtocolConstants.JOT_SUPPLY - burned);
 
             // update redemption pool balance trackers
-            RedemptionPool(redemptionPool).addRedemableBalance(
-                buybackAmount,
-                (buybackAmount / buybackPrice())
-            );
+            RedemptionPool(redemptionPool).addRedemableBalance(buybackAmount, (buybackAmount / buybackPrice));
 
             IERC20(fundingTokenAddress).transferFrom(msg.sender, redemptionPool, buybackAmount);
         }
@@ -786,12 +815,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             // If owner has some funding tokens left
             if (fundingLeft > 0) {
                 // How many jots you can buy with the funding tokens
-                uint256 fundingToJots = (fundingLeft * buybackPrice()) / 10**18;
+                uint256 fundingToJots = (fundingLeft * buybackPrice) / 10**18;
                 // if there's enough funding for buyback
                 // then return 0 as buybackAmount and the remaining funding
                 if ((fundingToJots + total_) > ProtocolConstants.JOT_SUPPLY) {
                     uint256 remainingJots = total_ - ProtocolConstants.JOT_SUPPLY;
-                    uint256 requiredFunding = (remainingJots * buybackPrice()) / 10**18;
+                    uint256 requiredFunding = (remainingJots * buybackPrice) / 10**18;
                     fundingLeft -= requiredFunding;
                     buybackAmount = 0;
                 }
@@ -801,7 +830,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                     fundingLeft = 0;
                 }
             } else {
-                buybackAmount = ((ProtocolConstants.JOT_SUPPLY - total_) * buybackPrice()) / 10**18;
+                buybackAmount = ((ProtocolConstants.JOT_SUPPLY - total_) * buybackPrice) / 10**18;
             }
         }
     }
@@ -975,8 +1004,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         return protocol.buybackPrice();
     }
 
-    /*function getLiquidityTokens(uint256 tokenId) public view returns(uint256) {
+    function getLiquidityTokens(uint256 tokenId) public view returns(uint256) {
         return tokens[tokenId].liquidityTokenBalance;
-    }*/
+    }
 
 }

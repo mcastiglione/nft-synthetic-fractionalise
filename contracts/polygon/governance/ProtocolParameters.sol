@@ -26,8 +26,6 @@ contract ProtocolParameters is Ownable {
     // Address of the funding token for new manager
     address public fundingTokenAddress;
 
-    uint256 public buybackPrice;
-
     uint256 public stakerShare;
 
     uint256 public liquidityPerpetualPercentage;
@@ -40,7 +38,6 @@ contract ProtocolParameters is Ownable {
     event AuctionDurationUpdated(uint256 from, uint256 to);
     event RecoveryThresholdUpdated(uint256 from, uint256 to);
     event FundingTokenAddressUpdated(address from, address to);
-    event BuybackPriceUpdated(uint256 from, uint256 to);
     event StakerShareUpdated(uint256 from, uint256 to);
     event LiquidityPercentagesUpdated(
         uint256 perpetualFrom,
@@ -61,8 +58,7 @@ contract ProtocolParameters is Ownable {
         address governanceContractAddress_,
         address fundingTokenAddress_,
         uint256 liquidityPerpetualPercentage_,
-        uint256 liquidityUniswapPercentage_,
-        uint256 buybackPrice_
+        uint256 liquidityUniswapPercentage_
     ) {
         require(flippingReward_ > 0, "Invalid Reward");
         require(flippingAmount_ > 0, "Invalid Amount");
@@ -70,7 +66,6 @@ contract ProtocolParameters is Ownable {
         require(flippingInterval_ > 15 minutes, "Flipping Interval should be greater than 15 minutes");
         require(auctionDuration_ > 1 hours, "Auction duration should be greater than 1 hour");
         require(fundingTokenAddress_ != address(0), "Funding token address can't be zero");
-        require(buybackPrice_ > 0, "Buyback price can't be zero");
         require(
             (liquidityPerpetualPercentage_ + liquidityUniswapPercentage_ == 100),
             "uniswap and perpetual percentages must sum 100"
@@ -83,7 +78,6 @@ contract ProtocolParameters is Ownable {
         fundingTokenAddress = fundingTokenAddress_;
         liquidityPerpetualPercentage = liquidityPerpetualPercentage_;
         liquidityUniswapPercentage = liquidityUniswapPercentage_;
-        buybackPrice = buybackPrice_;
         stakerShare = 1e16;
 
         // transfer ownership
@@ -126,12 +120,6 @@ contract ProtocolParameters is Ownable {
         require(fundingTokenAddress_ != address(0), "Funding token address can't be zero");
         emit FundingTokenAddressUpdated(fundingTokenAddress, fundingTokenAddress_);
         fundingTokenAddress = fundingTokenAddress_;
-    }
-
-    function setBuybackPrice(uint256 buybackPrice_) external onlyOwner {
-        require(buybackPrice > 0, "Buyback price can't be zero");
-        emit BuybackPriceUpdated(buybackPrice, buybackPrice_);
-        buybackPrice = buybackPrice_;
     }
 
     function setStakerShare(uint256 stakerShare_) external onlyOwner {
