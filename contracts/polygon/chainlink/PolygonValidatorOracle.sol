@@ -131,7 +131,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
             "get",
             string(abi.encodePacked(apiURL, "?collection=0x", msg.sender.toString()))
         );
-        Chainlink.add(request, "path", "buybackPrice");
+        Chainlink.add(request, "path", "buyback_price");
 
         // Send the request
         requestId = sendChainlinkRequestTo(chainlinkNode, request, nodeFee);

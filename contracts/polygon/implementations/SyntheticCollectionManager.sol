@@ -85,6 +85,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     address public fundingTokenAddress;
 
     uint256 public buybackPrice;
+    uint256 private _buybackPriceLastUpdate;
 
     /// @notice data for each token
     mapping(uint256 => TokenData) public tokens;
@@ -727,6 +728,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         onlyRole(VALIDATOR_ORACLE)
     {
         buybackPrice = buybackPrice_;
+        _buybackPriceLastUpdate = block.timestamp; // solhint-disable-line
 
         emit BuybackPriceUpdated(requestId_, buybackPrice_);
     }
@@ -784,6 +786,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * returned by the getRequiredFundingForBuyback(uint256 tokenId) function
      */
     function buyback(uint256 tokenId) public {
+        // solhint-disable-next-line
+        require(block.timestamp < _buybackPriceLastUpdate + 5 minutes, "Buyback price update required");
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
         require(!lockedNFT(tokenId), "Token is locked!");
 
