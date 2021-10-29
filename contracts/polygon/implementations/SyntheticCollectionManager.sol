@@ -60,6 +60,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     mapping(uint256 => uint256) private _originalToSynthetic;
 
+    mapping(uint256 => bool) private canFlip;
+
     ProtocolParameters public protocol;
 
     /// @notice address of the original collection
@@ -262,6 +264,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         if (supplyToKeep_ == 0) {
             IAuctionsManager(AuctionsManagerAddress).whitelistNFT(syntheticId);
         }
+
+        canFlip[syntheticId] = true;
     }
 
     /**
@@ -283,7 +287,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function withdrawFundingTokens(uint256 tokenId, uint256 amount) external {
         TokenData storage token = tokens[tokenId];
         require(!lockedNFT(tokenId), "Token is locked!");
-        require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner can withdraw");
+        require(isOwner(tokenId, msg.sender), "Only owner can withdraw");
 
         require(amount <= token.liquiditySold, "Not enough balance");
 
@@ -299,7 +303,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     function depositJotTokens(uint256 tokenId_, uint256 amountToDeposit_) external {
         TokenData storage token = tokens[tokenId_];
-        require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner can deposit");
+        require(isOwner(tokenId_, msg.sender), "Only owner can deposit");
 
         token.depositJotTokens(amountToDeposit_);
 
@@ -310,7 +314,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function withdrawJotTokens(uint256 tokenId_, uint256 amountToWithdraw_) public {
         TokenData storage token = tokens[tokenId_];
         require(!lockedNFT(tokenId_), "Token is locked!");
-        require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner can withdraw");
+        require(isOwner(tokenId_, msg.sender), "Only owner can withdraw");
 
         require(amountToWithdraw_ <= token.ownerSupply, "Not enough balance");
         token.ownerSupply -= amountToWithdraw_;
@@ -475,8 +479,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice Claim Liquidity Tokens
      */
     function claimLiquidityTokens(uint256 tokenId, uint256 amount) public {
-        address tokenOwner = ISyntheticNFT(erc721address).ownerOf(tokenId);
-        require(msg.sender == tokenOwner, "You are not the owner");
+        require(isOwner(tokenId, msg.sender), "You are not the owner");
 
         uint256 availableAmount = tokens[tokenId].liquidityTokenBalance;
         require(amount <= availableAmount, "Not enough liquidity available");
@@ -558,7 +561,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function recoverToken(uint256 tokenId) external {
         require(IAuctionsManager(AuctionsManagerAddress).isRecoverable(tokenId), "Token is not recoverable");
-        require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
+        require(isOwner(tokenId, msg.sender), "Only owner allowed");
 
         // reverts on failure
         IERC20(jotAddress).safeTransferFrom(msg.sender, address(this), ProtocolConstants.JOT_SUPPLY);
@@ -728,7 +731,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function buyback(uint256 tokenId) public {
         // solhint-disable-next-line
         require(block.timestamp < _buybackPriceLastUpdate + 5 minutes, "Buyback price update required");
-        require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
+        require(isOwner(tokenId, msg.sender), "Only owner allowed");
         require(!lockedNFT(tokenId), "Token is locked!");
 
         // execute the buyback if needed and remove the liquidity
@@ -977,6 +980,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {
         return
+            canFlip[tokenId] &&
             ISyntheticNFT(erc721address).exists(tokenId) &&
             block.timestamp - tokens[tokenId].lastFlipTime >= protocol.flippingInterval() && // solhint-disable-line
             IERC20(jotAddress).balanceOf(jotPool) > protocol.flippingAmount() &&
@@ -989,5 +993,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function getLiquidityTokens(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].liquidityTokenBalance;
+    }
+
+    function isOwner(uint256 tokenId, address caller) public view returns (bool) {
+        return ISyntheticNFT(erc721address).ownerOf(tokenId) == caller;
+    }
+
+    function setFlip(uint256 tokenId, bool value) public {
+        require(isOwner(tokenId, msg.sender), "Only owner can change flip");
+        canFlip[tokenId] = value;
     }
 }
