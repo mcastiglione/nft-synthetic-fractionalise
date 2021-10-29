@@ -19,7 +19,7 @@ describe('SyntheticCollectionManager', async function () {
     nftID = 1;
     NFT = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
 
-    const tx = await router.registerNFT(NFT, nftID, 5000, 5, ['My Collection', 'MYC', '']);
+    const tx = await router.registerNFT(NFT, nftID, parseAmount('5000'), parseAmount('5'), ['My Collection', 'MYC', '']);
     await expect(tx).to.emit(router, 'TokenRegistered');
     const args = await getEventArgs(tx, 'TokenRegistered', router);
     tokenId = args.syntheticTokenId;
@@ -77,15 +77,15 @@ describe('SyntheticCollectionManager', async function () {
       );
     });
 
-    it('If soldSupply is zero, will give error', async () => {
-      const tx = await router.registerNFT(NFT, nftID, 10000, 5, ['My Collection', 'MYC', '']);
-      await expect(tx).to.emit(router, 'TokenRegistered');
-      const args = await getEventArgs(tx, 'TokenRegistered', router);
-      tokenId = args.syntheticTokenId;
+    it('If sellingSupply is zero, will give error', async () => {
+      const registerTx = await router.registerNFT(NFT, nftID+1, parseAmount('10000'), parseAmount('1'), ['My Collection', 'MYC', '']);
+      await expect(registerTx).to.emit(router, 'TokenRegistered');
+      const eventArgs = await getEventArgs(registerTx, 'TokenRegistered', router);
+      const tokenID = eventArgs.syntheticTokenId;
       
-      await router.verifyNFT(NFT, tokenId);
+      await router.verifyNFT(NFT, tokenID);
       await fundingToken.approve(managerAddress, parseAmount('1'));
-      await manager.buyJotTokens(tokenId, parseAmount('1'));
+      await manager.buyJotTokens(tokenID, parseAmount('1'));
 
     });
 
@@ -303,6 +303,9 @@ describe('SyntheticCollectionManager', async function () {
       await fundingToken.approve(managerAddress, parseAmount('500'));
 
       await manager.buyJotTokens(tokenID, parseAmount('500'));
+
+      console.log('fundingToken.balanceOf', (await fundingToken.balanceOf(manager.address)).toString());
+      console.log('jot.balanceOf', (await jot.balanceOf(manager.address)).toString());
 
       // Now addLiquidity to Uniswap
       // Should be 500 Jots and 500 funding Tokens

@@ -17,8 +17,6 @@ import "./RedemptionPool.sol";
 import "./Structs.sol";
 import "./Enums.sol";
 
-import {AuctionsManager} from  "../auctions/AuctionsManager.sol";
-
 import "hardhat/console.sol";
 
 /**
@@ -48,7 +46,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     address private immutable _validatorAddress;
 
     /// @notice the address of the auctions manager fabric contract
-    address public auctionsManagerAddress;
+    address public AuctionsManagerAddress;
 
     /// @notice the address of the protocol router
     address public syntheticProtocolRouterAddress;
@@ -161,7 +159,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         erc721address = erc721address_;
         originalCollectionAddress = originalCollectionAddress_;
         syntheticProtocolRouterAddress = msg.sender;
-        auctionsManagerAddress = auctionManagerAddress_;
+        AuctionsManagerAddress = auctionManagerAddress_;
         protocol = ProtocolParameters(protocol_);
         jotPool = jotPool_;
         redemptionPool = redemptionPool_;
@@ -239,8 +237,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(!isSyntheticNFTCreated(tokenId_), "Synthetic NFT already generated!");
 
         uint256 syntheticId = ISyntheticNFT(erc721address).safeMint(nftOwner_, metadata_);
-
+        console.log(ProtocolConstants.JOT_SUPPLY, 'ProtocolConstants.JOT_SUPPLY');
+        console.log(supplyToKeep_, 'supplyToKeep_');
         uint256 sellingSupply = ProtocolConstants.JOT_SUPPLY - supplyToKeep_;
+        console.log(sellingSupply, 'sellingSupply');
 
         TokenData memory data = TokenData({
             originalTokenID: tokenId_,
@@ -259,7 +259,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // lock the nft and make it auctionable
         if (supplyToKeep_ == 0) {
-            AuctionsManager(auctionsManagerAddress).whitelistNFT(syntheticId);
+            IAuctionsManager(AuctionsManagerAddress).whitelistNFT(syntheticId);
         }
     }
 
@@ -273,7 +273,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(ISyntheticNFT(erc721address).exists(tokenId_), "Token not registered");
 
         uint256 amountToPay = token.buyJotTokens(amountToBuy_);
-
+        console.log(amountToPay, 'amountToPay');
         // make the transfers
         IERC20(fundingTokenAddress).transferFrom(msg.sender, address(this), amountToPay);
         IJot(jotAddress).transfer(msg.sender, amountToBuy_);
@@ -318,7 +318,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         IJot(jotAddress).transfer(msg.sender, amountToWithdraw_);
         if (token.ownerSupply == 0) {
-            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId_);
+            IAuctionsManager(AuctionsManagerAddress).whitelistNFT(tokenId_);
         }
     }
 
@@ -336,7 +336,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // lock the nft and make it auctionable
         if (tokens[tokenId_].ownerSupply == 0) {
-            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId_);
+            IAuctionsManager(AuctionsManagerAddress).whitelistNFT(tokenId_);
         }
     }
 
@@ -493,7 +493,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function flipJot(uint256 tokenId, uint64 prediction) external {
-        /*
+        
         TokenData storage token = tokens[tokenId];
 
         require(isAllowedToFlip(tokenId), "Flip is not allowed yet");
@@ -505,7 +505,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _flips[requestId] = Flip({tokenId: tokenId, prediction: prediction, player: msg.sender});
 
         emit CoinFlipped(requestId, msg.sender, tokenId, prediction);
-        */
+        
     }
 
     function processFlipResult(uint256 randomNumber, bytes32 requestId) external onlyRole(RANDOM_ORACLE) {
@@ -556,14 +556,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // lock the nft and make it auctionable
         if (token.ownerSupply == 0) {
-            AuctionsManager(auctionsManagerAddress).whitelistNFT(flip.tokenId);
+            IAuctionsManager(AuctionsManagerAddress).whitelistNFT(flip.tokenId);
         }
 
         emit FlipProcessed(requestId, flip.tokenId, flip.prediction, randomNumber);*/
     }
 
     function recoverToken(uint256 tokenId) external {
-        require(AuctionsManager(auctionsManagerAddress).isRecoverable(tokenId), "Token is not recoverable");
+        require(IAuctionsManager(AuctionsManagerAddress).isRecoverable(tokenId), "Token is not recoverable");
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner allowed");
 
         // reverts on failure
@@ -571,7 +571,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         tokens[tokenId].ownerSupply = ProtocolConstants.JOT_SUPPLY;
 
-        AuctionsManager(auctionsManagerAddress).blacklistNFT(tokenId);
+        IAuctionsManager(AuctionsManagerAddress).blacklistNFT(tokenId);
     }
 
     /**
@@ -851,7 +851,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         tokens[tokenId].ownerSupply -= amount;
         if (tokens[tokenId].ownerSupply == 0) {
-            AuctionsManager(auctionsManagerAddress).whitelistNFT(tokenId);
+            IAuctionsManager(AuctionsManagerAddress).whitelistNFT(tokenId);
         }
 
         uniswapV2Router.swapExactTokensForTokens(

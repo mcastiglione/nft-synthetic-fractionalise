@@ -3,6 +3,24 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
+interface ISyntheticCollectionManager {
+    function reassignNFT(uint256 nftId_, address newOwner_) external;
+    function isVerified(uint256 tokenId) external view returns (bool);
+
+    function originalCollectionAddress() external view returns (address);
+    
+    function removeLiquidityFromPool(uint256 tokenId) external;
+}
+
+interface IAuctionsManager {
+    function whitelistNFT(uint256 nftId_) external;
+
+    function blacklistNFT(uint256 nftId_) external;
+
+    function isRecoverable(uint256 nftId_) external view returns (bool);
+
+}
+
 interface IRandomNumberConsumer {
     function getRandomNumber() external returns (bytes32 requestId);
 }
