@@ -20,8 +20,7 @@ library SyntheticTokenLibrary {
         require(token.ownerSupply >= amount, "You do not have enough tokens left");
 
         token.ownerSupply -= amount;
-        token.sellingSupply += amount / 2;
-        token.liquiditySupply += amount / 2;
+        token.sellingSupply += amount;
     }
 
     /**
@@ -32,12 +31,10 @@ library SyntheticTokenLibrary {
         require(amount > 0, "Amount can't be zero!");
         require(!isLocked(token.state, token.ownerSupply), "Token is locked!");
 
-        require(token.liquiditySupply >= amount / 2, "You do not have enough liquidity left");
-        require(token.sellingSupply >= amount / 2, "You do not have enough selling supply left");
+        require(token.sellingSupply >= amount, "You do not have enough selling supply left");
 
         token.ownerSupply += amount;
-        token.sellingSupply -= amount / 2;
-        token.liquiditySupply -= amount / 2;
+        token.sellingSupply -= amount;
     }
 
     /**

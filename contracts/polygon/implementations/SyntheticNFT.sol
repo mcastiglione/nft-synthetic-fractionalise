@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
@@ -17,6 +18,10 @@ import "./Structs.sol";
 contract SyntheticNFT is Context, ERC165, IERC721Metadata, Initializable, AccessControl {
     using Address for address;
     using Strings for uint256;
+
+
+    using Counters for Counters.Counter;
+    Counters.Counter public tokenCounter;
 
     bytes32 public constant MANAGER = keccak256("MANAGER");
 
@@ -63,9 +68,13 @@ contract SyntheticNFT is Context, ERC165, IERC721Metadata, Initializable, Access
 
     function safeMint(
         address to,
-        uint256 tokenId,
         string memory metadata
     ) public onlyRole(MANAGER) {
+
+        // Get new synthetic ID
+        uint256 tokenId = tokenCounter.current();
+        tokenCounter.increment();
+
         _mint(to, tokenId);
         _tokenMetadata[tokenId] = metadata;
     }

@@ -8,13 +8,10 @@ struct TokenData {
     uint256 ownerSupply;
     uint256 sellingSupply;
     uint256 soldSupply;
-    uint256 liquiditySupply;
     uint256 liquiditySold;
     uint256 fractionPrices;
     uint256 lastFlipTime;
     uint256 liquidityTokenBalance;
-    uint256 uniswapJotLiquidity; // solhint-disable-line
-    uint256 uniswapFundingLiquidity; // solhint-disable-line
     uint256 perpetualFuturesLShares;
     State state;
 }

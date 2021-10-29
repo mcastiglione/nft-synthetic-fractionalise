@@ -3,6 +3,19 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
+interface IRandomNumberConsumer {
+    function getRandomNumber() external returns (bytes32 requestId);
+}
+
+interface IPolygonValidatorOracle {
+    function verifyTokenInCollection(
+        address ethereumCollection,
+        uint256 tokenId,
+        uint256 currentState,
+        uint256 nonce
+    ) external returns (bytes32 requestId);
+}
+
 interface IFlipCoinGenerator {
     function generateRandom() external view returns (uint8);
 }
@@ -16,9 +29,8 @@ interface ISyntheticNFT is IERC721Metadata {
 
     function safeMint(
         address to,
-        uint256 tokenId,
         string memory metadata
-    ) external;
+    ) external returns (uint256);
 
     function safeBurn(uint256 tokenId) external;
 }
