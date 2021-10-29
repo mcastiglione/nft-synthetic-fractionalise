@@ -84,6 +84,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /// @notice funding token address
     address public fundingTokenAddress;
 
+    uint256 public buybackPrice;
+
     /// @notice data for each token
     mapping(uint256 => TokenData) public tokens;
 
@@ -794,10 +796,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             Jot(jotAddress).increaseAllowance(redemptionPool, ProtocolConstants.JOT_SUPPLY - burned);
 
             // update redemption pool balance trackers
-            RedemptionPool(redemptionPool).addRedemableBalance(
-                buybackAmount,
-                (buybackAmount / buybackPrice())
-            );
+            RedemptionPool(redemptionPool).addRedemableBalance(buybackAmount, (buybackAmount / buybackPrice));
 
             IERC20(fundingTokenAddress).transferFrom(msg.sender, redemptionPool, buybackAmount);
         }
@@ -834,12 +833,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             // If owner has some funding tokens left
             if (fundingLeft > 0) {
                 // How many jots you can buy with the funding tokens
-                uint256 fundingToJots = (fundingLeft * buybackPrice()) / 10**18;
+                uint256 fundingToJots = (fundingLeft * buybackPrice) / 10**18;
                 // if there's enough funding for buyback
                 // then return 0 as buybackAmount and the remaining funding
                 if ((fundingToJots + total_) > ProtocolConstants.JOT_SUPPLY) {
                     uint256 remainingJots = total_ - ProtocolConstants.JOT_SUPPLY;
-                    uint256 requiredFunding = (remainingJots * buybackPrice()) / 10**18;
+                    uint256 requiredFunding = (remainingJots * buybackPrice) / 10**18;
                     fundingLeft -= requiredFunding;
                     buybackAmount = 0;
                 }
@@ -849,7 +848,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
                     fundingLeft = 0;
                 }
             } else {
-                buybackAmount = ((ProtocolConstants.JOT_SUPPLY - total_) * buybackPrice()) / 10**18;
+                buybackAmount = ((ProtocolConstants.JOT_SUPPLY - total_) * buybackPrice) / 10**18;
             }
         }
     }
@@ -1016,10 +1015,5 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function getliquiditySold(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].liquiditySold;
-    }
-
-    // the price to buyback an NFT (buying Jots) and exit the protocol
-    function buybackPrice() public view returns (uint256) {
-        return protocol.buybackPrice();
     }
 }

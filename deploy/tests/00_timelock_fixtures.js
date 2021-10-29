@@ -43,11 +43,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     flippingReward: 5,
     flippingAmount: 20,
     auctionDuration: String(time.duration.weeks(1)),
-    governanceContractAddress: timelock.address, 
+    governanceContractAddress: timelock.address,
     fundingTokenAddress: fundingTokenAddress,
-    liquidityPerpetualPercentage: "50", 
-    liquidityUniswapPercentage: "50",
-    buybackPrice: parseAmount('1')
+    liquidityPerpetualPercentage: '50',
+    liquidityUniswapPercentage: '50',
   };
 
   await deploy('ProtocolParameters', {
