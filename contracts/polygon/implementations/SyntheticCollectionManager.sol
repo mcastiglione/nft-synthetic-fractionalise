@@ -633,7 +633,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // should be verified
         require(token.state == State.VERIFIED, "Token not verified");
 
-        // caller must be tokens owner
+        // caller must be token owner
         require(IERC721(erc721address).ownerOf(syntheticId) == caller, "Should own NFT");
 
         // updates the nonce for change
@@ -809,7 +809,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         // increase nonce to avoid double verification
         uint256 currentNonce = nonces[token.originalTokenID];
-        ownersByNonce[tokenId][currentNonce] = msg.sender;
+        ownersByNonce[token.originalTokenID][currentNonce] = msg.sender;
         nonces[token.originalTokenID] = currentNonce + 1;
 
         // Burn synthetic token
