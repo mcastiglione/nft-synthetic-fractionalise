@@ -100,8 +100,7 @@ describe('SyntheticCollectionManager', async function () {
 
   describe('depositJotTokens', async () => {
     it('Non existent token ID', async () => {
-      const tokenCounter = (await manager.tokenCounter()).toNumber();
-      await expect(manager.depositJotTokens(tokenCounter + 1, 300)).to.be.revertedWith(
+      await expect(manager.depositJotTokens(300, 300)).to.be.revertedWith(
         'ERC721: owner query for nonexistent token'
       );
     });
@@ -232,7 +231,7 @@ describe('SyntheticCollectionManager', async function () {
       await router.verifyNFT(NFT, tokenId);
 
       await expect(manager.decreaseSellingSupply(tokenId, parseAmount('10001'))).to.be.revertedWith(
-        'You do not have enough liquidity left'
+        'You do not have enough selling supply left'
       );
     });
 
@@ -307,7 +306,7 @@ describe('SyntheticCollectionManager', async function () {
 
       // Now addLiquidity to Uniswap
       // Should be 500 Jots and 500 funding Tokens
-      await manager.addLiquidityToPool(tokenID);
+      await manager.addLiquidityToQuickswap(tokenID, parseAmount('1'));
 
       const liquidity = await manager.getAccruedReward(tokenID);
 
@@ -673,7 +672,7 @@ describe('SyntheticCollectionManager', async function () {
       // Now mint and approve 1000 jots 5000 funding tokens
       await fundingToken.mint(owner.address, parseAmount('500'));
       await fundingToken.approve(managerAddress, parseAmount('500'));
-      
+
       await manager.withdrawJotTokens(tokenID, parseAmount('500'));
       
       // Now exit protocol

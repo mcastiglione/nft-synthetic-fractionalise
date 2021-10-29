@@ -69,10 +69,10 @@ contract SyntheticNFT is Context, ERC165, IERC721Metadata, Initializable, Access
     function safeMint(
         address to,
         string memory metadata
-    ) public onlyRole(MANAGER) {
+    ) public onlyRole(MANAGER) returns (uint256 tokenId) {
 
         // Get new synthetic ID
-        uint256 tokenId = tokenCounter.current();
+        tokenId = tokenCounter.current();
         tokenCounter.increment();
 
         _mint(to, tokenId);

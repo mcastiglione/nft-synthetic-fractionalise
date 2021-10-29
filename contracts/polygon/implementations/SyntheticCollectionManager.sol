@@ -19,6 +19,8 @@ import "./Enums.sol";
 
 import {AuctionsManager} from  "../auctions/AuctionsManager.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title synthetic collection abstraction contract
  * @author priviprotocol
@@ -309,6 +311,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(!lockedNFT(tokenId_), "Token is locked!");
         require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner can withdraw");
 
+        console.log(token.ownerSupply, 'token.ownerSupply');
+
         require(amountToWithdraw_ <= token.ownerSupply, "Not enough balance");
         token.ownerSupply -= amountToWithdraw_;
 
@@ -363,6 +367,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice add available liquidity to Perpetual Pool
      */
     function AddLiquidityToFuturePool(uint256 tokenId, uint256 amount) public {
+        require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
         require(amount > 0, "Amount can't be zero!");
         require(amount >= tokens[tokenId].liquiditySold, "Amount is greater than available funding");
         
@@ -378,7 +383,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      */
     function addLiquidityToQuickswap(uint256 tokenId, uint256 amount) public {
         TokenData storage token = tokens[tokenId];
-
+        require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
         require(token.soldSupply > 0, "soldSupply is zero");
         require(amount >= token.liquiditySold, "Amount is greater than available funding");
         require(amount >= token.ownerSupply, "Amount is greater than available funding");
@@ -961,9 +966,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             isSyntheticNFTFractionalised(tokenId);
     }
 
-    /*function getliquiditySold(uint256 tokenId) public view returns (uint256) {
+    function getliquiditySold(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].liquiditySold;
-    }*/
+    }
 
     // the price to buyback an NFT (buying Jots) and exit the protocol
     function buybackPrice() public view returns (uint256) {
