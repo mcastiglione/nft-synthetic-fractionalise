@@ -5,10 +5,11 @@ import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
 interface ISyntheticCollectionManager {
     function reassignNFT(uint256 nftId_, address newOwner_) external;
+
     function isVerified(uint256 tokenId) external view returns (bool);
 
     function originalCollectionAddress() external view returns (address);
-    
+
     function removeLiquidityFromPool(uint256 tokenId) external;
 }
 
@@ -18,7 +19,6 @@ interface IAuctionsManager {
     function blacklistNFT(uint256 nftId_) external;
 
     function isRecoverable(uint256 nftId_) external view returns (bool);
-
 }
 
 interface IRandomNumberConsumer {
@@ -32,6 +32,8 @@ interface IPolygonValidatorOracle {
         uint256 currentState,
         uint256 nonce
     ) external returns (bytes32 requestId);
+
+    function updateBuybackPrice() external returns (bytes32 requestId);
 }
 
 interface IFlipCoinGenerator {
@@ -45,10 +47,7 @@ interface ISyntheticNFT is IERC721Metadata {
 
     function exists(uint256 tokenId) external view returns (bool);
 
-    function safeMint(
-        address to,
-        string memory metadata
-    ) external returns (uint256);
+    function safeMint(address to, string memory metadata) external returns (uint256);
 
     function safeBurn(uint256 tokenId) external;
 }
@@ -505,7 +504,7 @@ interface IPerpetualPoolLite {
 
     function addLiquidity(uint256 bAmount) external;
 
-    function addLiquidityGetlShares(uint256 bAmount) external returns(uint256);
+    function addLiquidityGetlShares(uint256 bAmount) external returns (uint256);
 
     function removeLiquidity(uint256 lShares) external;
 

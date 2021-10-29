@@ -17,8 +17,6 @@ import "./RedemptionPool.sol";
 import "./Structs.sol";
 import "./Enums.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title synthetic collection abstraction contract
  * @author priviprotocol
@@ -243,10 +241,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(!isSyntheticNFTCreated(tokenId_), "Synthetic NFT already generated!");
 
         uint256 syntheticId = ISyntheticNFT(erc721address).safeMint(nftOwner_, metadata_);
-        console.log(ProtocolConstants.JOT_SUPPLY, 'ProtocolConstants.JOT_SUPPLY');
-        console.log(supplyToKeep_, 'supplyToKeep_');
         uint256 sellingSupply = ProtocolConstants.JOT_SUPPLY - supplyToKeep_;
-        console.log(sellingSupply, 'sellingSupply');
 
         TokenData memory data = TokenData({
             originalTokenID: tokenId_,
@@ -279,7 +274,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(ISyntheticNFT(erc721address).exists(tokenId_), "Token not registered");
 
         uint256 amountToPay = token.buyJotTokens(amountToBuy_);
-        console.log(amountToPay, 'amountToPay');
+
         // make the transfers
         IERC20(fundingTokenAddress).transferFrom(msg.sender, address(this), amountToPay);
         IJot(jotAddress).transfer(msg.sender, amountToBuy_);
@@ -291,7 +286,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(ISyntheticNFT(erc721address).ownerOf(tokenId) == msg.sender, "Only owner can withdraw");
 
         require(amount <= token.liquiditySold, "Not enough balance");
-        
+
         IERC20(fundingTokenAddress).transfer(msg.sender, amount);
 
         token.liquiditySold -= amount;
@@ -316,8 +311,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         TokenData storage token = tokens[tokenId_];
         require(!lockedNFT(tokenId_), "Token is locked!");
         require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner can withdraw");
-
-        console.log(token.ownerSupply, 'token.ownerSupply');
 
         require(amountToWithdraw_ <= token.ownerSupply, "Not enough balance");
         token.ownerSupply -= amountToWithdraw_;
@@ -376,12 +369,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
         require(amount > 0, "Amount can't be zero!");
         require(amount >= tokens[tokenId].liquiditySold, "Amount is greater than available funding");
-        
+
         IERC20(fundingTokenAddress).approve(perpetualPoolLiteAddress, amount);
         uint256 lShares = IPerpetualPoolLite(perpetualPoolLiteAddress).addLiquidityGetlShares(amount);
         tokens[tokenId].liquiditySold -= amount;
         tokens[tokenId].perpetualFuturesLShares += lShares;
-        
     }
 
     /**
@@ -430,7 +422,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _withdrawLiquidityFromFuturePool(tokenId, amount);
     }
 
-
     function _withdrawLiquidityFromFuturePool(uint256 tokenId, uint256 amount) internal {
         require(amount > 0, "Amount can't be zero");
         require(amount <= tokens[tokenId].perpetualFuturesLShares, "Not enough balance");
@@ -450,11 +441,10 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _withdrawLiquidityFromQuickswap(tokenId, amount);
     }
 
-
-    function _withdrawLiquidityFromQuickswap(uint256 tokenId, uint256 amount) internal returns (
-        uint256 jotAmountExecuted, 
-        uint256 fundingAmountExecuted
-    ) {
+    function _withdrawLiquidityFromQuickswap(uint256 tokenId, uint256 amount)
+        internal
+        returns (uint256 jotAmountExecuted, uint256 fundingAmountExecuted)
+    {
         TokenData storage token = tokens[tokenId];
 
         require(amount > 0, "Amount can't be zero");
@@ -499,7 +489,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function flipJot(uint256 tokenId, uint64 prediction) external {
-        
         TokenData storage token = tokens[tokenId];
 
         require(isAllowedToFlip(tokenId), "Flip is not allowed yet");
@@ -511,7 +500,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _flips[requestId] = Flip({tokenId: tokenId, prediction: prediction, player: msg.sender});
 
         emit CoinFlipped(requestId, msg.sender, tokenId, prediction);
-        
     }
 
     function processFlipResult(uint256 randomNumber, bytes32 requestId) external onlyRole(RANDOM_ORACLE) {
@@ -664,8 +652,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice allows users to update buyback price for buyback
      */
-    function updateBuybackPrice() external {
-        bytes32 requestId = PolygonValidatorOracle(_validatorAddress).updateBuybackPrice();
+    function updateBuybackPrice() external returns (bytes32 requestId) {
+        requestId = IPolygonValidatorOracle(_validatorAddress).updateBuybackPrice();
 
         emit BuybackPriceUpdateRequested(requestId);
     }
@@ -757,7 +745,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         TokenData storage token = tokens[tokenId];
 
         // get available liquidity (owner + selling + liquidity + uniswap )
-        (uint256 jotLiquidity, uint256 fundingLiquidity) = _withdrawLiquidityFromQuickswap(tokenId, token.liquidityTokenBalance);
+        (, uint256 fundingLiquidity) = _withdrawLiquidityFromQuickswap(tokenId, token.liquidityTokenBalance);
         // TODO: get PerpetualPoolLite.getLiquidity
         //uint256 perpetualPoolLiteLiquidity;
 
@@ -999,13 +987,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         return tokens[tokenId].liquiditySold;
     }
 
-    // the price to buyback an NFT (buying Jots) and exit the protocol
-    function buybackPrice() public view returns (uint256) {
-        return protocol.buybackPrice();
-    }
-
-    function getLiquidityTokens(uint256 tokenId) public view returns(uint256) {
+    function getLiquidityTokens(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].liquidityTokenBalance;
     }
-
 }
