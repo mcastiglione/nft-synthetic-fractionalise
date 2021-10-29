@@ -46,7 +46,7 @@ const networkConfig = {
     name: 'mumbai',
     validatorChainlinkNode: '0x0dc63a45c513bef5b84555d3fe56c227caa8e13e',
     validatorJobId: '531caa20390041ce8b05f5249b74776a',
-    validatorUint256JobId: '531caa20390041ce8b05f5249b74776a',
+    validatorUint256JobId: 'dcf1800fb9d443cdb512070046852c2d',
     validatorNodeFee: web3.utils.toWei('0.1'),
     linkToken: '0x326C977E6efc84E512bB9C30f76E30c160eD06FB',
     keyHash: '0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4',
