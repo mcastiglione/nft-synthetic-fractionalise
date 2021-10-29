@@ -134,6 +134,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     event LiquidityRemoved(uint256 jotAmount, uint256 fundingAmount);
 
+    event BuybackPriceUpdateRequested(bytes32 requestId);
+    event BuybackPriceUpdated(bytes32 requestId, uint256 price);
+
     /**
      * @dev initializes some immutable variables and lock the implementation contract
      *      for further initializations (with the initializer modifier)
@@ -703,6 +706,29 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _originalToSynthetic[newOriginalId] = syntheticId;
 
         ISyntheticNFT(erc721address).setMetadata(syntheticId, metadata);
+    }
+
+    /**
+     * @notice allows users to update buyback price for buyback
+     */
+    function updateBuybackPrice() external {
+        bytes32 requestId = PolygonValidatorOracle(_validatorAddress).updateBuybackPrice();
+
+        emit BuybackPriceUpdateRequested(requestId);
+    }
+
+    /**
+     * @dev processes the oracle response for buyback price updates
+     * @param requestId_ the id of the Chainlink request
+     * @param buybackPrice_ the new buyback price
+     */
+    function processBuybackPriceResponse(bytes32 requestId_, uint256 buybackPrice_)
+        external
+        onlyRole(VALIDATOR_ORACLE)
+    {
+        buybackPrice = buybackPrice_;
+
+        emit BuybackPriceUpdated(requestId_, buybackPrice_);
     }
 
     /**

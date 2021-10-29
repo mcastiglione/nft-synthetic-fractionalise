@@ -19,6 +19,7 @@ module.exports = async ({ getNamedAccounts, deployments, network, getChainId }) 
       chainlinkNode: networkConfig[chainId].validatorChainlinkNode || constants.ZERO_ADDRESS,
       linkToken: networkConfig[chainId].linkToken || constants.ZERO_ADDRESS,
       jobId: networkConfig[chainId].validatorJobId || '',
+      uintJobId: networkConfig[chainId].validatorUint256JobId || '',
       nodeFee: networkConfig[chainId].validatorNodeFee || 0,
     };
 
