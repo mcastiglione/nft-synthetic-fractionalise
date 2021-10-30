@@ -371,7 +371,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
                 ProtocolParameters(_protocol).fundingTokenAddress(),
                 lTokenAddress,
                 pTokenAddress,
-                _jotPool, // TODO: change by liquidator address
+                address(0), // TODO: change by liquidator address
                 _jotPool,
                 collection
             ]
