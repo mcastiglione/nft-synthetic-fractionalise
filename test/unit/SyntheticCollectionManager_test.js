@@ -78,7 +78,7 @@ describe('SyntheticCollectionManager', async function () {
     });
 
     it('If sellingSupply is zero, will give error', async () => {
-      const registerTx = await router.registerNFT(NFT, nftID+1, parseAmount('10000'), parseAmount('1'), ['My Collection', 'MYC', '']);
+      const registerTx = await router.registerNFT(NFT, 10, parseAmount('10000'), parseAmount('1'), ['My Collection', 'MYC', '']);
       await expect(registerTx).to.emit(router, 'TokenRegistered');
       const eventArgs = await getEventArgs(registerTx, 'TokenRegistered', router);
       const tokenID = eventArgs.syntheticTokenId;
@@ -445,7 +445,7 @@ describe('SyntheticCollectionManager', async function () {
       await manager.increaseSellingSupply(tokenId, parseAmount('1000'));
       await manager.buyJotTokens(tokenId, amount);
       const liquiditySold = await manager.getliquiditySold(tokenId);
-      expect(liquiditySold).to.be.equal(5);
+      expect(liquiditySold).to.be.equal(parseAmount('5'));
     });
   });
 

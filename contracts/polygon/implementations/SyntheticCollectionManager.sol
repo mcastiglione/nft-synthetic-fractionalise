@@ -122,10 +122,34 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     event TokenReassigned(uint256 tokenID, address newOwner);
 
-    event LiquidityRemoved(uint256 jotAmount, uint256 fundingAmount);
-
     event BuybackPriceUpdateRequested(bytes32 requestId);
     event BuybackPriceUpdated(bytes32 requestId, uint256 price);
+    
+    event LiquidityAddedToFuturePool(
+        uint256 tokenId, 
+        uint256 fundingSent,
+        uint256 lShares
+        );
+
+    event LiquidityAddedToQuickswap(
+        uint256 tokenId,
+        uint256 jotAmount,
+        uint256 fundingAmount,
+        uint256 liquidity
+    );
+
+    event LiquidityRemovedFromFuturePool(
+        uint256 tokenId,
+        uint256 fundingReceived,
+        uint256 lShares
+    );
+
+    event LiquidityRemovedFromQuickswap(
+        uint256 tokenId,
+        uint256 jotAmount,
+        uint256 fundingAmount,
+        uint256 liquidity
+    );
 
     /**
      * @dev initializes some immutable variables and lock the implementation contract
@@ -378,6 +402,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 lShares = IPerpetualPoolLite(perpetualPoolLiteAddress).addLiquidityGetlShares(amount);
         tokens[tokenId].liquiditySold -= amount;
         tokens[tokenId].perpetualFuturesLShares += lShares;
+
+        emit LiquidityAddedToFuturePool(tokenId, amount, lShares);
     }
 
     /**
@@ -412,6 +438,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         token.ownerSupply -= amountA;
         token.liquiditySold -= amountB;
         token.liquidityTokenBalance += liquidity;
+
+        emit LiquidityAddedToQuickswap(tokenId, amountA, amountB, liquidity);
     }
 
     function removeLiquidityFromPool(uint256 tokenId) external onlyRole(AUCTION_MANAGER) {
@@ -438,6 +466,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         tokens[tokenId].liquiditySold += (balanceAfter - balanceBefore);
         tokens[tokenId].perpetualFuturesLShares -= amount;
+
+        emit LiquidityRemovedFromFuturePool(tokenId, (balanceAfter - balanceBefore), amount);
     }
 
     function withdrawLiquidityFromQuickswap(uint256 tokenId, uint256 amount) external {
@@ -473,6 +503,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         token.ownerSupply += jotAmountExecuted;
         token.liquiditySold += fundingAmountExecuted;
         token.liquidityTokenBalance += amount;
+
+        emit LiquidityRemovedFromQuickswap(tokenId, jotAmountExecuted, fundingAmountExecuted, amount);
     }
 
     /**
