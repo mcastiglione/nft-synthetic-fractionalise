@@ -124,12 +124,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     event BuybackPriceUpdateRequested(bytes32 requestId);
     event BuybackPriceUpdated(bytes32 requestId, uint256 price);
-    
-    event LiquidityAddedToFuturePool(
-        uint256 tokenId, 
-        uint256 fundingSent,
-        uint256 lShares
-        );
+
+    event LiquidityAddedToFuturePool(uint256 tokenId, uint256 fundingSent, uint256 lShares);
 
     event LiquidityAddedToQuickswap(
         uint256 tokenId,
@@ -138,11 +134,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 liquidity
     );
 
-    event LiquidityRemovedFromFuturePool(
-        uint256 tokenId,
-        uint256 fundingReceived,
-        uint256 lShares
-    );
+    event LiquidityRemovedFromFuturePool(uint256 tokenId, uint256 fundingReceived, uint256 lShares);
 
     event LiquidityRemovedFromQuickswap(
         uint256 tokenId,
@@ -266,7 +258,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     ) public onlyRole(ROUTER) returns (uint256 syntheticId) {
         require(!isSyntheticNFTCreated(tokenId_), "Synthetic NFT already generated!");
 
-        uint256 syntheticId = ISyntheticNFT(erc721address).safeMint(nftOwner_, metadata_);
+        syntheticId = ISyntheticNFT(erc721address).safeMint(nftOwner_, metadata_);
         uint256 sellingSupply = ProtocolConstants.JOT_SUPPLY - supplyToKeep_;
 
         TokenData memory data = TokenData({
