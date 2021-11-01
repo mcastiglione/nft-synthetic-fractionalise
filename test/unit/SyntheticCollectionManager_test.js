@@ -401,8 +401,8 @@ describe('SyntheticCollectionManager', async function () {
 
       const liquidity = await manager.getAccruedReward(tokenID);
 
-      expect(liquidity[0].toString()).to.be.equal(parseAmount('500'));
-      expect(liquidity[1].toString()).to.be.equal(parseAmount('500'));
+      expect(liquidity[0].toString()).to.be.equal(parseAmount('1'));
+      expect(liquidity[1].toString()).to.be.equal(parseAmount('1'));
     });
 
     describe('claimLiquidityTokens', async () => {
@@ -533,7 +533,7 @@ describe('SyntheticCollectionManager', async function () {
 
       await manager.buyJotTokens(tokenId, amount);
 
-      await manager.addLiquidityToPool(tokenId);
+      await manager.addLiquidityToQuickswap(tokenId, amount);
       //console.log('jot UniSwap pair', await router.getCollectionUniswapPair(NFT));
     });
   });
@@ -591,14 +591,14 @@ describe('SyntheticCollectionManager', async function () {
 
       // Mint and approve funding to buy 500 jots
       // Now mint and approve 1000 jots 5000 funding tokens
-      await fundingToken.mint(owner.address, parseAmount('500'));
-      await fundingToken.approve(managerAddress, parseAmount('500'));
+      await fundingToken.mint(owner.address, parseAmount('2500'));
+      await fundingToken.approve(managerAddress, parseAmount('2500'));
 
       await manager.buyJotTokens(tokenID, parseAmount('500'));
 
       // Now addLiquidity to Uniswap
       // Should be 500 Jots and 500 funding Tokens
-      await manager.addLiquidityToPool(tokenID);
+      await manager.addLiquidityToQuickswap(tokenID, parseAmount('500'));
 
       const UniswapPairAddress = await jot.uniswapV2Pair();
 
@@ -654,14 +654,14 @@ describe('SyntheticCollectionManager', async function () {
       
       // Mint and approve funding to buy 500 jots
       // Now mint and approve 1000 jots 5000 funding tokens
-      await fundingToken.mint(owner.address, parseAmount('500'));
-      await fundingToken.approve(managerAddress, parseAmount('500'));
+      await fundingToken.mint(owner.address, parseAmount('2500'));
+      await fundingToken.approve(managerAddress, parseAmount('2500'));
       
       await manager.buyJotTokens(tokenID, parseAmount('500'));
       
       // Now addLiquidity to Uniswap
       // Should be 500 Jots and 500 funding Tokens
-      await manager.addLiquidityToPool(tokenID);
+      await manager.addLiquidityToQuickswap(tokenID, parseAmount('500'));
       
       // mint and approve and deposit remaining jots to reach JOTS_SUPPLY (1000)
       await jot.mint(owner.address, parseAmount('1000'));
@@ -694,14 +694,14 @@ describe('SyntheticCollectionManager', async function () {
       
       // Mint and approve funding to buy 500 jots
       // Now mint and approve 1000 jots 5000 funding tokens
-      await fundingToken.mint(owner.address, parseAmount('500'));
-      await fundingToken.approve(managerAddress, parseAmount('500'));
+      await fundingToken.mint(owner.address, parseAmount('2500'));
+      await fundingToken.approve(managerAddress, parseAmount('2500'));
       
       await manager.buyJotTokens(tokenID, parseAmount('500'));
       
       // Now addLiquidity to Uniswap
       // Should be 500 Jots and 500 funding Tokens
-      await manager.addLiquidityToPool(tokenID);
+      await manager.addLiquidityToQuickswap(tokenID, parseAmount('500'));
 
       await manager.withdrawJotTokens(tokenID, parseAmount('1000'));
 

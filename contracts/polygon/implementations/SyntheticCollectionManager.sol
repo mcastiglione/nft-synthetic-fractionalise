@@ -390,7 +390,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function AddLiquidityToFuturePool(uint256 tokenId, uint256 amount) public {
         require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
         require(amount > 0, "Amount can't be zero!");
-        require(amount >= tokens[tokenId].liquiditySold, "Amount is greater than available funding");
+        require(amount <= tokens[tokenId].liquiditySold, "Amount is greater than available funding");
 
         IERC20(fundingTokenAddress).approve(perpetualPoolLiteAddress, amount);
         uint256 lShares = IPerpetualPoolLite(perpetualPoolLiteAddress).addLiquidityGetlShares(amount);
