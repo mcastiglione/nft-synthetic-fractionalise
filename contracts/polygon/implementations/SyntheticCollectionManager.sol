@@ -16,6 +16,7 @@ import "./JotPool.sol";
 import "./RedemptionPool.sol";
 import "./Structs.sol";
 import "./Enums.sol";
+import "hardhat/console.sol";
 
 /**
  * @title synthetic collection abstraction contract
@@ -294,6 +295,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(ISyntheticNFT(erc721address).exists(tokenId_), "Token not registered");
 
         uint256 amountToPay = token.buyJotTokens(amountToBuy_);
+        console.log(amountToPay, 'amountToPay');
 
         // make the transfers
         IERC20(fundingTokenAddress).transferFrom(msg.sender, address(this), amountToPay);
@@ -405,8 +407,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         TokenData storage token = tokens[tokenId];
         require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
         require(token.soldSupply > 0, "soldSupply is zero");
-        require(amount >= token.liquiditySold, "Amount is greater than available funding");
-        require(amount >= token.ownerSupply, "Amount is greater than available funding");
+        require(amount <= token.liquiditySold, "Amount is greater than available funding");
+        require(amount <= token.ownerSupply, "Amount is greater than available ownerSupply");
 
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
 

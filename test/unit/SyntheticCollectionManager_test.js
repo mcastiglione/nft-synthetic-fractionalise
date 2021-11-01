@@ -85,16 +85,102 @@ describe('SyntheticCollectionManager', async function () {
       
       await router.verifyNFT(NFT, tokenID);
       await fundingToken.approve(managerAddress, parseAmount('1'));
-      await manager.buyJotTokens(tokenID, parseAmount('1'));
+      await expect(manager.buyJotTokens(tokenID, parseAmount('1'))).to.be.revertedWith(
+        'No available tokens for sale'
+      );
 
     });
 
     it('if all previous conditions are met, should be ok', async () => {
+      console.log('1');
       await router.verifyNFT(NFT, tokenId);
-      await fundingToken.approve(managerAddress, parseAmount('1'));
+      console.log('2');
+      await fundingToken.mint(owner.address, parseAmount('5'));
+      await fundingToken.approve(managerAddress, parseAmount('5'));
+      console.log('3');
       await manager.buyJotTokens(tokenId, parseAmount('1'));
+      console.log('4');
       const soldSupply = await manager.getSoldSupply(tokenId);
+      console.log('5');
       expect(soldSupply).to.be.equal(parseAmount('1'));
+    });
+  });
+
+  describe('Verify Token ID ', async () => {
+    it('verify ', async () => {
+      const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
+        'My Collection',
+        'MYC',
+        '',
+      ]);
+      await expect(TX).to.emit(router, 'TokenRegistered');
+      const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+      tokenID = ARGS.syntheticTokenId;
+
+      expect(tokenID).to.be.equal(1);
+      expect(tokenID).to.be.equal(1);
+    });
+  });
+
+
+  describe('Register with and without Metadata', async () => {
+    it('With metadata ', async () => {
+      let TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
+        'My Collection',
+        'MYC',
+        'https://mysite.com/metadata/1',
+      ]);
+      await expect(TX).to.emit(router, 'TokenRegistered');
+      let ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+      let tokenID = ARGS.syntheticTokenId;
+
+      expect(tokenID).to.be.equal(1);
+      
+      TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
+        'My Collection',
+        'MYC',
+        'https://mysite.com/metadata/1',
+      ]);
+      await expect(TX).to.emit(router, 'TokenRegistered');
+      ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+      tokenID = ARGS.syntheticTokenId;
+
+      expect(tokenID).to.be.equal(2);
+    });
+  });
+
+  describe('Register various addresses', async () => {
+    it('0xc015b280be8f0423bfd40f9b5a32a54490ff7085 ID 11', async () => {
+      const nftAddress = '0xc015b280be8f0423bfd40f9b5a32a54490ff7085';
+      const nftId = 11;
+
+      let TX = await router.registerNFT(nftAddress, nftId, parseAmount('9000'), parseAmount('1'), [
+        'My Collection',
+        'MYC',
+        'https://mysite.com/metadata/1',
+      ]);
+      await expect(TX).to.emit(router, 'TokenRegistered');
+      let ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+      let tokenID = ARGS.syntheticTokenId;
+
+      expect(tokenID).to.be.equal(0);
+    });
+
+    it('0x1c8025cf3482003ee303a1844f263912f5a5a1bb ID 10', async () => {
+
+      const nftAddress = '0x1c8025cf3482003ee303a1844f263912f5a5a1bb';
+      const nftId = 10;
+      let TX = await router.registerNFT(nftAddress, nftId, parseAmount('9000'), parseAmount('1'), [
+        'My Collection',
+        'MYC',
+        'https://mysite.com/metadata/1',
+      ]);
+      await expect(TX).to.emit(router, 'TokenRegistered');
+      let ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+      let tokenID = ARGS.syntheticTokenId;
+
+      expect(tokenID).to.be.equal(0);
+      
     });
   });
 
@@ -160,15 +246,15 @@ describe('SyntheticCollectionManager', async function () {
 
       // Store the balance of the SyntheticCollectionManager
       // to which it is deposited to validate that the balance increases after the deposit
-      const beforeBalance = (await manager.tokens(tokenId)).ownerSupply.toNumber();
+      const beforeBalance = await manager.getOwnerSupply(tokenId);
 
       await router.verifyNFT(NFT, tokenId);
 
       await manager.depositJotTokens(tokenId, amount);
 
-      const afterBalance = (await manager.tokens(tokenId)).ownerSupply.toNumber();
+      const afterBalance = await manager.getOwnerSupply(tokenId);
 
-      expect(afterBalance).to.be.equal(beforeBalance + amount);
+      expect(afterBalance).to.be.equal(beforeBalance.add(amount));
     });
   });
 
@@ -195,7 +281,9 @@ describe('SyntheticCollectionManager', async function () {
     it('amount greater than ownerSupply', async () => {
       await router.verifyNFT(NFT, tokenId);
 
-      await expect(manager.increaseSellingSupply(tokenId, 10001)).to.be.revertedWith(
+      const ownerSupply = await manager.getOwnerSupply(tokenId);
+
+      await expect(manager.increaseSellingSupply(tokenId, ownerSupply.add(1))).to.be.revertedWith(
         'You do not have enough tokens left'
       );
     });
@@ -299,10 +387,10 @@ describe('SyntheticCollectionManager', async function () {
 
       await router.verifyNFT(NFT, tokenID);
 
-      await fundingToken.mint(owner.address, parseAmount('500'));
-      await fundingToken.approve(managerAddress, parseAmount('500'));
+      await fundingToken.mint(owner.address, parseAmount('5'));
+      await fundingToken.approve(managerAddress, parseAmount('5'));
 
-      await manager.buyJotTokens(tokenID, parseAmount('500'));
+      await manager.buyJotTokens(tokenID, parseAmount('1'));
 
       console.log('fundingToken.balanceOf', (await fundingToken.balanceOf(manager.address)).toString());
       console.log('jot.balanceOf', (await jot.balanceOf(manager.address)).toString());
@@ -316,31 +404,6 @@ describe('SyntheticCollectionManager', async function () {
       expect(liquidity[0].toString()).to.be.equal(parseAmount('500'));
       expect(liquidity[1].toString()).to.be.equal(parseAmount('500'));
     });
-
-    it('addLiquidityToPool twice', async () => {
-      const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
-        'My Collection',
-        'MYC',
-        '',
-      ]);
-      await expect(TX).to.emit(router, 'TokenRegistered');
-      const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
-      tokenID = ARGS.syntheticTokenId;
-
-      await router.verifyNFT(NFT, tokenID);
-
-      await fundingToken.mint(owner.address, parseAmount('500'));
-      await fundingToken.approve(managerAddress, parseAmount('500'));
-
-      await manager.buyJotTokens(tokenID, parseAmount('500'));
-
-      // Now addLiquidity to Uniswap
-      // Should be 500 Jots and 500 funding Tokens
-      await manager.addLiquidityToPool(tokenID);
-
-      await expect(manager.addLiquidityToPool(tokenID)).to.be.revertedWith('soldSupply is zero');
-    });
-
 
     describe('claimLiquidityTokens', async () => {
       it('non existent token', async () => {
@@ -380,11 +443,11 @@ describe('SyntheticCollectionManager', async function () {
         await fundingToken.mint(owner.address, parseAmount('500'));
         await fundingToken.approve(managerAddress, parseAmount('500'));
 
-        await manager.buyJotTokens(tokenID, parseAmount('500'));
+        await manager.buyJotTokens(tokenID, parseAmount('100'));
 
         // Now addLiquidity to Uniswap
         // Should be 500 Jots and 500 funding Tokens
-        await manager.addLiquidityToPool(tokenID);
+        await manager.addLiquidityToQuickswap(tokenID, parseAmount('10'));
 
         const UniswapPairAddress = await jot.uniswapV2Pair();
 

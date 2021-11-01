@@ -84,7 +84,9 @@ describe("Full flow test", function() {
      async function addLiquidity() {
       for(let i = 0; i < nftIDs.length - 1; i++) {
         console.log('addLiquidity', i);
-        await manager.addLiquidityToPool(nftIDs[i]);
+        await manager.AddLiquidityToFuturePool(nftIDs[i], parseAmount('0.1'));
+        await manager.addLiquidityToQuickswap(nftIDs[i], parseAmount('0.1'));
+        
       }
     }
     await addLiquidity();

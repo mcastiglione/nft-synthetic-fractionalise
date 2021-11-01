@@ -70,6 +70,8 @@ library SyntheticTokenLibrary {
 
         amountToPay = (amount * token.fractionPrices) / 10**18;
 
+        console.log('amountToPay', amountToPay);
+
         // Can't sell zero tokens
         require(amountToPay > 0, "No tokens left!");
 
