@@ -73,9 +73,11 @@ contract JotPool is ERC721, Initializable {
 
     function addLiquidity(uint256 amount) external {
         require(amount > 0, "Invalid amount");
-        uint256 mintedLiquidity = totalLiquidity > 0
-            ? (totalLiquidity * amount) / IERC20(jot).balanceOf(address(this))
-            : 100;
+        
+        uint256 mintedLiquidity = (totalLiquidity > 0 && IERC20(jot).balanceOf(address(this)) > 0)
+             ? (totalLiquidity * amount) / IERC20(jot).balanceOf(address(this))
+             : 100;
+
         positions[msg.sender].liquidity += mintedLiquidity;
         totalLiquidity += mintedLiquidity;
 
