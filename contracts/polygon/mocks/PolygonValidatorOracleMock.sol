@@ -63,6 +63,21 @@ contract PolygonValidatorOracleMock is ChainlinkClient, Ownable {
         emit ResponseReceived(requestId, originalCollection, syntheticCollection, tokenId, verified);
     }
 
+/**
+     * @dev call to get the new buyback price
+     *      this method can be called only from the collection manager contract
+     *
+     * @return requestId the id of the request to the Chainlink oracle
+     */
+    function updateBuybackPrice() external returns (bytes32 requestId) {
+        SyntheticCollectionManager(msg.sender).processBuybackPriceResponse(
+            0, 1000000000000000000
+        );
+
+        return 0;
+
+    }
+
     /**
      * @dev whitelist collections to call this contract
      */

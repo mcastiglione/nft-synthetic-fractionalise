@@ -30,6 +30,8 @@ describe('SyntheticCollectionManager', async function () {
     managerAddress = await router.getCollectionManagerAddress(NFT);
     manager = await ethers.getContractAt('SyntheticCollectionManager', managerAddress);
 
+    await manager.updateBuybackPrice();
+
     jotAddress = await router.getJotsAddress(NFT);
     jot = await ethers.getContractAt('JotMock', jotAddress);
 
