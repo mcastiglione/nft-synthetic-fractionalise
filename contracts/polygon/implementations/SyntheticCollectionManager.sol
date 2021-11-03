@@ -407,7 +407,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         TokenData storage token = tokens[tokenId];
         require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
         require(token.soldSupply > 0, "soldSupply is zero");
-        require(amount >= token.liquiditySold, "Amount is greater than available funding");
+        require(amount <= token.liquiditySold, "Amount is greater than available funding");
 
         IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(poolAddress());
 

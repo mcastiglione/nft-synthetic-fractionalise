@@ -27,18 +27,8 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId, network }) 
   let swapAddress;
 
   if (network.tags.local) {
-    let UniswapPairMock = await deploy('UniswapPairMock', {
-      from: deployer,
-    });
-    let UniSwapFactoryMock = await deploy('UniSwapFactoryMock', {
-      from: deployer,
-      args: [UniswapPairMock.address],
-    });
-    let UniSwapRouterMock = await deploy('UniSwapRouterMock', {
-      from: deployer,
-      args: [UniSwapFactoryMock.address],
-    });
-    swapAddress = UniSwapRouterMock.address;
+    const router = await ethers.getContract('UniswapRouter');
+    swapAddress = router.address;
   } else {
     swapAddress = networkConfig[chainId].uniswapAddress;
   }
@@ -111,4 +101,5 @@ module.exports.dependencies = [
   'ptoken',
   'futures_protocol_parameters',
   'pool_info',
+  'uniswap_router'
 ];
