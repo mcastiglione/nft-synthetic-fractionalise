@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../../libraries/Stringify.sol";
 import "../implementations/SyntheticCollectionManager.sol";
 import "./OracleStructs.sol";
-import "hardhat/console.sol";
 
 /**
  * @dev the ownership will be transferred after deployment to the router contract
