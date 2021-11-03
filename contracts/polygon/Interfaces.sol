@@ -33,7 +33,7 @@ interface IPolygonValidatorOracle {
         uint256 nonce
     ) external returns (bytes32 requestId);
 
-    function updateBuybackPrice() external returns (bytes32 requestId);
+    function updateBuybackPrice(address) external returns (bytes32 requestId);
 }
 
 interface IFlipCoinGenerator {

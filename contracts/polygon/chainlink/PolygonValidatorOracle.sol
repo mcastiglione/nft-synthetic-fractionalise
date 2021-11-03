@@ -117,7 +117,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
      *
      * @return requestId the id of the request to the Chainlink oracle
      */
-    function updateBuybackPrice() external returns (bytes32 requestId) {
+    function updateBuybackPrice(address ethereumCollection) external returns (bytes32 requestId) {
         require(_whitelistedCollections[msg.sender], "Invalid requester");
 
         Chainlink.Request memory request = buildChainlinkRequest(
@@ -130,7 +130,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         Chainlink.add(
             request,
             "get",
-            string(abi.encodePacked(apiURL, "getprice?contractAddress=0x", msg.sender.toString()))
+            string(abi.encodePacked(apiURL, "getprice?contractAddress=0x", ethereumCollection.toString()))
         );
         Chainlink.add(request, "path", "price");
 

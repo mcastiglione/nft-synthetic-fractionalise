@@ -295,7 +295,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(ISyntheticNFT(erc721address).exists(tokenId_), "Token not registered");
 
         uint256 amountToPay = token.buyJotTokens(amountToBuy_);
-        console.log(amountToPay, 'amountToPay');
+        console.log(amountToPay, "amountToPay");
 
         // make the transfers
         IERC20(fundingTokenAddress).transferFrom(msg.sender, address(this), amountToPay);
@@ -679,7 +679,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
      * @notice allows users to update buyback price for buyback
      */
     function updateBuybackPrice() external returns (bytes32 requestId) {
-        requestId = IPolygonValidatorOracle(_validatorAddress).updateBuybackPrice();
+        requestId = IPolygonValidatorOracle(_validatorAddress).updateBuybackPrice(originalCollectionAddress);
 
         emit BuybackPriceUpdateRequested(requestId);
     }
