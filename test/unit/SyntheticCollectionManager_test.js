@@ -619,9 +619,10 @@ describe('SyntheticCollectionManager', async function () {
       await manager.depositJotTokens(tokenID, parseAmount('1000'));
 
       const managerAfterDepositBalance = parseReverse(await jot.balanceOf(managerAddress));
-
+      console.log('before');
       // Now exit protocol
       await manager.buyback(tokenID);
+      console.log('after');
 
       const managerAfterExitProtocolBalance = parseReverse(await jot.balanceOf(managerAddress));
 

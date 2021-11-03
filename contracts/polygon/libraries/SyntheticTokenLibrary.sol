@@ -63,14 +63,7 @@ library SyntheticTokenLibrary {
         require(amountLeft > 0, "No available tokens for sale");
         require(amount <= amountLeft, "Not enough available tokens");
 
-        console.log('amount', amount);
-        console.log('amountLeft', amountLeft);
-        console.log('token.soldSupply', token.soldSupply);
-        console.log('token.sellingSupply', token.sellingSupply  );
-
         amountToPay = (amount * token.fractionPrices) / 10**18;
-
-        console.log('amountToPay', amountToPay);
 
         // Can't sell zero tokens
         require(amountToPay > 0, "No tokens left!");

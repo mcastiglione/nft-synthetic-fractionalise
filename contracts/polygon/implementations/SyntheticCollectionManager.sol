@@ -409,6 +409,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(token.soldSupply > 0, "soldSupply is zero");
         require(amount >= token.liquiditySold, "Amount is greater than available funding");
 
+        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(poolAddress());
+
+        (uint112 jotReserves, uint112 fundingReserves, ) = uniswapV2Pair.getReserves();
+        
+        require(jotReserves > 0 && fundingReserves > 0, "No reserves available!");
+
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
 
         // Approve Uniswap address

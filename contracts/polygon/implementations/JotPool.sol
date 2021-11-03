@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../governance/ProtocolParameters.sol";
 import "../libraries/ProtocolConstants.sol";
+import "hardhat/console.sol";
 
 contract JotPool is ERC721, Initializable {
     using SafeERC20 for IERC20;
@@ -150,8 +151,14 @@ contract JotPool is ERC721, Initializable {
     function _sync() internal returns (uint256, uint256) {
         uint256 ftBalance = IERC20(fundingToken).balanceOf(address(this));
         uint256 x = ftBalance - lastReward;
+        console.log('x', x);
+
+        console.log(totalStaked, 'totalStaked');
         if (totalStaked != 0) {
             totalShares += (x * protocol.stakerShare()) / totalStaked;
+
+            console.log('totalShares', totalShares);
+            console.log('protocol.stakerShare()', protocol.stakerShare());
         }
 
         return (ftBalance, x);
