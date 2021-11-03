@@ -63,6 +63,23 @@ describe('JotPool', async function () {
       const amount = jotAmount('200');
       await expect(addLiquidity(amount)).to.emit(pool, 'Staked');
     });
+
+    it('verify totalShares', async () => {
+      const amount = jotAmount('200');
+      await addLiquidity(amount);
+
+      let totalShares = await pool.totalShares();
+
+      console.log(totalShares, 'totalShares 1');
+
+      await addLiquidity(amount);
+
+      totalShares = await pool.totalShares();
+
+      console.log(totalShares, 'totalShares 2');
+
+    });
+
   });
 
   describe('removeLiquidity', () => {
