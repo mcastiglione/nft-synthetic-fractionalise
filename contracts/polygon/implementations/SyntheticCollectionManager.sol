@@ -407,8 +407,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         TokenData storage token = tokens[tokenId];
         require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
         require(token.soldSupply > 0, "soldSupply is zero");
-        require(amount <= token.liquiditySold, "Amount is greater than available funding");
-        require(amount <= token.ownerSupply, "Amount is greater than available ownerSupply");
+        require(amount >= token.liquiditySold, "Amount is greater than available funding");
 
         IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(poolAddress());
 
@@ -419,14 +418,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
 
         // Approve Uniswap address
-        IJot(jotAddress).approve(_swapAddress, amount);
+        IJot(jotAddress).approve(_swapAddress, token.ownerSupply);
         IERC20(fundingTokenAddress).approve(_swapAddress, amount);
 
         // add the liquidity to Uniswapp
         (uint256 amountA, uint256 amountB, uint256 liquidity) = uniswapV2Router.addLiquidity(
             jotAddress,
             fundingTokenAddress,
-            amount,
+            token.ownerSupply,
             amount,
             0, // slippage is unavoidable
             0, // slippage is unavoidable
@@ -438,8 +437,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         token.ownerSupply -= amountA;
         token.liquiditySold -= amountB;
         token.liquidityTokenBalance += liquidity;
-
-        emit LiquidityAddedToQuickswap(tokenId, amountA, amountB, liquidity);
     }
 
     function removeLiquidityFromPool(uint256 tokenId) external onlyRole(AUCTION_MANAGER) {
