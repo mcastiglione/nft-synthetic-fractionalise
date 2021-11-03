@@ -38,7 +38,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         booleanjobId = _oracleInfo.jobId.toBytes32();
         uint256JobId = _oracleInfo.uintJobId.toBytes32();
         nodeFee = _oracleInfo.nodeFee;
-        apiURL = "https://nft-validator-o24ig.ondigitalocean.app/verify";
+        apiURL = "https://nft-validator-o24ig.ondigitalocean.app/";
 
         setChainlinkToken(linkToken);
     }
@@ -74,7 +74,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
             string(
                 abi.encodePacked(
                     apiURL,
-                    "?collection=0x",
+                    "verify?collection=0x",
                     ethereumCollection.toString(),
                     "&tokenId=",
                     tokenId.toString(),
@@ -130,9 +130,9 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         Chainlink.add(
             request,
             "get",
-            string(abi.encodePacked(apiURL, "?collection=0x", msg.sender.toString()))
+            string(abi.encodePacked(apiURL, "getprice?contractAddress=0x", msg.sender.toString()))
         );
-        Chainlink.add(request, "path", "buyback_price");
+        Chainlink.add(request, "path", "price");
 
         // Send the request
         requestId = sendChainlinkRequestTo(chainlinkNode, request, nodeFee);
