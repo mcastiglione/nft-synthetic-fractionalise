@@ -412,7 +412,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(poolAddress());
 
         (uint112 jotReserves, uint112 fundingReserves, ) = uniswapV2Pair.getReserves();
-        
+
         require(jotReserves > 0 && fundingReserves > 0, "No reserves available!");
 
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
@@ -602,8 +602,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     /**
      * @notice this method calls chainlink oracle and
-     *  verifies if the NFT has been locked on NFTVaultManager. In addition
-     *  gets the metadata of the NFT
+     *         verifies if the NFT has been locked on NFTVaultManager. In addition
+     *         gets the metadata of the NFT
      */
     function verify(uint256 tokenId) external {
         TokenData storage token = tokens[tokenId];
