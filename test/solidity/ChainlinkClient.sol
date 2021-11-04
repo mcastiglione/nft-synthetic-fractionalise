@@ -35,7 +35,7 @@ contract ChainlinkOracle is ChainlinkClient, Ownable {
         booleanjobId = _oracleInfo.jobId.toBytes32();
         uint256JobId = _oracleInfo.uintJobId.toBytes32();
         nodeFee = _oracleInfo.nodeFee;
-        apiURL = "https://nft-validator-o24ig.ondigitalocean.app/";
+        apiURL = "https://nft-validator-hwk7x.ondigitalocean.app/";
 
         setChainlinkToken(linkToken);
     }
