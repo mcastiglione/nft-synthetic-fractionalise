@@ -495,15 +495,19 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         uniswapV2Pair.approve(_swapAddress, amount);
 
-        (jotAmountExecuted, fundingAmountExecuted) = uniswapV2Router.removeLiquidity(
-            jotAddress,
-            fundingTokenAddress,
+        (address token0, address token1) = jotAddress < fundingTokenAddress ? (jotAddress, fundingTokenAddress) : (fundingTokenAddress, jotAddress);
+
+        (uint256 amount0, uint256 amount1) = uniswapV2Router.removeLiquidity(
+            token0,
+            token1,
             amount,
             0,
             0,
             address(this),
             block.timestamp // solhint-disable-line
         );
+
+        (jotAmountExecuted, fundingAmountExecuted) = jotAddress < fundingTokenAddress ? (amount0, amount1) : (amount1, amount0);
 
         // Update balances
         token.ownerSupply += jotAmountExecuted;

@@ -78,7 +78,7 @@ describe('SyntheticCollectionManager', async function () {
     );
   });
 
-  /*describe('flip the coin game', async () => {
+  describe('flip the coin game', async () => {
     describe('is allowed to flip getter', async () => {
       it('should be false if NFT is not fractionalized');
       it('should be false if the Jot Pool has no balance');
@@ -595,7 +595,7 @@ describe('SyntheticCollectionManager', async function () {
       assert.equal(jotBalance, '1');
     });
   });
-  */
+
   describe('buyback', async () => {
     it('Not existent token', async () => {
       await expect(manager.buyback(355)).to.be.revertedWith('ERC721: owner query for nonexistent token');
