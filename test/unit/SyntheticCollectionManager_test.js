@@ -769,12 +769,15 @@ describe('SyntheticCollectionManager', async function () {
       // verify NFT
       await router.verifyNFT(NFT, tokenID);
       
+      await manager.withdrawJotTokens(tokenID, parseAmount('3000'));
+
+      const requiredAmount = await manager.buybackRequiredAmount(tokenID);
+
+
       // Mint and approve funding to buy 500 jots
       // Now mint and approve 1000 jots 5000 funding tokens
-      await fundingToken.mint(owner.address, parseAmount('500'));
-      await fundingToken.approve(managerAddress, parseAmount('500'));
-
-      await manager.withdrawJotTokens(tokenID, parseAmount('500'));
+      await fundingToken.mint(owner.address, requiredAmount.buybackAmount);
+      await fundingToken.approve(managerAddress, requiredAmount.buybackAmount);
       
       // Now exit protocol
       await manager.buyback(tokenID);
