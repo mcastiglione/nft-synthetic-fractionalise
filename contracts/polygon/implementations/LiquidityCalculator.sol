@@ -112,7 +112,7 @@ contract LiquidityCalculator is AccessControl, Initializable {
                 // if there's enough funding for buyback
                 // then return 0 as buybackAmount and the remaining funding
                 if ((fundingToJots + total_) > JOT_SUPPLY) {
-                    uint256 remainingJots = total_ - JOT_SUPPLY;
+                    uint256 remainingJots = JOT_SUPPLY - total_;
                     uint256 requiredFunding = (remainingJots * buybackPrice) / 10**18;
                     fundingLeft -= requiredFunding;
                     buybackAmount = 0;

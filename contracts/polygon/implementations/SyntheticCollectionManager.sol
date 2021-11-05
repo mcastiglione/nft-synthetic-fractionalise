@@ -16,7 +16,6 @@ import "./JotPool.sol";
 import "./RedemptionPool.sol";
 import "./Structs.sol";
 import "./Enums.sol";
-import "hardhat/console.sol";
 
 /**
  * @title synthetic collection abstraction contract
@@ -111,20 +110,20 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 randomResult
     );
 
-    event VerificationRequested(bytes32 indexed requestId, address from, uint256 tokenId);
+    //event VerificationRequested(bytes32 indexed requestId, address from, uint256 tokenId);
 
-    event VerifyResponseReceived(
+    /*event VerifyResponseReceived(
         bytes32 indexed requestId,
         address originalCollection,
         address syntheticCollection,
         uint256 tokenId,
         bool verified
-    );
+    );*/
 
-    event TokenReassigned(uint256 tokenID, address newOwner);
+    //event TokenReassigned(uint256 tokenID, address newOwner);
 
-    event BuybackPriceUpdateRequested(bytes32 requestId);
-    event BuybackPriceUpdated(bytes32 requestId, uint256 price);
+    //event BuybackPriceUpdateRequested(bytes32 requestId);
+    //event BuybackPriceUpdated(bytes32 requestId, uint256 price);
 
     event LiquidityAddedToFuturePool(uint256 tokenId, uint256 fundingSent, uint256 lShares);
 
@@ -238,7 +237,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             State.VERIFIED
         );
 
-        emit TokenReassigned(newSyntheticID, newOwner_);
+        //emit TokenReassigned(newSyntheticID, newOwner_);
     }
 
     /**
@@ -514,7 +513,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         token.liquiditySold += fundingAmountExecuted;
         token.liquidityTokenBalance += amount;
 
-        emit LiquidityRemovedFromQuickswap(tokenId, jotAmountExecuted, fundingAmountExecuted, amount);
+        //emit LiquidityRemovedFromQuickswap(tokenId, jotAmountExecuted, fundingAmountExecuted, amount);
     }
 
     /**
@@ -526,15 +525,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 availableAmount = tokens[tokenId].liquidityTokenBalance;
         require(amount <= availableAmount, "Not enough liquidity available");
 
-        IUniswapV2Pair pair = IUniswapV2Pair(poolAddress());
-
         tokens[tokenId].liquidityTokenBalance -= amount;
 
-        pair.transfer(msg.sender, amount);
+        IUniswapV2Pair(poolAddress()).transfer(msg.sender, amount);
     }
 
     function flipJot(uint256 tokenId, uint64 prediction) external {
-        /*
+        
         TokenData storage token = tokens[tokenId];
 
         require(isAllowedToFlip(tokenId), "Flip is not allowed yet");
@@ -546,11 +543,11 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _flips[requestId] = Flip({tokenId: tokenId, prediction: prediction, player: msg.sender});
 
         emit CoinFlipped(requestId, msg.sender, tokenId, prediction);
-        */
+        
     }
 
     function processFlipResult(uint256 randomNumber, bytes32 requestId) external onlyRole(RANDOM_ORACLE) {
-        /*
+        
         uint256 poolAmount;
         uint256 fAmount = protocol.flippingAmount();
         uint256 fReward = protocol.flippingReward();
@@ -600,7 +597,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             IAuctionsManager(AuctionsManagerAddress).whitelistNFT(flip.tokenId);
         }
 
-        emit FlipProcessed(requestId, flip.tokenId, flip.prediction, randomNumber);*/
+        emit FlipProcessed(requestId, flip.tokenId, flip.prediction, randomNumber);
     }
 
     function recoverToken(uint256 tokenId) external {
@@ -634,7 +631,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             nonces[token.originalTokenID]
         );
 
-        emit VerificationRequested(requestId, msg.sender, tokenId);
+        //emit VerificationRequested(requestId, msg.sender, tokenId);
     }
 
     function processVerifyResponse(
@@ -653,13 +650,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             token.state = requestData.previousState;
         }
 
-        emit VerifyResponseReceived(
+        /*emit VerifyResponseReceived(
             requestId,
             requestData.originalCollection,
             requestData.syntheticCollection,
             requestData.tokenId,
             verified
-        );
+        );*/
     }
 
     /**
@@ -702,7 +699,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function updateBuybackPrice() external returns (bytes32 requestId) {
         requestId = IPolygonValidatorOracle(_validatorAddress).updateBuybackPrice(originalCollectionAddress);
 
-        emit BuybackPriceUpdateRequested(requestId);
+        //emit BuybackPriceUpdateRequested(requestId);
     }
 
     /**
@@ -717,7 +714,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         buybackPrice = buybackPrice_;
         _buybackPriceLastUpdate = block.timestamp; // solhint-disable-line
 
-        emit BuybackPriceUpdated(requestId_, buybackPrice_);
+        //emit BuybackPriceUpdated(requestId_, buybackPrice_);
     }
 
     /**
@@ -903,21 +900,21 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         return (tokens[tokenId].state == State.VERIFIED);
     }
 
-    function getOriginalID(uint256 tokenId) public view returns (uint256) {
+    /*function getOriginalID(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].originalTokenID;
-    }
+    }*/
 
-    function getTokenURI(uint256 tokenId) public view returns (string memory) {
+    /*function getTokenURI(uint256 tokenId) public view returns (string memory) {
         return ISyntheticNFT(erc721address).tokenURI(tokenId);
-    }
+    }*/
 
     /**
      * @notice get the owner of the NFT
      * @param tokenId_ the id of the NFT
      */
-    function getSyntheticNFTOwner(uint256 tokenId_) public view returns (address) {
+    /*function getSyntheticNFTOwner(uint256 tokenId_) public view returns (address) {
         return IERC721(erc721address).ownerOf(tokenId_);
-    }
+    }*/
 
     /**
      * @notice returns the Quickswap pool address
@@ -943,7 +940,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         return tokens[tokenId].originalTokenID != 0;
     }
 
-    function getOwnerSupply(uint256 tokenId) public view returns (uint256) {
+    /*function getOwnerSupply(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].ownerSupply;
     }
 
@@ -957,7 +954,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function getJotFractionPrice(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].fractionPrices;
-    }
+    }*/
 
     function getJotAmountLeft(uint256 tokenId) public view returns (uint256) {
         TokenData storage token = tokens[tokenId];
@@ -994,13 +991,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             isSyntheticNFTFractionalised(tokenId);
     }
 
-    function getliquiditySold(uint256 tokenId) public view returns (uint256) {
+    /*function getliquiditySold(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].liquiditySold;
     }
 
     function getLiquidityTokens(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].liquidityTokenBalance;
-    }
+    }*/
 
     function isOwner(uint256 tokenId, address caller) public view returns (bool) {
         return ISyntheticNFT(erc721address).ownerOf(tokenId) == caller;
@@ -1011,7 +1008,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         canFlip[tokenId] = value;
     }
 
-    function getLtoken(uint256 tokenId) public view returns (uint256) {
+    /*function getLtoken(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].perpetualFuturesLShares;
-    }
+    }*/
 }
