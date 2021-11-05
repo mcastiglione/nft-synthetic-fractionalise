@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../../libraries/Stringify.sol";
 import "../implementations/SyntheticCollectionManager.sol";
 import "./OracleStructs.sol";
-import "hardhat/console.sol";
 
 /**
  * @dev the ownership will be transferred after deployment to the router contract
@@ -85,7 +84,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         );
         Chainlink.add(request, "path", "locked");
 
-        // Send the request
+        // send the request
         requestId = sendChainlinkRequestTo(chainlinkNode, request, nodeFee);
 
         _verifyRequests[requestId] = VerifyRequest({
@@ -134,7 +133,7 @@ contract PolygonValidatorOracle is ChainlinkClient, Ownable {
         );
         Chainlink.add(request, "path", "price");
 
-        // Send the request
+        // send the request
         requestId = sendChainlinkRequestTo(chainlinkNode, request, nodeFee);
 
         _updateRequests[requestId] = UpdateRequest({syntheticCollection: msg.sender});
