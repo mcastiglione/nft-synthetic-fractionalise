@@ -19,7 +19,18 @@ describe('SyntheticCollectionManager', async function () {
     nftID = 1;
     NFT = '0x4A8Cc549c71f12817F9aA25F7f6a37EB1A4Fa087';
 
-    const tx = await router.registerNFT(NFT, nftID, parseAmount('5000'), parseAmount('5'), ['My Collection', 'MYC', '']);
+    const tx = await router.registerNFT(
+      NFT, 
+      nftID, 
+      parseAmount('5000'), 
+      parseAmount('5'), 
+      [
+        'My Collection', 
+        'MYC', 
+        ''
+      ]
+    );
+
     await expect(tx).to.emit(router, 'TokenRegistered');
     const args = await getEventArgs(tx, 'TokenRegistered', router);
     tokenId = args.syntheticTokenId;
@@ -36,10 +47,38 @@ describe('SyntheticCollectionManager', async function () {
     jot = await ethers.getContractAt('JotMock', jotAddress);
 
     fundingTokenAddress = await manager.fundingTokenAddress();
-    fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
+    fundingToken = await ethers.getContractAt('FundingMock', fundingTokenAddress);
+
+    const timestampLimit = 0; // the timestamp this transaction will expire
+
+    uniswapRouterAdress = await router.swapAddress();
+    uniswapRouter = await ethers.getContractAt('UniswapRouter', uniswapRouterAdress);
+
+    await fundingToken.mint(
+      owner.address, 
+      parseAmount('1')
+    );
+    await fundingToken.approve(
+      uniswapRouterAdress, 
+      parseAmount('1')
+    );
+
+    await jot.mint(owner.address, parseAmount('1'));
+    await jot.approve(uniswapRouterAdress, parseAmount('1'));
+
+    await uniswapRouter.addLiquidity(
+      jot.address,
+      fundingToken.address, 
+      parseAmount('1'), 
+      parseAmount('1'), 
+      1, 
+      1, 
+      owner.address,
+      timestampLimit
+    );
   });
 
-  describe('flip the coin game', async () => {
+  /*describe('flip the coin game', async () => {
     describe('is allowed to flip getter', async () => {
       it('should be false if NFT is not fractionalized');
       it('should be false if the Jot Pool has no balance');
@@ -556,7 +595,7 @@ describe('SyntheticCollectionManager', async function () {
       assert.equal(jotBalance, '1');
     });
   });
-
+  */
   describe('buyback', async () => {
     it('Not existent token', async () => {
       await expect(manager.buyback(355)).to.be.revertedWith('ERC721: owner query for nonexistent token');
@@ -579,49 +618,49 @@ describe('SyntheticCollectionManager', async function () {
 
       const managerBeforeRegisterBalance = parseReverse(await jot.balanceOf(managerAddress));
 
-      const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
-        'My Collection',
-        'MYC',
-        '',
-      ]);
-      await expect(TX).to.emit(router, 'TokenRegistered');
-      const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
-      tokenID = ARGS.syntheticTokenId;
-
       // verify NFT
-      await router.verifyNFT(NFT, tokenID);
-
+      await router.verifyNFT(NFT, tokenId);
+      console.log('1', await manager.lockedNFT(tokenId));
       // Mint and approve funding to buy 500 jots
       // Now mint and approve 1000 jots 5000 funding tokens
       await fundingToken.mint(owner.address, parseAmount('2500'));
       await fundingToken.approve(managerAddress, parseAmount('2500'));
-
-      await manager.buyJotTokens(tokenID, parseAmount('500'));
-
+      console.log('2', await manager.lockedNFT(tokenId));
+      await manager.buyJotTokens(tokenId, parseAmount('500'));
+      console.log('3', await manager.lockedNFT(tokenId));
       // Now addLiquidity to Uniswap
       // Should be 500 Jots and 500 funding Tokens
-      await manager.addLiquidityToQuickswap(tokenID, parseAmount('500'));
-
+      console.log('4', await manager.lockedNFT(tokenId));
       const UniswapPairAddress = await jot.uniswapV2Pair();
-
+      console.log('5', await manager.lockedNFT(tokenId));
+      let PairBalance = await jot.balanceOf(UniswapPairAddress);
+      let PairBalanceFunding = await fundingToken.balanceOf(UniswapPairAddress);
+      console.log('6', await manager.lockedNFT(tokenId));
+      console.log('PairBalance before', PairBalance.toString());
+      console.log('PairBalanceFunding before', PairBalanceFunding.toString());
+      console.log('7', await manager.lockedNFT(tokenId));
+      await manager.addLiquidityToQuickswap(tokenId, parseAmount('500'));
+      console.log('8', await manager.lockedNFT(tokenId));
       // Pair balance in jots and funding after add liquidity
-      const PairBalance = await jot.balanceOf(UniswapPairAddress);
-      const PairBalanceFunding = await fundingToken.balanceOf(UniswapPairAddress);
-
+      PairBalance = await jot.balanceOf(UniswapPairAddress);
+      PairBalanceFunding = await fundingToken.balanceOf(UniswapPairAddress);
+      console.log('PairBalance after', PairBalance.toString());
+      console.log('PairBalanceFunding after', PairBalanceFunding.toString());
+      console.log('9', await manager.lockedNFT(tokenId));
       // Owner funding token before removeLiquidity
       const FundingBalanceOwner = await fundingToken.balanceOf(owner.address);
-
+      console.log('10', await manager.lockedNFT(tokenId));
       const managerInitialBalance = parseReverse(await jot.balanceOf(managerAddress));
-
+      console.log('11', await manager.lockedNFT(tokenId));
       // mint and approve and deposit remaining jots to reach JOTS_SUPPLY (1000)
       await jot.mint(owner.address, parseAmount('1000'));
       await jot.approve(manager.address, parseAmount('1000'));
-      await manager.depositJotTokens(tokenID, parseAmount('1000'));
+      await manager.depositJotTokens(tokenId, parseAmount('1000'));
 
       const managerAfterDepositBalance = parseReverse(await jot.balanceOf(managerAddress));
       console.log('before');
       // Now exit protocol
-      await manager.buyback(tokenID);
+      await manager.buyback(tokenId);
       console.log('after');
 
       const managerAfterExitProtocolBalance = parseReverse(await jot.balanceOf(managerAddress));

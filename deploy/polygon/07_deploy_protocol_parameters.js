@@ -14,9 +14,13 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId, network }) 
   let fundingTokenAddress;
 
   if (network.tags.local || network.tags.rinkeby_fork) {
-    const jot = await ethers.getContract('Jot');
+    const funding = await deploy('FundingMock', {
+      from: deployer,
+      log: true,
+      args: [],
+    });
 
-    fundingTokenAddress = jot.address;
+    fundingTokenAddress = funding.address;
   } else {
     fundingTokenAddress = networkConfig[chainId].fundingTokenAddress;
     fundingTokenAddress = '0x2cA48b8c2d574b282FDAB69545646983A94a3286';

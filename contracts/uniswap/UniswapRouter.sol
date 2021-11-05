@@ -11,4 +11,10 @@ contract UniswapRouter is UniswapV2Router02 {
         _factory,
         _WETH
     ) public {}
+
+    function getBlockTimestamp() external returns (
+        uint256 blockNumber
+    ) {
+        blockNumber = block.timestamp;
+    }
 }

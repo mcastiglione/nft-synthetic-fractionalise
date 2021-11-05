@@ -80,4 +80,48 @@ contract LiquidityCalculator is AccessControl, Initializable {
 
     }
 
+    
+    /**
+     * @dev helper for the execute buyback function
+     */
+    function getFundingLeftAndBuybackAmount(uint256 total_, uint256 fundingLiquidity_, uint256 JOT_SUPPLY, uint256 buybackPrice)
+        external
+        view
+        returns (
+            uint256 jotsLeft,
+            uint256 fundingLeft,
+            uint256 buybackAmount
+        )
+    {
+        // Starting funding left
+        fundingLeft = fundingLiquidity_;
+
+        // If owner has enough balance buybackAmount is zero
+        if (JOT_SUPPLY < total_) {
+            buybackAmount = 0;
+            jotsLeft = total_ - JOT_SUPPLY;
+        } else {
+            // If owner has some funding tokens left
+            if (fundingLeft > 0) {
+                // How many jots you can buy with the funding tokens
+                uint256 fundingToJots = (fundingLeft * buybackPrice) / 10**18;
+                // if there's enough funding for buyback
+                // then return 0 as buybackAmount and the remaining funding
+                if ((fundingToJots + total_) > JOT_SUPPLY) {
+                    uint256 remainingJots = total_ - JOT_SUPPLY;
+                    uint256 requiredFunding = (remainingJots * buybackPrice) / 10**18;
+                    fundingLeft -= requiredFunding;
+                    buybackAmount = 0;
+                }
+                // if there isn't enough funding for buyback
+                else {
+                    buybackAmount = (JOT_SUPPLY - total_ - fundingToJots);
+                    fundingLeft = 0;
+                }
+            } else {
+                buybackAmount = ((JOT_SUPPLY - total_) * buybackPrice) / 10**18;
+            }
+        }
+    }
+
 }

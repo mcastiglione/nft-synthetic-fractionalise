@@ -16,7 +16,6 @@ import "./JotPool.sol";
 import "./RedemptionPool.sol";
 import "./Structs.sol";
 import "./Enums.sol";
-import "hardhat/console.sol";
 
 /**
  * @title synthetic collection abstraction contract
@@ -295,7 +294,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(ISyntheticNFT(erc721address).exists(tokenId_), "Token not registered");
 
         uint256 amountToPay = token.buyJotTokens(amountToBuy_);
-        console.log(amountToPay, "amountToPay");
 
         // make the transfers
         IERC20(fundingTokenAddress).transferFrom(msg.sender, address(this), amountToPay);
@@ -420,6 +418,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         // Approve Uniswap address
         IJot(jotAddress).approve(_swapAddress, token.ownerSupply);
         IERC20(fundingTokenAddress).approve(_swapAddress, amount);
+
 
         // add the liquidity to Uniswapp
         (uint256 amountA, uint256 amountB, uint256 liquidity) = uniswapV2Router.addLiquidity(
@@ -749,7 +748,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         (uint256 total, uint256 fundingLiquidity) = getAvailableJotsForBuyback(tokenId);
 
-        (jotsLeft, fundingLeft, buybackAmount) = _getFundingLeftAndBuybackAmount(total, fundingLiquidity);
+        (jotsLeft, fundingLeft, buybackAmount) = LiquidityCalculator(
+            _liquidityCalculatorAddress
+        ).getFundingLeftAndBuybackAmount(total, fundingLiquidity, ProtocolConstants.JOT_SUPPLY, buybackPrice);
     }
 
     /**
@@ -783,9 +784,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         uint256 total = token.ownerSupply + token.sellingSupply;
 
-        (uint256 jotsLeft, uint256 fundingLeft, uint256 buybackAmount) = _getFundingLeftAndBuybackAmount(
+        (uint256 jotsLeft, uint256 fundingLeft, uint256 buybackAmount) = LiquidityCalculator(
+            _liquidityCalculatorAddress
+        ).getFundingLeftAndBuybackAmount(
             total,
-            fundingLiquidity
+            fundingLiquidity,
+            ProtocolConstants.JOT_SUPPLY,
+            buybackPrice
         );
 
         uint256 burned = total < ProtocolConstants.JOT_SUPPLY ? total : ProtocolConstants.JOT_SUPPLY;
@@ -809,49 +814,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
         if (jotsLeft > 0) {
             IJot(jotAddress).transfer(msg.sender, jotsLeft);
-        }
-    }
-
-    /**
-     * @dev helper for the execute buyback function
-     */
-    function _getFundingLeftAndBuybackAmount(uint256 total_, uint256 fundingLiquidity_)
-        internal
-        view
-        returns (
-            uint256 jotsLeft,
-            uint256 fundingLeft,
-            uint256 buybackAmount
-        )
-    {
-        // Starting funding left
-        fundingLeft = fundingLiquidity_;
-
-        // If owner has enough balance buybackAmount is zero
-        if (ProtocolConstants.JOT_SUPPLY < total_) {
-            buybackAmount = 0;
-            jotsLeft = total_ - ProtocolConstants.JOT_SUPPLY;
-        } else {
-            // If owner has some funding tokens left
-            if (fundingLeft > 0) {
-                // How many jots you can buy with the funding tokens
-                uint256 fundingToJots = (fundingLeft * buybackPrice) / 10**18;
-                // if there's enough funding for buyback
-                // then return 0 as buybackAmount and the remaining funding
-                if ((fundingToJots + total_) > ProtocolConstants.JOT_SUPPLY) {
-                    uint256 remainingJots = total_ - ProtocolConstants.JOT_SUPPLY;
-                    uint256 requiredFunding = (remainingJots * buybackPrice) / 10**18;
-                    fundingLeft -= requiredFunding;
-                    buybackAmount = 0;
-                }
-                // if there isn't enough funding for buyback
-                else {
-                    buybackAmount = (ProtocolConstants.JOT_SUPPLY - total_ - fundingToJots);
-                    fundingLeft = 0;
-                }
-            } else {
-                buybackAmount = ((ProtocolConstants.JOT_SUPPLY - total_) * buybackPrice) / 10**18;
-            }
         }
     }
 
@@ -1031,5 +993,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function setFlip(uint256 tokenId, bool value) public {
         require(isOwner(tokenId, msg.sender), "Only owner can change flip");
         canFlip[tokenId] = value;
+    }
+
+    function getLtoken(uint256 tokenId) public view returns (uint256) {
+        return tokens[tokenId].perpetualFuturesLShares;
     }
 }
