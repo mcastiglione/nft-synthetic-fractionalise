@@ -620,38 +620,31 @@ describe('SyntheticCollectionManager', async function () {
 
       // verify NFT
       await router.verifyNFT(NFT, tokenId);
-      console.log('1', await manager.lockedNFT(tokenId));
+
       // Mint and approve funding to buy 500 jots
       // Now mint and approve 1000 jots 5000 funding tokens
       await fundingToken.mint(owner.address, parseAmount('2500'));
       await fundingToken.approve(managerAddress, parseAmount('2500'));
-      console.log('2', await manager.lockedNFT(tokenId));
       await manager.buyJotTokens(tokenId, parseAmount('500'));
-      console.log('3', await manager.lockedNFT(tokenId));
       // Now addLiquidity to Uniswap
       // Should be 500 Jots and 500 funding Tokens
-      console.log('4', await manager.lockedNFT(tokenId));
       const UniswapPairAddress = await jot.uniswapV2Pair();
-      console.log('5', await manager.lockedNFT(tokenId));
-      let PairBalance = await jot.balanceOf(UniswapPairAddress);
-      let PairBalanceFunding = await fundingToken.balanceOf(UniswapPairAddress);
-      console.log('6', await manager.lockedNFT(tokenId));
-      console.log('PairBalance before', PairBalance.toString());
-      console.log('PairBalanceFunding before', PairBalanceFunding.toString());
-      console.log('7', await manager.lockedNFT(tokenId));
+      
+      let ManagerBalance = await jot.balanceOf(manager.address);
+
+      console.log('ManagerBalance before', ManagerBalance.toString());
+      
       await manager.addLiquidityToQuickswap(tokenId, parseAmount('500'));
-      console.log('8', await manager.lockedNFT(tokenId));
+      
+      
       // Pair balance in jots and funding after add liquidity
-      PairBalance = await jot.balanceOf(UniswapPairAddress);
+      ManagerBalance = await jot.balanceOf(manager.address);
       PairBalanceFunding = await fundingToken.balanceOf(UniswapPairAddress);
-      console.log('PairBalance after', PairBalance.toString());
-      console.log('PairBalanceFunding after', PairBalanceFunding.toString());
-      console.log('9', await manager.lockedNFT(tokenId));
+      console.log('ManagerBalance after', ManagerBalance.toString());
+      
       // Owner funding token before removeLiquidity
       const FundingBalanceOwner = await fundingToken.balanceOf(owner.address);
-      console.log('10', await manager.lockedNFT(tokenId));
       const managerInitialBalance = parseReverse(await jot.balanceOf(managerAddress));
-      console.log('11', await manager.lockedNFT(tokenId));
       // mint and approve and deposit remaining jots to reach JOTS_SUPPLY (1000)
       await jot.mint(owner.address, parseAmount('1000'));
       await jot.approve(manager.address, parseAmount('1000'));

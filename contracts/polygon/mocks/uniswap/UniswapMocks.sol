@@ -2,7 +2,6 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "hardhat/console.sol";
 
 import "./UniswapPairMock.sol";
 
@@ -75,8 +74,6 @@ contract UniSwapRouterMock {
         amountA = amountBDesired;
         amountB = amountBDesired;
 
-        console.log(amountA, 'amountA', amountB, 'amountB');
-
         liquidity = sqrt(amountA*amountB);
 
         IERC20(tokenA).transferFrom(msg.sender, pairAddress, amountA);
@@ -105,21 +102,12 @@ contract UniSwapRouterMock {
 
         uint256 totalSupply = UniswapPairMock(pairAddress).totalSupply();
 
-        console.log('totalSupply', totalSupply);
-        console.log('liquidityRemoveLiquidity', liquidity);
-        console.log('reserve0', reserve0);
-        console.log('reserve1', reserve1);
-
         uint256 amountPerc = totalSupply/liquidity*100;
-
-        console.log(amountPerc, 'amountPerc');
 
         amountA = reserve0/100*amountPerc;
         amountB = reserve1/100*amountPerc;
 
-        console.log('amountA', amountA, amountB, 'amountB');
-
-        UniswapPairMock(pairAddress).executeRemoveLiquidity(tokenA, tokenB, amountAMin, amountBMin, to);
+        UniswapPairMock(pairAddress).executeRemoveLiquidity(tokenA, tokenB, amountA, amountB, to);
     }
 
     function swapTokensForExactTokens(

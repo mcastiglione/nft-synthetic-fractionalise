@@ -58,7 +58,7 @@ library SyntheticTokenLibrary {
         require(!isLocked(token.state, token.ownerSupply), "Token is locked!");
 
         // calculate amount left
-        uint256 amountLeft = token.sellingSupply - token.soldSupply;
+        uint256 amountLeft = token.sellingSupply;
 
         require(amountLeft > 0, "No available tokens for sale");
         require(amount <= amountLeft, "Not enough available tokens");
@@ -69,6 +69,7 @@ library SyntheticTokenLibrary {
         require(amountToPay > 0, "No tokens left!");
 
         //Increase sold supply (amount in token) and liquidity sold (amount in ether)
+        token.sellingSupply -= amount;
         token.soldSupply += amount;
         token.liquiditySold += amountToPay;
     }

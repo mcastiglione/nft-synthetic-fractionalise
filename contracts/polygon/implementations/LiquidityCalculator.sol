@@ -6,6 +6,9 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../governance/ProtocolParameters.sol";
 import "./Structs.sol";
 import "../Interfaces.sol";
+import "hardhat/console.sol";
+import "../Interfaces.sol";
+import "./SyntheticCollectionManager.sol";
 
 contract LiquidityCalculator is AccessControl, Initializable {
 
@@ -97,7 +100,8 @@ contract LiquidityCalculator is AccessControl, Initializable {
         fundingLeft = fundingLiquidity_;
 
         // If owner has enough balance buybackAmount is zero
-        if (JOT_SUPPLY < total_) {
+
+        if (total_ > JOT_SUPPLY) {
             buybackAmount = 0;
             jotsLeft = total_ - JOT_SUPPLY;
         } else {

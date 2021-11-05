@@ -27,8 +27,41 @@ describe('AuctionsManager', async function () {
     managerAddress = await router.getCollectionManagerAddress(NFT);
     manager = await ethers.getContractAt('SyntheticCollectionManager', managerAddress);
 
+    jot = await ethers.getContractAt('Jot', collectionManagerRegistered.jotAddress);
+
+    fundingTokenAddress = await manager.fundingTokenAddress();
+    fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
+
     /* address */
     [owner, address1] = await ethers.getSigners();
+
+    const timestampLimit = 0; // the timestamp this transaction will expire
+
+    uniswapRouterAdress = await router.swapAddress();
+    uniswapRouter = await ethers.getContractAt('UniswapRouter', uniswapRouterAdress);
+
+    await fundingToken.mint(
+      owner.address, 
+      parseAmount('1')
+    );
+    await fundingToken.approve(
+      uniswapRouterAdress, 
+      parseAmount('1')
+    );
+
+    await jot.mint(owner.address, parseAmount('1'));
+    await jot.approve(uniswapRouterAdress, parseAmount('1'));
+
+    await uniswapRouter.addLiquidity(
+      jot.address,
+      fundingToken.address, 
+      parseAmount('1'), 
+      parseAmount('1'), 
+      1, 
+      1, 
+      owner.address,
+      timestampLimit
+    );
   });
 
   it('should be deployed', async () => {
@@ -74,22 +107,17 @@ describe('AuctionsManager', async function () {
 
     await collectionContract.verify(localNFTID);
 
-    const fundingTokenAddress = await collectionContract.fundingTokenAddress();
-    const fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
-
     await fundingToken.mint(owner.address, parseAmount('500'));
     await fundingToken.approve(syntheticCollectionAddress, parseAmount('500'));
 
     await collectionContract.buyJotTokens(localNFTID, parseAmount('500'));
-    await collectionContract.addLiquidityToPool(localNFTID);
+    await collectionContract.addLiquidityToQuickswap(localNFTID, parseAmount('500'));
 
     const fundingBalanceBefore = await fundingToken.balanceOf(deployer);
 
-    await collectionContract.withdrawJotTokens(localNFTID, parseAmount('9000'));
+    await collectionContract.withdrawJotTokens(localNFTID, parseAmount('8500'));
 
     const jotOwnerSupplyBefore = await collectionContract.getOwnerSupply(localNFTID);
-
-    const jot = await ethers.getContractAt('Jot', collectionManagerRegistered.jotAddress);
 
     await jot.mint(deployer, amountMint);
     await jot.approve(auctionsManager.address, amountApprove);

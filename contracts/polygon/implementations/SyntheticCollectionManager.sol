@@ -16,6 +16,7 @@ import "./JotPool.sol";
 import "./RedemptionPool.sol";
 import "./Structs.sol";
 import "./Enums.sol";
+import "hardhat/console.sol";
 
 /**
  * @title synthetic collection abstraction contract
@@ -332,6 +333,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(!lockedNFT(tokenId_), "Token is locked!");
         require(isOwner(tokenId_, msg.sender), "Only owner can withdraw");
 
+        console.log('token.ownerSupply', token.ownerSupply);
         require(amountToWithdraw_ <= token.ownerSupply, "Not enough balance");
         token.ownerSupply -= amountToWithdraw_;
 
@@ -385,7 +387,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /**
      * @notice add available liquidity to Perpetual Pool
      */
-    function AddLiquidityToFuturePool(uint256 tokenId, uint256 amount) public {
+    function addLiquidityToFuturePool(uint256 tokenId, uint256 amount) public {
         require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
         require(amount > 0, "Amount can't be zero!");
         require(amount <= tokens[tokenId].liquiditySold, "Amount is greater than available funding");
@@ -440,9 +442,14 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function removeLiquidityFromPool(uint256 tokenId) external onlyRole(AUCTION_MANAGER) {
         uint256 lShares = tokens[tokenId].perpetualFuturesLShares;
-        _withdrawLiquidityFromFuturePool(tokenId, lShares);
+        if(lShares > 0) {
+            _withdrawLiquidityFromFuturePool(tokenId, lShares);
+        }
+        
         uint256 liquidityAvailable = tokens[tokenId].liquidityTokenBalance;
-        _withdrawLiquidityFromQuickswap(tokenId, liquidityAvailable);
+        if(liquidityAvailable > 0) {
+            _withdrawLiquidityFromQuickswap(tokenId, liquidityAvailable);
+        }
     }
 
     function withdrawLiquidityFromFuturePool(uint256 tokenId, uint256 amount) external {
@@ -452,6 +459,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function _withdrawLiquidityFromFuturePool(uint256 tokenId, uint256 amount) internal {
         require(amount > 0, "Amount can't be zero");
+        
         require(amount <= tokens[tokenId].perpetualFuturesLShares, "Not enough balance");
 
         uint256 balanceBefore = IERC20(fundingTokenAddress).balanceOf(address(this));
@@ -477,7 +485,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     {
         TokenData storage token = tokens[tokenId];
 
-        require(amount > 0, "Amount can't be zero");
+        if (amount == 0) {
+            return (0,0);
+        }
         require(token.liquidityTokenBalance >= amount, "There's not enough liquidity available");
 
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
@@ -520,6 +530,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     function flipJot(uint256 tokenId, uint64 prediction) external {
+        /*
         TokenData storage token = tokens[tokenId];
 
         require(isAllowedToFlip(tokenId), "Flip is not allowed yet");
@@ -531,6 +542,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _flips[requestId] = Flip({tokenId: tokenId, prediction: prediction, player: msg.sender});
 
         emit CoinFlipped(requestId, msg.sender, tokenId, prediction);
+        */
     }
 
     function processFlipResult(uint256 randomNumber, bytes32 requestId) external onlyRole(RANDOM_ORACLE) {
@@ -777,7 +789,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function _executeBuyback(uint256 tokenId) internal {
         TokenData storage token = tokens[tokenId];
 
-        // get available liquidity (owner + selling + liquidity + uniswap )
+        // get available liquidity (owner + selling + liquidity + uniswap ))
         (, uint256 fundingLiquidity) = _withdrawLiquidityFromQuickswap(tokenId, token.liquidityTokenBalance);
         // TODO: get PerpetualPoolLite.getLiquidity
         //uint256 perpetualPoolLiteLiquidity;

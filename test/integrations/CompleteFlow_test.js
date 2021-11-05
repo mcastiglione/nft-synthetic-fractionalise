@@ -15,7 +15,7 @@ const parseReverse = (amount) => ethers.utils.formatEther(amount);
 describe("Full flow test", function() {
   it('Test', async () => {
     await deployments.fixture(["synthetic_router"]);
-    console.log('1');
+
     const namedAccounts = await getNamedAccounts();
     const { deployer } = namedAccounts;
 
@@ -28,7 +28,7 @@ describe("Full flow test", function() {
     /*************************************
     * register 6 NFTs of same collection *
     *************************************/
-     console.log('2');
+
     const nftIDs = [];
     
     async function registerMultipleNFT() {
@@ -36,11 +36,11 @@ describe("Full flow test", function() {
         console.log('i',i);
         nftIDs.push(i);
         await router.registerNFT(
-          collectionAddress, i, 10, 5, ['My Collection', 'MYC', '']
+          collectionAddress, i, parseAmount('1000'), parseAmount('1'), ['My Collection', 'MYC', '']
         )
       }
     }
-    console.log('3');
+
     await registerMultipleNFT();
 
     async function verifyAllSyntheticNFT() {
@@ -49,25 +49,45 @@ describe("Full flow test", function() {
         await router.verifyNFT(collectionAddress, nftIDs[i]);
       }
     }
-    console.log('4');
+
     await verifyAllSyntheticNFT();
-    console.log('5');
+
     // initialize the proxy contract
     const managerAddress = await router.getCollectionManagerAddress(collectionAddress);
     const manager = await ethers.getContractAt('SyntheticCollectionManager', managerAddress);
-    console.log('6');
+
     const jotAddress = await manager.jotAddress();
     const jot = await ethers.getContractAt('Jot', jotAddress);
-    console.log('7');
+
     const fundingTokenAddress = await manager.fundingTokenAddress();
     const fundingToken = await ethers.getContractAt('Jot', fundingTokenAddress);
-    console.log('8');
+
     await fundingToken.approve(managerAddress, parseAmount('8'));
-    console.log('9');
+
+    uniswapRouter = await ethers.getContractAt('UniswapRouter', uniswapAddress);
+
+    await fundingToken.approve(
+      uniswapAddress, 
+      parseAmount('1')
+    );
+
+    await jot.mint(deployer, parseAmount('1'));
+    await jot.approve(uniswapAddress, parseAmount('1'));
+
+    await uniswapRouter.addLiquidity(
+      jot.address,
+      fundingTokenAddress, 
+      parseAmount('1'), 
+      parseAmount('1'), 
+      1, 
+      1, 
+      manager.address,
+      0
+    );
+
     /*******************************************************************
      * buy JOTs from same collection from different fractionalisations *
      ******************************************************************/
-     console.log('10');
 
     async function buyJotTokensAll() {
       for(let i = 0; i < nftIDs.length - 1; i++) {
@@ -75,8 +95,7 @@ describe("Full flow test", function() {
       }
     }
     await buyJotTokensAll();
-    console.log('11');
-    
+
     /**************************************************
      * do some trading on quickswap, generating fees  *
      *************************************************/
@@ -84,7 +103,8 @@ describe("Full flow test", function() {
      async function addLiquidity() {
       for(let i = 0; i < nftIDs.length - 1; i++) {
         console.log('addLiquidity', i);
-        await manager.AddLiquidityToFuturePool(nftIDs[i], parseAmount('0.1'));
+        console.log(i);
+        await manager.addLiquidityToFuturePool(nftIDs[i], parseAmount('0.1'));
         await manager.addLiquidityToQuickswap(nftIDs[i], parseAmount('0.1'));
         
       }
