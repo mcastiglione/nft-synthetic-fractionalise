@@ -49,7 +49,7 @@ describe('SyntheticCollectionManager', async function () {
     fundingTokenAddress = await manager.fundingTokenAddress();
     fundingToken = await ethers.getContractAt('FundingMock', fundingTokenAddress);
 
-    const timestampLimit = 0; // the timestamp this transaction will expire
+    const timestampLimit = parseAmount('2147483647'); // the timestamp this transaction will expire
 
     uniswapRouterAdress = await router.swapAddress();
     uniswapRouter = await ethers.getContractAt('UniswapRouter', uniswapRouterAdress);

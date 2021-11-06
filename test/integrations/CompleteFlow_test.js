@@ -82,7 +82,7 @@ describe("Full flow test", function() {
       1, 
       1, 
       manager.address,
-      0
+      parseAmount('2147483647')
     );
 
     /*******************************************************************

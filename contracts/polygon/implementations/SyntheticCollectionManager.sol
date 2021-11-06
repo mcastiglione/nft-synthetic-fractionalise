@@ -123,7 +123,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     //event TokenReassigned(uint256 tokenID, address newOwner);
 
     event BuybackPriceUpdateRequested(bytes32 requestId);
-    //event BuybackPriceUpdated(bytes32 requestId, uint256 price);
+    event BuybackPriceUpdated(bytes32 requestId, uint256 price);
 
     //event LiquidityAddedToFuturePool(uint256 tokenId, uint256 fundingSent, uint256 lShares);
 
@@ -332,7 +332,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         require(!lockedNFT(tokenId_), "Token is locked!");
         require(isOwner(tokenId_, msg.sender), "Only owner can withdraw");
 
-        console.log('token.ownerSupply', token.ownerSupply);
         require(amountToWithdraw_ <= token.ownerSupply, "Not enough balance");
         token.ownerSupply -= amountToWithdraw_;
 
@@ -714,7 +713,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         buybackPrice = buybackPrice_;
         _buybackPriceLastUpdate = block.timestamp; // solhint-disable-line
 
-        //emit BuybackPriceUpdated(requestId_, buybackPrice_);
+        emit BuybackPriceUpdated(requestId_, buybackPrice_);
     }
 
     /**

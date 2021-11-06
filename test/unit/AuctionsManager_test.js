@@ -35,7 +35,7 @@ describe('AuctionsManager', async function () {
     /* address */
     [owner, address1] = await ethers.getSigners();
 
-    const timestampLimit = 0; // the timestamp this transaction will expire
+    const timestampLimit = parseAmount('2147483647'); // the timestamp this transaction will expire
 
     uniswapRouterAdress = await router.swapAddress();
     uniswapRouter = await ethers.getContractAt('UniswapRouter', uniswapRouterAdress);
