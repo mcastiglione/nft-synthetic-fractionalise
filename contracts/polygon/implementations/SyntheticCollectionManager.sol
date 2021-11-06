@@ -957,7 +957,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function getJotAmountLeft(uint256 tokenId) public view returns (uint256) {
         TokenData storage token = tokens[tokenId];
-        return token.sellingSupply - token.soldSupply;
+        return token.sellingSupply;
     }
 
     function getSalePrice(uint256 tokenId, uint256 buyAmount) public view returns (uint256) {
