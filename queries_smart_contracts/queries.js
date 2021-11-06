@@ -17,7 +17,7 @@ async function test() {
   // console.log( txn)
 
   result = await collection.buyJotTokens(0, "1000000000000000000")
-  result1 = await collection.getSoldSupply(0)
+  result1 = (await collection.tokens(0)).soldSupply;
   
   result2 = await collection.getSalePrice(0,"1000000000000000000")
   //result =await collection.getRemainingSupply("1")

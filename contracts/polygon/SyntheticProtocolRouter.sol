@@ -21,6 +21,7 @@ import "../perpetual_futures/tokens/PTokenLite.sol";
 import "../perpetual_futures/PerpetualPoolLite.sol";
 import "../perpetual_futures/PoolInfo.sol";
 import "./Interfaces.sol";
+import "./implementations/Enums.sol";
 
 import {AuctionsManager} from "./auctions/AuctionsManager.sol";
 
@@ -85,7 +86,6 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
     event TokenRegistered(
         address collectionManagerAddress,
-        uint256 collectionManagerID,
         uint256 syntheticTokenId
     );
 
@@ -256,7 +256,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             registrationMetadata.metadata
         );
 
-        emit TokenRegistered(collectionAddress, protocolVaults.current(), syntheticID);
+        emit TokenRegistered(collectionAddress, syntheticID);
     }
 
     function _deployAndInitJot(string memory originalName_, string memory originalSymbol_)
@@ -430,7 +430,11 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     function isNFTVerified(address collection, uint256 tokenId) public view returns (bool) {
         require(isSyntheticNFTCreated(collection, tokenId), "NFT not registered");
         address collectionManager = getCollectionManagerAddress(collection);
-        return SyntheticCollectionManager(collectionManager).isVerified(tokenId);
+        //return SyntheticCollectionManager(collectionManager).isVerified(tokenId);
+
+        (,,,,,,,,,State verified) = SyntheticCollectionManager(collectionManager).tokens(tokenId);
+
+        return (verified == State.VERIFIED);
     }
 
     /**

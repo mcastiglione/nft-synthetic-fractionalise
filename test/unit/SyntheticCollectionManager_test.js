@@ -141,7 +141,7 @@ describe('SyntheticCollectionManager', async function () {
       console.log('3');
       await manager.buyJotTokens(tokenId, parseAmount('1'));
       console.log('4');
-      const soldSupply = await manager.getSoldSupply(tokenId);
+      const soldSupply = await manager.tokens(tokenId).soldSupply;
       console.log('5');
       expect(soldSupply).to.be.equal(parseAmount('1'));
     });

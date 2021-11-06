@@ -62,7 +62,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     mapping(uint256 => bool) private canFlip;
 
-    ProtocolParameters public protocol;
+    address public protocol;
 
     /// @notice address of the original collection
     address public originalCollectionAddress;
@@ -110,22 +110,22 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 randomResult
     );
 
-    //event VerificationRequested(bytes32 indexed requestId, address from, uint256 tokenId);
+    event VerificationRequested(bytes32 indexed requestId, address from, uint256 tokenId);
 
-    /*event VerifyResponseReceived(
+    event VerifyResponseReceived(
         bytes32 indexed requestId,
         address originalCollection,
         address syntheticCollection,
         uint256 tokenId,
         bool verified
-    );*/
+    );
 
     //event TokenReassigned(uint256 tokenID, address newOwner);
 
-    //event BuybackPriceUpdateRequested(bytes32 requestId);
+    event BuybackPriceUpdateRequested(bytes32 requestId);
     //event BuybackPriceUpdated(bytes32 requestId, uint256 price);
 
-    event LiquidityAddedToFuturePool(uint256 tokenId, uint256 fundingSent, uint256 lShares);
+    //event LiquidityAddedToFuturePool(uint256 tokenId, uint256 fundingSent, uint256 lShares);
 
     event LiquidityAddedToQuickswap(
         uint256 tokenId,
@@ -134,7 +134,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         uint256 liquidity
     );
 
-    event LiquidityRemovedFromFuturePool(uint256 tokenId, uint256 fundingReceived, uint256 lShares);
+    //event LiquidityRemovedFromFuturePool(uint256 tokenId, uint256 fundingReceived, uint256 lShares);
 
     event LiquidityRemovedFromQuickswap(
         uint256 tokenId,
@@ -182,7 +182,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         originalCollectionAddress = originalCollectionAddress_;
         syntheticProtocolRouterAddress = msg.sender;
         AuctionsManagerAddress = auctionManagerAddress_;
-        protocol = ProtocolParameters(protocol_);
+        protocol = protocol_;
         jotPool = jotPool_;
         redemptionPool = redemptionPool_;
 
@@ -396,7 +396,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         tokens[tokenId].liquiditySold -= amount;
         tokens[tokenId].perpetualFuturesLShares += lShares;
 
-        emit LiquidityAddedToFuturePool(tokenId, amount, lShares);
+        //emit LiquidityAddedToFuturePool(tokenId, amount, lShares);
     }
 
     /**
@@ -470,7 +470,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         tokens[tokenId].liquiditySold += (balanceAfter - balanceBefore);
         tokens[tokenId].perpetualFuturesLShares -= amount;
 
-        emit LiquidityRemovedFromFuturePool(tokenId, (balanceAfter - balanceBefore), amount);
+        //emit LiquidityRemovedFromFuturePool(tokenId, (balanceAfter - balanceBefore), amount);
     }
 
     function withdrawLiquidityFromQuickswap(uint256 tokenId, uint256 amount) external {
@@ -549,8 +549,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function processFlipResult(uint256 randomNumber, bytes32 requestId) external onlyRole(RANDOM_ORACLE) {
         
         uint256 poolAmount;
-        uint256 fAmount = protocol.flippingAmount();
-        uint256 fReward = protocol.flippingReward();
+        uint256 fAmount = ProtocolParameters(protocol).flippingAmount();
+        uint256 fReward = ProtocolParameters(protocol).flippingReward();
 
         Flip memory flip = _flips[requestId];
         TokenData storage token = tokens[flip.tokenId];
@@ -631,7 +631,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             nonces[token.originalTokenID]
         );
 
-        //emit VerificationRequested(requestId, msg.sender, tokenId);
+        emit VerificationRequested(requestId, msg.sender, tokenId);
     }
 
     function processVerifyResponse(
@@ -650,13 +650,13 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             token.state = requestData.previousState;
         }
 
-        /*emit VerifyResponseReceived(
+        emit VerifyResponseReceived(
             requestId,
             requestData.originalCollection,
             requestData.syntheticCollection,
             requestData.tokenId,
             verified
-        );*/
+        );
     }
 
     /**
@@ -699,7 +699,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function updateBuybackPrice() external returns (bytes32 requestId) {
         requestId = IPolygonValidatorOracle(_validatorAddress).updateBuybackPrice(originalCollectionAddress);
 
-        //emit BuybackPriceUpdateRequested(requestId);
+        emit BuybackPriceUpdateRequested(requestId);
     }
 
     /**
@@ -896,9 +896,9 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         return super.supportsInterface(interfaceId);
     }
 
-    function isVerified(uint256 tokenId) public view returns (bool) {
+    /*function isVerified(uint256 tokenId) public view returns (bool) {
         return (tokens[tokenId].state == State.VERIFIED);
-    }
+    }*/
 
     /*function getOriginalID(uint256 tokenId) public view returns (uint256) {
         return tokens[tokenId].originalTokenID;
@@ -986,8 +986,8 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         return
             canFlip[tokenId] &&
             ISyntheticNFT(erc721address).exists(tokenId) &&
-            block.timestamp - tokens[tokenId].lastFlipTime >= protocol.flippingInterval() && // solhint-disable-line
-            IERC20(jotAddress).balanceOf(jotPool) > protocol.flippingAmount() &&
+            block.timestamp - tokens[tokenId].lastFlipTime >= ProtocolParameters(protocol).flippingInterval() && // solhint-disable-line
+            IERC20(jotAddress).balanceOf(jotPool) > ProtocolParameters(protocol).flippingAmount() &&
             isSyntheticNFTFractionalised(tokenId);
     }
 
