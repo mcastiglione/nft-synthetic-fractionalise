@@ -120,7 +120,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         bool verified
     );
 
-    //event TokenReassigned(uint256 tokenID, address newOwner);
+    event TokenReassigned(uint256 tokenID, address newOwner);
 
     event BuybackPriceUpdateRequested(bytes32 requestId);
     event BuybackPriceUpdated(bytes32 requestId, uint256 price);
@@ -237,7 +237,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             State.VERIFIED
         );
 
-        //emit TokenReassigned(newSyntheticID, newOwner_);
+        emit TokenReassigned(newSyntheticID, newOwner_);
     }
 
     /**
