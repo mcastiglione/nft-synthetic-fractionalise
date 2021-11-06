@@ -133,16 +133,12 @@ describe('SyntheticCollectionManager', async function () {
     });
 
     it('if all previous conditions are met, should be ok', async () => {
-      console.log('1');
+
       await router.verifyNFT(NFT, tokenId);
-      console.log('2');
       await fundingToken.mint(owner.address, parseAmount('5'));
       await fundingToken.approve(managerAddress, parseAmount('5'));
-      console.log('3');
       await manager.buyJotTokens(tokenId, parseAmount('1'));
-      console.log('4');
-      const soldSupply = await manager.tokens(tokenId).soldSupply;
-      console.log('5');
+      const soldSupply = (await manager.tokens(tokenId)).soldSupply;
       expect(soldSupply).to.be.equal(parseAmount('1'));
     });
   });
@@ -287,13 +283,13 @@ describe('SyntheticCollectionManager', async function () {
 
       // Store the balance of the SyntheticCollectionManager
       // to which it is deposited to validate that the balance increases after the deposit
-      const beforeBalance = await manager.getOwnerSupply(tokenId);
+      const beforeBalance = (await manager.tokens(tokenId)).ownerSupply;
 
       await router.verifyNFT(NFT, tokenId);
 
       await manager.depositJotTokens(tokenId, amount);
 
-      const afterBalance = await manager.getOwnerSupply(tokenId);
+      const afterBalance = (await manager.tokens(tokenId)).ownerSupply;
 
       expect(afterBalance).to.be.equal(beforeBalance.add(amount));
     });
@@ -322,7 +318,7 @@ describe('SyntheticCollectionManager', async function () {
     it('amount greater than ownerSupply', async () => {
       await router.verifyNFT(NFT, tokenId);
 
-      const ownerSupply = await manager.getOwnerSupply(tokenId);
+      const ownerSupply = (await manager.tokens(tokenId)).ownerSupply;
 
       await expect(manager.increaseSellingSupply(tokenId, ownerSupply.add(1))).to.be.revertedWith(
         'You do not have enough tokens left'
@@ -433,9 +429,6 @@ describe('SyntheticCollectionManager', async function () {
 
       await manager.buyJotTokens(tokenID, parseAmount('1'));
 
-      console.log('fundingToken.balanceOf', (await fundingToken.balanceOf(manager.address)).toString());
-      console.log('jot.balanceOf', (await jot.balanceOf(manager.address)).toString());
-
       // Now addLiquidity to Uniswap
       // Should be 500 Jots and 500 funding Tokens
       await manager.addLiquidityToQuickswap(tokenID, parseAmount('1'));
@@ -470,6 +463,13 @@ describe('SyntheticCollectionManager', async function () {
       });
 
       it('ok', async () => {
+
+        const UniswapPairAddress = await jot.uniswapV2Pair();
+
+        const UniswapV2Pair = await ethers.getContractAt('UniswapPairMock', UniswapPairAddress);
+
+        const balanceBefore = await UniswapV2Pair.balanceOf(owner.address);
+
         const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
           'My Collection',
           'MYC',
@@ -490,17 +490,13 @@ describe('SyntheticCollectionManager', async function () {
         // Should be 500 Jots and 500 funding Tokens
         await manager.addLiquidityToQuickswap(tokenID, parseAmount('10'));
 
-        const UniswapPairAddress = await jot.uniswapV2Pair();
-
-        const UniswapV2Pair = await ethers.getContractAt('UniswapPairMock', UniswapPairAddress);
-
         const liquidity = await UniswapV2Pair.balanceOf(manager.address);
 
         await manager.claimLiquidityTokens(tokenID, liquidity.toString());
 
         const balance = await UniswapV2Pair.balanceOf(owner.address);
 
-        expect(balance).to.be.equal(liquidity.toString());
+        expect(balance).to.be.equal(balanceBefore.add(liquidity));
       });
     });
   });
@@ -532,7 +528,7 @@ describe('SyntheticCollectionManager', async function () {
       await router.verifyNFT(NFT, tokenId);
 
       await manager.updatePriceFraction(tokenId, parseAmount('1'));
-      const fractionPrice = await manager.getJotFractionPrice(tokenId);
+      const fractionPrice = (await manager.tokens(tokenId)).fractionPrices;
       expect(fractionPrice).to.be.equal(parseAmount('1'));
     });
   });
@@ -548,7 +544,8 @@ describe('SyntheticCollectionManager', async function () {
       await manager.depositJotTokens(tokenId, parseAmount('1000'));
       await manager.increaseSellingSupply(tokenId, parseAmount('1000'));
       await manager.buyJotTokens(tokenId, amount);
-      const liquiditySold = await manager.getliquiditySold(tokenId);
+      const liquiditySold = (await manager.tokens(tokenId)).liquiditySold;
+
       expect(liquiditySold).to.be.equal(parseAmount('5'));
     });
   });
@@ -575,19 +572,18 @@ describe('SyntheticCollectionManager', async function () {
       await manager.buyJotTokens(tokenId, amount);
 
       await manager.addLiquidityToQuickswap(tokenId, amount);
-      //console.log('jot UniSwap pair', await router.getCollectionUniswapPair(NFT));
     });
   });
 
   describe('withdrawJots', async () => {
     it('check withdrawJots', async () => {
-      const balance = await manager.getOwnerSupply(tokenId);
+      const balance = (await manager.tokens(tokenId)).ownerSupply;
 
       await router.verifyNFT(NFT, tokenId);
 
       await manager.withdrawJotTokens(tokenId, 1);
 
-      const new_balance = await manager.getOwnerSupply(tokenId);
+      const new_balance = (await manager.tokens(tokenId)).ownerSupply;
 
       const jotBalance = (await jot.balanceOf(owner.address)).toString();
 
@@ -632,7 +628,6 @@ describe('SyntheticCollectionManager', async function () {
       
       let ManagerBalance = await jot.balanceOf(manager.address);
 
-      console.log('ManagerBalance before', ManagerBalance.toString());
       
       await manager.addLiquidityToQuickswap(tokenId, parseAmount('500'));
       
@@ -640,7 +635,6 @@ describe('SyntheticCollectionManager', async function () {
       // Pair balance in jots and funding after add liquidity
       ManagerBalance = await jot.balanceOf(manager.address);
       PairBalanceFunding = await fundingToken.balanceOf(UniswapPairAddress);
-      console.log('ManagerBalance after', ManagerBalance.toString());
       
       // Owner funding token before removeLiquidity
       const FundingBalanceOwner = await fundingToken.balanceOf(owner.address);
@@ -651,10 +645,8 @@ describe('SyntheticCollectionManager', async function () {
       await manager.depositJotTokens(tokenId, parseAmount('1000'));
 
       const managerAfterDepositBalance = parseReverse(await jot.balanceOf(managerAddress));
-      console.log('before');
       // Now exit protocol
       await manager.buyback(tokenId);
-      console.log('after');
 
       const managerAfterExitProtocolBalance = parseReverse(await jot.balanceOf(managerAddress));
 

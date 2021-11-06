@@ -117,14 +117,14 @@ describe('AuctionsManager', async function () {
 
     await collectionContract.withdrawJotTokens(localNFTID, parseAmount('8500'));
 
-    const jotOwnerSupplyBefore = await collectionContract.getOwnerSupply(localNFTID);
+    const jotOwnerSupplyBefore = (await collectionContract.tokens(localNFTID)).ownerSupply;
 
     await jot.mint(deployer, amountMint);
     await jot.approve(auctionsManager.address, amountApprove);
 
     const startAuction = await auctionsManager.startAuction(syntheticCollectionAddress, localNFTID, amountApprove);
 
-    const jotOwnerSupplyAfter = await collectionContract.getOwnerSupply(localNFTID);
+    const jotOwnerSupplyAfter = (await collectionContract.tokens(localNFTID)).ownerSupply;
 
     expect(jotOwnerSupplyAfter).to.be.equal(jotOwnerSupplyBefore.add(parseAmount('500')));
 

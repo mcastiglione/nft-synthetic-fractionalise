@@ -70,13 +70,9 @@ describe('JotPool', async function () {
 
       let totalShares = await pool.totalShares();
 
-      console.log(totalShares, 'totalShares 1');
-
       await addLiquidity(amount);
 
       totalShares = await pool.totalShares();
-
-      console.log(totalShares, 'totalShares 2');
 
     });
 

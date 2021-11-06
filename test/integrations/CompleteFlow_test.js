@@ -33,7 +33,7 @@ describe("Full flow test", function() {
     
     async function registerMultipleNFT() {
       for(let i = nftInitialID; nftIDs.length < 6; i++) {
-        console.log('i',i);
+
         nftIDs.push(i);
         await router.registerNFT(
           collectionAddress, i, parseAmount('1000'), parseAmount('1'), ['My Collection', 'MYC', '']
@@ -45,7 +45,7 @@ describe("Full flow test", function() {
 
     async function verifyAllSyntheticNFT() {
       for(let i = 0; i < nftIDs.length - 1; i++) {
-        console.log('i', i);
+
         await router.verifyNFT(collectionAddress, nftIDs[i]);
       }
     }
@@ -102,17 +102,12 @@ describe("Full flow test", function() {
 
      async function addLiquidity() {
       for(let i = 0; i < nftIDs.length - 1; i++) {
-        console.log('addLiquidity', i);
-        console.log(i);
         await manager.addLiquidityToFuturePool(nftIDs[i], parseAmount('0.1'));
         await manager.addLiquidityToQuickswap(nftIDs[i], parseAmount('0.1'));
         
       }
     }
     await addLiquidity();
-
-    console.log('after addLiquidity');
-
     await fundingToken.approve(uniswapAddress, parseAmount('100'));
 
     const UniswapV2Router02 = await ethers.getContractAt(UniswapV2Router02ABI, uniswapAddress);
@@ -127,7 +122,8 @@ describe("Full flow test", function() {
 
     async function claimLiquidityTokens() {
       for(let i = 0; i < nftIDs.length - 1; i++) {
-        let liquidityTokens = manager.getLiquidityTokens(nftIDs[i]);
+        let liquidityTokens = (await manager.tokens(nftIDs[i])).liquidityTokenBalance;
+        
         await manager.claimLiquidityTokens(nftIDs[i], liquidityTokens);
       }
     }
