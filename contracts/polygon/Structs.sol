@@ -14,22 +14,11 @@ struct SyntheticCollection {
     address syntheticNFTAddress;
     string originalName;
     string originalSymbol;
-    address lTokenAddress;
-    address pTokenAddress;
-    address perpetualPoolLiteAddress;
-    address poolInfo;
 }
 
 struct ProtocolParametersContracts {
     address fractionalizeProtocol;
     address futuresProtocol;
-}
-
-struct FuturesParametersContracts {
-    address lTokenLite_;
-    address pTokenLite_;
-    address perpetualPoolLiteAddress_;
-    address poolInfo_;
 }
 
 struct RegistrationMetadata {

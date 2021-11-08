@@ -4,7 +4,6 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./LiquidityCalculator.sol";
 import "../libraries/SyntheticTokenLibrary.sol";
 import "../extensions/IERC20ManagedAccounts.sol";
 import "../chainlink/OracleStructs.sol";
@@ -49,11 +48,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     /// @notice the address of the protocol router
     address public syntheticProtocolRouterAddress;
 
-    address public perpetualPoolLiteAddress;
-
     address private _swapAddress;
-
-    address private _liquidityCalculatorAddress;
 
     /// @dev mapping the request id from Chainlink with the flip input data
     mapping(bytes32 => Flip) private _flips;
@@ -125,24 +120,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     event BuybackPriceUpdateRequested(bytes32 requestId);
     event BuybackPriceUpdated(bytes32 requestId, uint256 price);
 
-    //event LiquidityAddedToFuturePool(uint256 tokenId, uint256 fundingSent, uint256 lShares);
-
-    event LiquidityAddedToQuickswap(
-        uint256 tokenId,
-        uint256 jotAmount,
-        uint256 fundingAmount,
-        uint256 liquidity
-    );
-
-    //event LiquidityRemovedFromFuturePool(uint256 tokenId, uint256 fundingReceived, uint256 lShares);
-
-    event LiquidityRemovedFromQuickswap(
-        uint256 tokenId,
-        uint256 jotAmount,
-        uint256 fundingAmount,
-        uint256 liquidity
-    );
-
     /**
      * @dev initializes some immutable variables and lock the implementation contract
      *      for further initializations (with the initializer modifier)
@@ -174,8 +151,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         address protocol_,
         address jotPool_,
         address redemptionPool_,
-        address swapAddress_,
-        address liquidityCalculatorAddress_
+        address swapAddress_
     ) external initializer {
         jotAddress = jotAddress_;
         erc721address = erc721address_;
@@ -187,8 +163,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         redemptionPool = redemptionPool_;
 
         _swapAddress = swapAddress_;
-
-        _liquidityCalculatorAddress = liquidityCalculatorAddress_;
 
         // we need to initialize this member here because we need to continue using this if governance changes it
         fundingTokenAddress = ProtocolParameters(protocol_).fundingTokenAddress();
@@ -221,14 +195,12 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         _originalToSynthetic[originalID] = newSyntheticID;
 
         // Empty previous id
-        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, 0, 0, State.NEW);
+        tokens[nftId_] = TokenData(0, 0, 0, 0, 0, 0, 0, State.NEW);
 
         // Fill new ID
         tokens[newSyntheticID] = TokenData(
             originalID,
             ProtocolConstants.JOT_SUPPLY,
-            0,
-            0,
             0,
             0,
             0,
@@ -269,8 +241,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             liquiditySold: 0,
             fractionPrices: priceFraction_,
             lastFlipTime: 0,
-            liquidityTokenBalance: 0,
-            perpetualFuturesLShares: 0,
             state: State.NEW
         });
 
@@ -380,153 +350,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function updatePriceFraction(uint256 tokenId_, uint256 newFractionPrice_) public {
         require(ISyntheticNFT(erc721address).ownerOf(tokenId_) == msg.sender, "Only owner allowed");
         tokens[tokenId_].updatePriceFraction(newFractionPrice_);
-    }
-
-    /**
-     * @notice add available liquidity to Perpetual Pool
-     */
-    function addLiquidityToFuturePool(uint256 tokenId, uint256 amount) public {
-        require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
-        require(amount > 0, "Amount can't be zero!");
-        require(amount <= tokens[tokenId].liquiditySold, "Amount is greater than available funding");
-
-        IERC20(fundingTokenAddress).approve(perpetualPoolLiteAddress, amount);
-        uint256 lShares = IPerpetualPoolLite(perpetualPoolLiteAddress).addLiquidityGetlShares(amount);
-        tokens[tokenId].liquiditySold -= amount;
-        tokens[tokenId].perpetualFuturesLShares += lShares;
-
-        //emit LiquidityAddedToFuturePool(tokenId, amount, lShares);
-    }
-
-    /**
-     * @notice add available liquidity for a given token to UniSwap pool
-     */
-    function addLiquidityToQuickswap(uint256 tokenId, uint256 amount) public {
-        TokenData storage token = tokens[tokenId];
-        require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
-        require(token.soldSupply > 0, "soldSupply is zero");
-        require(amount <= token.liquiditySold, "Amount is greater than available funding");
-
-        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(poolAddress());
-
-        (uint112 jotReserves, uint112 fundingReserves, ) = uniswapV2Pair.getReserves();
-
-        require(jotReserves > 0 && fundingReserves > 0, "No reserves available!");
-
-        IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
-
-        // Approve Uniswap address
-        IJot(jotAddress).approve(_swapAddress, token.ownerSupply);
-        IERC20(fundingTokenAddress).approve(_swapAddress, amount);
-
-
-        // add the liquidity to Uniswapp
-        (uint256 amountA, uint256 amountB, uint256 liquidity) = uniswapV2Router.addLiquidity(
-            jotAddress,
-            fundingTokenAddress,
-            token.ownerSupply,
-            amount,
-            0, // slippage is unavoidable
-            0, // slippage is unavoidable
-            address(this),
-            block.timestamp // solhint-disable-line
-        );
-
-        // Update balances
-        token.ownerSupply -= amountA;
-        token.liquiditySold -= amountB;
-        token.liquidityTokenBalance += liquidity;
-    }
-
-    function removeLiquidityFromPool(uint256 tokenId) external onlyRole(AUCTION_MANAGER) {
-        uint256 lShares = tokens[tokenId].perpetualFuturesLShares;
-        if(lShares > 0) {
-            _withdrawLiquidityFromFuturePool(tokenId, lShares);
-        }
-        
-        uint256 liquidityAvailable = tokens[tokenId].liquidityTokenBalance;
-        if(liquidityAvailable > 0) {
-            _withdrawLiquidityFromQuickswap(tokenId, liquidityAvailable);
-        }
-    }
-
-    function withdrawLiquidityFromFuturePool(uint256 tokenId, uint256 amount) external {
-        require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
-        _withdrawLiquidityFromFuturePool(tokenId, amount);
-    }
-
-    function _withdrawLiquidityFromFuturePool(uint256 tokenId, uint256 amount) internal {
-        require(amount > 0, "Amount can't be zero");
-        
-        require(amount <= tokens[tokenId].perpetualFuturesLShares, "Not enough balance");
-
-        uint256 balanceBefore = IERC20(fundingTokenAddress).balanceOf(address(this));
-
-        IPerpetualPoolLite(perpetualPoolLiteAddress).removeLiquidity(amount);
-
-        uint256 balanceAfter = IERC20(fundingTokenAddress).balanceOf(address(this));
-
-        tokens[tokenId].liquiditySold += (balanceAfter - balanceBefore);
-        tokens[tokenId].perpetualFuturesLShares -= amount;
-
-        //emit LiquidityRemovedFromFuturePool(tokenId, (balanceAfter - balanceBefore), amount);
-    }
-
-    function withdrawLiquidityFromQuickswap(uint256 tokenId, uint256 amount) external {
-        require(IERC721(erc721address).ownerOf(tokenId) == msg.sender, "Should own NFT");
-        _withdrawLiquidityFromQuickswap(tokenId, amount);
-    }
-
-    function _withdrawLiquidityFromQuickswap(uint256 tokenId, uint256 amount)
-        internal
-        returns (uint256 jotAmountExecuted, uint256 fundingAmountExecuted)
-    {
-        TokenData storage token = tokens[tokenId];
-
-        if (amount == 0) {
-            return (0,0);
-        }
-        require(token.liquidityTokenBalance >= amount, "There's not enough liquidity available");
-
-        IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
-        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(poolAddress());
-
-        uniswapV2Pair.approve(_swapAddress, amount);
-
-        (address token0, address token1) = jotAddress < fundingTokenAddress ? (jotAddress, fundingTokenAddress) : (fundingTokenAddress, jotAddress);
-
-        (uint256 amount0, uint256 amount1) = uniswapV2Router.removeLiquidity(
-            token0,
-            token1,
-            amount,
-            0,
-            0,
-            address(this),
-            block.timestamp // solhint-disable-line
-        );
-
-        (jotAmountExecuted, fundingAmountExecuted) = jotAddress < fundingTokenAddress ? (amount0, amount1) : (amount1, amount0);
-
-        // Update balances
-        token.ownerSupply += jotAmountExecuted;
-        token.liquiditySold += fundingAmountExecuted;
-        token.liquidityTokenBalance += amount;
-
-        //emit LiquidityRemovedFromQuickswap(tokenId, jotAmountExecuted, fundingAmountExecuted, amount);
-    }
-
-    /**
-     * @notice Claim Liquidity Tokens
-     */
-    function claimLiquidityTokens(uint256 tokenId, uint256 amount) public {
-        require(isOwner(tokenId, msg.sender), "You are not the owner");
-
-        uint256 availableAmount = tokens[tokenId].liquidityTokenBalance;
-        require(amount <= availableAmount, "Not enough liquidity available");
-
-        tokens[tokenId].liquidityTokenBalance -= amount;
-
-        IUniswapV2Pair(poolAddress()).transfer(msg.sender, amount);
     }
 
     function flipJot(uint256 tokenId, uint64 prediction) external {
@@ -716,37 +539,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         emit BuybackPriceUpdated(requestId_, buybackPrice_);
     }
 
-    /**
-     * @notice returns funds owned by token, in Jots and Funding, in contract and in UniSwap
-     */
-    function getAvailableJotsForBuyback(uint256 tokenId)
-        public
-        view
-        returns (uint256 totalJots, uint256 totalFunding)
-    {
-        TokenData storage token = tokens[tokenId];
-
-        IUniswapV2Pair uniswapV2Pair = IUniswapV2Pair(poolAddress());
-
-        uint256 liquidity = token.liquidityTokenBalance;
-
-        (uint112 jotReserves, uint112 fundingReserves, ) = uniswapV2Pair.getReserves();
-
-        uint256 totalSupply = uniswapV2Pair.totalSupply();
-
-        uint256 jotLiquidity;
-
-        if (totalSupply > 0) {
-            jotLiquidity = (liquidity * jotReserves) / totalSupply;
-            // the funding liquidity is the total funding
-            totalFunding = (liquidity * fundingReserves) / totalSupply;
-        } else {
-            totalFunding = fundingReserves;
-        }
-
-        totalJots = token.ownerSupply + token.sellingSupply + jotLiquidity;
-    }
-
     function buybackRequiredAmount(uint256 tokenId)
         public
         view
@@ -758,11 +550,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     {
         require(!lockedNFT(tokenId), "Token is locked!");
 
-        (uint256 total, uint256 fundingLiquidity) = getAvailableJotsForBuyback(tokenId);
-
-        (jotsLeft, fundingLeft, buybackAmount) = LiquidityCalculator(
-            _liquidityCalculatorAddress
-        ).getFundingLeftAndBuybackAmount(total, fundingLiquidity, ProtocolConstants.JOT_SUPPLY, buybackPrice);
+        (jotsLeft, fundingLeft, buybackAmount) = getFundingLeftAndBuybackAmount(tokenId);
     }
 
     /**
@@ -784,27 +572,60 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     }
 
     /**
+     * @dev helper for the execute buyback function
+     */
+    function getFundingLeftAndBuybackAmount(uint256 tokenId)
+        public
+        view
+        returns (
+            uint256 jotsLeft,
+            uint256 fundingLeft,
+            uint256 buybackAmount
+        )
+    {
+
+        TokenData storage token = tokens[tokenId];
+
+        // Total available Jots is owner supply + selling supply
+        uint256 total = token.ownerSupply + token.sellingSupply;
+
+        // Starting funding left
+        fundingLeft = token.liquiditySold;
+
+        // If user has more jots than needed for buyback, then jotsLeft = leftover
+        // If user has less jots than needed for buyback, then buybackAmount = jots needed for buyback 
+        if (total >= ProtocolConstants.JOT_SUPPLY) {
+            jotsLeft = total - ProtocolConstants.JOT_SUPPLY;
+        } else {
+            // how much funding is needed for buyback
+            buybackAmount = ((ProtocolConstants.JOT_SUPPLY - total) * buybackPrice) / 10**18;
+
+            // if the user has funding tokens available...
+            if (fundingLeft > 0) {
+                // If user has enough, then save remaining for sending later
+                if (fundingLeft >= buybackAmount) {
+                    fundingLeft -= buybackAmount;
+                // If user doesn't have enough, then subtract available funding from required amount
+                } else {
+                    buybackAmount -= fundingLeft;
+                }
+            }
+        }
+    }
+
+    /**
      * @dev helper for the buyback function
      */
     function _executeBuyback(uint256 tokenId) internal {
         TokenData storage token = tokens[tokenId];
 
-        // get available liquidity (owner + selling + liquidity + uniswap ))
-        (, uint256 fundingLiquidity) = _withdrawLiquidityFromQuickswap(tokenId, token.liquidityTokenBalance);
-        // TODO: get PerpetualPoolLite.getLiquidity
-        //uint256 perpetualPoolLiteLiquidity;
-
+        // Total available Jots is owner suppl y selling supply
         uint256 total = token.ownerSupply + token.sellingSupply;
 
-        (uint256 jotsLeft, uint256 fundingLeft, uint256 buybackAmount) = LiquidityCalculator(
-            _liquidityCalculatorAddress
-        ).getFundingLeftAndBuybackAmount(
-            total,
-            fundingLiquidity,
-            ProtocolConstants.JOT_SUPPLY,
-            buybackPrice
-        );
+        (uint256 jotsLeft, uint256 fundingLeft, uint256 buybackAmount) = getFundingLeftAndBuybackAmount(tokenId);
 
+        // If the user has less jots than needed for buyback, burn all of them
+        // If the user more jots than needed for buyback, then burn JOTS_SUPPLY and send remaining
         uint256 burned = total < ProtocolConstants.JOT_SUPPLY ? total : ProtocolConstants.JOT_SUPPLY;
 
         // burn the jots
@@ -887,10 +708,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
         );
     }
 
-    function setPerpetualPoolLiteAddress(address perpetualPoolLiteAddress_) external onlyRole(ROUTER) {
-        perpetualPoolLiteAddress = perpetualPoolLiteAddress_;
-    }
-
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId);
     }
@@ -967,17 +784,6 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
     function lockedNFT(uint256 tokenId) public view returns (bool) {
         TokenData storage token = tokens[tokenId];
         return token.state != State.VERIFIED || token.ownerSupply == 0;
-    }
-
-    /**
-     * @notice returns the accrued reward by QuickSwap pool LP for a given fractionalization
-     */
-    function getAccruedReward(uint256 tokenId) public view returns (uint256, uint256) {
-        return
-            LiquidityCalculator(_liquidityCalculatorAddress).getAccruedReward(
-                poolAddress(),
-                tokens[tokenId].liquidityTokenBalance
-            );
     }
 
     function isAllowedToFlip(uint256 tokenId) public view returns (bool) {

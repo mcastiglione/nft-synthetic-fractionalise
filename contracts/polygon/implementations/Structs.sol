@@ -11,8 +11,6 @@ struct TokenData {
     uint256 liquiditySold;
     uint256 fractionPrices;
     uint256 lastFlipTime;
-    uint256 liquidityTokenBalance;
-    uint256 perpetualFuturesLShares;
     State state;
 }
 

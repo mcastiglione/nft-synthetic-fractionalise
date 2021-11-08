@@ -8,7 +8,6 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId, network }) 
   // get the previously deployed contracts
   let jot = await ethers.getContract('Jot');
   let jotPool = await ethers.getContract('JotPool');
-  let liquidityCalculator = await ethers.getContract('LiquidityCalculator');
   let redemptionPool = await ethers.getContract('RedemptionPool');
   let collectionManager = await ethers.getContract('SyntheticCollectionManager');
   let auctionsManager = await ethers.getContract('AuctionsManager');
@@ -17,17 +16,14 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId, network }) 
   let futuresProtocol = await ethers.getContract('FuturesProtocolParameters');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
   let validator = await ethers.getContract('PolygonValidatorOracle');
-  let pool = await ethers.getContract('PerpetualPoolLite');
-  let poolInfo = await ethers.getContract('PoolInfo');
-  let lToken = await ethers.getContract('LTokenLite');
-  let pToken = await ethers.getContract('PTokenLite');
+  
   let auctionBeacon = await ethers.getContract('NFTAuctionBeacon');
   let governance = await ethers.getContract('TimelockController');
   
   let swapAddress;
 
   if (network.tags.local) {
-/*
+
     let UniswapPairMock = await deploy('UniswapPairMock', {
       from: deployer,
     });
@@ -40,23 +36,13 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId, network }) 
       args: [UniSwapFactoryMock.address],
     });
     swapAddress = UniSwapRouterMock.address;
-*/
+/*
     const uniswapRouter = await ethers.getContract('UniswapRouter');
     swapAddress = uniswapRouter.address;
+*/
 
   } else {
     swapAddress = networkConfig[chainId].uniswapAddress;
-  }
-
-  let perpetualPoolLiteAddress;
-  let oracleAddress;
-
-  if (chainId == 80001) {
-    perpetualPoolLiteAddress = networkConfig[chainId].perpetualPoolLiteAddress;
-    oracleAddress = networkConfig[chainId].oracleAddress;
-  } else {
-    let PerpetualPoolLiteMock = await deploy('PerpetualPoolLiteMock', { from: deployer });
-    perpetualPoolLiteAddress = PerpetualPoolLiteMock.address;
   }
 
   let router = await deploy('SyntheticProtocolRouter', {
@@ -67,7 +53,6 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId, network }) 
         swapAddress, 
         jot.address, 
         jotPool.address, 
-        liquidityCalculator.address,
         redemptionPool.address,
         collectionManager.address,
         syntheticNFT.address,
@@ -75,14 +60,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId, network }) 
         randomConsumer.address,
         validator.address,
       ],
-      
-      {
-        lTokenLite_: lToken.address,
-        pTokenLite_: pToken.address,
-        perpetualPoolLiteAddress_: pool.address,
-        poolInfo_: poolInfo.address,
-      },
-      { fractionalizeProtocol: protocol.address, futuresProtocol: futuresProtocol.address },
+      protocol.address,
     ],
   });
 

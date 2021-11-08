@@ -9,7 +9,7 @@ async function asyncCall() {
     [owner] = await ethers.getSigners();
 
     const fundingTokenAdress = '0x2cA48b8c2d574b282FDAB69545646983A94a3286';
-    const jotAdress = '0xa0bca15e542536339c87c11f8fc141053e146249';
+    const jotAdress = '0x7B1E735F8539C4df23999AbEbC1dDf91C44Fbd99';
 
     const fundingToken = await ethers.getContractAt('FundingMock', fundingTokenAdress);
     const jot = await ethers.getContractAt('Jot', jotAdress);
@@ -24,8 +24,8 @@ async function asyncCall() {
     await jot.approve(uniswapRouterAdress, parseAmount('1'));
 
     await uniswapRouter.addLiquidity(
-      jot.address,
-      fundingToken.address, 
+      jotAdress,
+      fundingTokenAdress, 
       parseAmount('1'), // take decimals into account
       1000000, // take decimals into account
       1,
