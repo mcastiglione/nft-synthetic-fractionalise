@@ -186,8 +186,6 @@ contract AuctionsManager is Initializable, AccessControlUpgradeable, UUPSUpgrade
             "Unable to transfer jots"
         );
 
-        manager.removeLiquidityFromPool(nftId_);
-
         emit AuctionStarted(collection_, nftId_, auctionAddress, openingBid_);
     }
 

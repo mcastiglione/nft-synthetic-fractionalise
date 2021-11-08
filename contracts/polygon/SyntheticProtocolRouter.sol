@@ -91,7 +91,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
             randomConsumer.address,
             validator.address,
          */
-        address[10] memory addresses_,
+        address[9] memory addresses_,
         address protocol_
     ) {
         swapAddress = addresses_[0];

@@ -411,94 +411,6 @@ describe('SyntheticCollectionManager', async function () {
 
       expect(liquidity.toString()).to.be.equal('0,0');
     });
-
-    it('getAccruedReward', async () => {
-      const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
-        'My Collection',
-        'MYC',
-        '',
-      ]);
-      await expect(TX).to.emit(router, 'TokenRegistered');
-      const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
-      tokenID = ARGS.syntheticTokenId;
-
-      await router.verifyNFT(NFT, tokenID);
-
-      await fundingToken.mint(owner.address, parseAmount('5'));
-      await fundingToken.approve(managerAddress, parseAmount('5'));
-
-      await manager.buyJotTokens(tokenID, parseAmount('1'));
-
-      // Now addLiquidity to Uniswap
-      // Should be 500 Jots and 500 funding Tokens
-      await manager.addLiquidityToQuickswap(tokenID, parseAmount('1'));
-
-      const liquidity = await manager.getAccruedReward(tokenID);
-
-      expect(liquidity[0].toString()).to.be.equal(parseAmount('1'));
-      expect(liquidity[1].toString()).to.be.equal(parseAmount('1'));
-    });
-
-    describe('claimLiquidityTokens', async () => {
-      it('non existent token', async () => {
-        await expect(manager.claimLiquidityTokens(tokenId + 1, 1000)).to.be.revertedWith(
-          'ERC721: owner query for nonexistent token'
-        );
-      });
-
-      it('call with other than owner', async () => {
-        await expect(manager.connect(address1).claimLiquidityTokens(tokenId, 1000)).to.be.revertedWith(
-          'You are not the owner'
-        );
-      });
-
-      it('call with other than owner', async () => {
-        await expect(manager.connect(address1).claimLiquidityTokens(tokenId, 1000)).to.be.revertedWith(
-          'You are not the owner'
-        );
-      });
-
-      it('more than balance', async () => {
-        await expect(manager.claimLiquidityTokens(tokenId, 1)).to.be.revertedWith('Not enough liquidity available');
-      });
-
-      it('ok', async () => {
-
-        const UniswapPairAddress = await jot.uniswapV2Pair();
-
-        const UniswapV2Pair = await ethers.getContractAt('UniswapPairMock', UniswapPairAddress);
-
-        const balanceBefore = await UniswapV2Pair.balanceOf(owner.address);
-
-        const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
-          'My Collection',
-          'MYC',
-          '',
-        ]);
-        await expect(TX).to.emit(router, 'TokenRegistered');
-        const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
-        tokenID = ARGS.syntheticTokenId;
-
-        await router.verifyNFT(NFT, tokenID);
-
-        await fundingToken.mint(owner.address, parseAmount('500'));
-        await fundingToken.approve(managerAddress, parseAmount('500'));
-
-        await manager.buyJotTokens(tokenID, parseAmount('100'));
-
-        // Now addLiquidity to Uniswap
-        // Should be 500 Jots and 500 funding Tokens
-        await manager.addLiquidityToQuickswap(tokenID, parseAmount('10'));
-
-        const liquidity = await UniswapV2Pair.balanceOf(manager.address);
-
-        await manager.claimLiquidityTokens(tokenID, liquidity.toString());
-
-        const balance = await UniswapV2Pair.balanceOf(owner.address);
-
-        expect(balance).to.be.equal(balanceBefore.add(liquidity));
-      });
-    });
   });
 
   describe('updatePriceFraction', async () => {
@@ -547,31 +459,6 @@ describe('SyntheticCollectionManager', async function () {
       const liquiditySold = (await manager.tokens(tokenId)).liquiditySold;
 
       expect(liquiditySold).to.be.equal(parseAmount('5'));
-    });
-  });
-
-  describe('Add Liquidity to Pool', async () => {
-    it('Verify that liquidity is added to the pool', async () => {
-      // Verify NFT
-      await router.verifyNFT(NFT, tokenId);
-
-      const amount = parseAmount('1000');
-
-      const fundingTokenAddress = await manager.fundingTokenAddress();
-      const fundingToken = await ethers.getContractAt('JotMock', fundingTokenAddress);
-
-      await jot.mint(owner.address, parseAmount('100000'));
-      await jot.approve(managerAddress, parseAmount('100000'));
-      await fundingToken.mint(owner.address, parseAmount('100000'));
-      await fundingToken.approve(managerAddress, parseAmount('100000'));
-
-      await manager.depositJotTokens(tokenId, parseAmount('1000'));
-
-      await manager.increaseSellingSupply(tokenId, parseAmount('1000'));
-
-      await manager.buyJotTokens(tokenId, amount);
-
-      await manager.addLiquidityToQuickswap(tokenId, amount);
     });
   });
 
