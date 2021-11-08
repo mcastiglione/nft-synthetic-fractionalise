@@ -5,14 +5,16 @@ const parseAmount = (amount) => ethers.utils.parseEther(amount);
 
 async function asyncCall() {
 
-
-    const fundingToken = await ethers.getContractAt('FundingMock', '0x2cA48b8c2d574b282FDAB69545646983A94a3286');
-    const jot = await ethers.getContractAt('Jot', '0xC671d2E919cdCC1C17a80223e8BD6E9393A6Ca78');
-
     /* address */
     [owner] = await ethers.getSigners();
 
-    const timestampLimit = 1638648281; // the timestamp this transaction will expire
+    const fundingTokenAdress = '0x2cA48b8c2d574b282FDAB69545646983A94a3286';
+    const jotAdress = '0xa0bca15e542536339c87c11f8fc141053e146249';
+
+    const fundingToken = await ethers.getContractAt('FundingMock', fundingTokenAdress);
+    const jot = await ethers.getContractAt('Jot', jotAdress);
+
+    const timestampLimit = 2638838254; // the timestamp this transaction will expire
 
     uniswapRouterAdress = '0x4CeBfcDA07A08B1C7169E5eb77AC117FF87EEae9';
     uniswapRouter = await ethers.getContractAt('UniswapRouter', uniswapRouterAdress);
@@ -24,8 +26,8 @@ async function asyncCall() {
     await uniswapRouter.addLiquidity(
       jot.address,
       fundingToken.address, 
-      parseAmount('1'), 
-      1000000, 
+      parseAmount('1'), // take decimals into account
+      1000000, // take decimals into account
       1,
       1, 
       owner.address,
