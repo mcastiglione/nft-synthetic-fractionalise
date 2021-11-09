@@ -636,7 +636,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
             Jot(jotAddress).increaseAllowance(redemptionPool, ProtocolConstants.JOT_SUPPLY - burned);
 
             // update redemption pool balance trackers
-            RedemptionPool(redemptionPool).addRedemableBalance(buybackAmount, (buybackAmount / buybackPrice));
+            RedemptionPool(redemptionPool).addRedemableBalance(buybackAmount, (buybackAmount / buybackPrice * 10**18));
 
             IERC20(fundingTokenAddress).transferFrom(msg.sender, redemptionPool, buybackAmount);
         }

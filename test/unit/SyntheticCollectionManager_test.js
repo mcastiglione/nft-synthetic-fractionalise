@@ -394,25 +394,6 @@ describe('SyntheticCollectionManager', async function () {
     });
   });
 
-  describe('Uniswap', async () => {
-    it('getAccruedReward 0', async () => {
-      const TX = await router.registerNFT(NFT, nftID, parseAmount('9000'), parseAmount('1'), [
-        'My Collection',
-        'MYC',
-        '',
-      ]);
-      await expect(TX).to.emit(router, 'TokenRegistered');
-      const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
-      tokenID = ARGS.syntheticTokenId;
-
-      await router.verifyNFT(NFT, tokenID);
-
-      liquidity  = await manager.getAccruedReward(tokenID);
-
-      expect(liquidity.toString()).to.be.equal('0,0');
-    });
-  });
-
   describe('updatePriceFraction', async () => {
     it('tokenId not registered', async () => {
       await expect(manager.updatePriceFraction(tokenId + 1, parseAmount('1'))).to.be.revertedWith(
@@ -665,6 +646,44 @@ describe('SyntheticCollectionManager', async function () {
       expect(managerBeforeRegisterBalanceJot).to.be.equal(managerAfterExitProtocolBalanceJot);
     });
 
+    it('redeem', async () => {
+      const TX = await router.registerNFT(NFT, nftID, parseAmount('10000'), parseAmount('1'), [
+        'My Collection',
+        'MYC',
+        '',
+      ]);
+      
+      await expect(TX).to.emit(router, 'TokenRegistered');
+      const ARGS = await getEventArgs(TX, 'TokenRegistered', router);
+      tokenID = ARGS.syntheticTokenId;
+      
+      // verify NFT
+      await router.verifyNFT(NFT, tokenID);
+      
+      await manager.withdrawJotTokens(tokenID, parseAmount('3000'));
+
+      const requiredAmount = await manager.buybackRequiredAmount(tokenID);
+
+      // Mint and approve funding to buy 500 jots
+      // Now mint and approve 1000 jots 5000 funding tokens
+      await fundingToken.mint(owner.address, requiredAmount.buybackAmount);
+      await fundingToken.approve(managerAddress, requiredAmount.buybackAmount);
+      
+      // Now exit protocol
+      await manager.buyback(tokenID);
+
+      const redemptionPoolAddress = await manager.redemptionPool();
+      const redemptionPool = await ethers.getContractAt('RedemptionPool', redemptionPoolAddress);
+
+      const totalLiquidityToRedeeem = await redemptionPool.totalLiquidityToRedeeem();
+      const jotsToRedeem = await redemptionPool.jotsToRedeem();
+      expect(totalLiquidityToRedeeem).to.be.equal(requiredAmount.buybackAmount);
+
+      await jot.approve(redemptionPool.address, jotsToRedeem);
+
+      await redemptionPool.redeem(jotsToRedeem);
+
+    });
 
   });
 });
