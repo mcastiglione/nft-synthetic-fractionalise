@@ -116,8 +116,8 @@ contract JotPool is ERC721, Initializable {
         return 0;
     }
 
-    function getPosition() external view returns (Position memory) {
-        return positions[msg.sender];
+    function getPosition(address account) external view returns (Position memory) {
+        return positions[account];
     }
 
     function stakeShares(uint256 amount) external {
