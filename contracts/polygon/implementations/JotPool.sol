@@ -116,10 +116,14 @@ contract JotPool is ERC721, Initializable {
         return 0;
     }
 
-    function getPosition(address account) external view returns (Position memory) {
-        return positions[account];
+    function getPosition() external view returns (Position memory) {
+        return positions[msg.sender];
     }
 
+    function getPositionByAddress(address account) external view returns (Position memory) {
+        return positions[account];
+    }
+    
     function stakeShares(uint256 amount) external {
         require(IERC20(jot).balanceOf(msg.sender) >= amount, "Insufficient Jot balance");
         address to = msg.sender;
