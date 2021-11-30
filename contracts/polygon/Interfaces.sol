@@ -423,11 +423,6 @@ interface IMigratable is IOwnable {
     function executeMigration(address source) external;
 }
 
-interface ILiquidatorQualifier {
-    function isQualifiedLiquidator(address liquidator) external view returns (bool);
-}
-
-
 interface IOracle {
     function getPrice() external returns (uint256);
 }
