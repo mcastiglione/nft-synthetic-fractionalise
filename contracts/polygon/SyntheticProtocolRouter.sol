@@ -14,7 +14,6 @@ import "./implementations/RedemptionPool.sol";
 import "./implementations/SyntheticNFT.sol";
 import "./Structs.sol";
 import "./governance/ProtocolParameters.sol";
-import "./governance/FuturesProtocolParameters.sol";
 import "./Interfaces.sol";
 import "./implementations/Enums.sol";
 

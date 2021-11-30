@@ -688,6 +688,7 @@ contract SyntheticCollectionManager is AccessControl, Initializable {
 
     function exchangeOwnerJot(uint256 tokenId, uint256 amount) external {
         require(tokens[tokenId].ownerSupply >= amount, "Exchange amount exceeds balance");
+        require(!lockedNFT(tokenId), "Token is locked!");
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(_swapAddress);
         address[] memory path = new address[](2);
         path[0] = jotAddress;

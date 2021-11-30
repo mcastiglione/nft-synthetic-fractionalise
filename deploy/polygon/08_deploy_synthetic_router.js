@@ -13,7 +13,6 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId, network }) 
   let auctionsManager = await ethers.getContract('AuctionsManager');
   let syntheticNFT = await ethers.getContract('SyntheticNFT');
   let protocol = await ethers.getContract('ProtocolParameters');
-  let futuresProtocol = await ethers.getContract('FuturesProtocolParameters');
   let randomConsumer = await ethers.getContract('RandomNumberConsumer');
   let validator = await ethers.getContract('PolygonValidatorOracle');
   

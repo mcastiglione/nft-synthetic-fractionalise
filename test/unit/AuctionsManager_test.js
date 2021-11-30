@@ -89,50 +89,6 @@ describe('AuctionsManager', async function () {
     await expect(auction.endAuction()).to.be.revertedWith('Auction not yet ended');
   });
 
-  it('owner should get UniSwap liquidity after startAuction', async () => {
-    const { deployer } = await getNamedAccounts();
-
-    const localNFT = await router.registerNFT(NFT, nftID + 1, parseAmount('9000'), parseAmount('1'), [
-      'My Collection',
-      'MYC',
-      '',
-    ]);
-    localNFTID = (await getEvent(localNFT, 'TokenRegistered', router)).syntheticTokenId.toString();
-
-    const amountMint = parseAmount('1000000').toString();
-    const amountApprove = parseAmount('100000').toString();
-
-    const syntheticCollectionAddress = collectionManagerRegistered.collectionManagerAddress;
-    const collectionContract = await ethers.getContractAt('SyntheticCollectionManager', syntheticCollectionAddress);
-
-    await collectionContract.verify(localNFTID);
-
-    await fundingToken.mint(owner.address, parseAmount('500'));
-    await fundingToken.approve(syntheticCollectionAddress, parseAmount('500'));
-
-    await collectionContract.buyJotTokens(localNFTID, parseAmount('500'));
-    await collectionContract.addLiquidityToQuickswap(localNFTID, parseAmount('500'));
-
-    const fundingBalanceBefore = await fundingToken.balanceOf(deployer);
-
-    await collectionContract.withdrawJotTokens(localNFTID, parseAmount('8500'));
-
-    const jotOwnerSupplyBefore = (await collectionContract.tokens(localNFTID)).ownerSupply;
-
-    await jot.mint(deployer, amountMint);
-    await jot.approve(auctionsManager.address, amountApprove);
-
-    const startAuction = await auctionsManager.startAuction(syntheticCollectionAddress, localNFTID, amountApprove);
-
-    const jotOwnerSupplyAfter = (await collectionContract.tokens(localNFTID)).ownerSupply;
-
-    expect(jotOwnerSupplyAfter).to.be.equal(jotOwnerSupplyBefore.add(parseAmount('500')));
-
-    const fundingBalanceAfter = await fundingToken.balanceOf(deployer);
-
-    expect(fundingBalanceAfter).to.be.equal(await fundingBalanceBefore.add(parseAmount('500')));
-  });
-
   it('should be upgradeable', async () => {
     const { deployer } = await getNamedAccounts();
 

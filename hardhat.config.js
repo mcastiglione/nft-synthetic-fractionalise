@@ -63,6 +63,10 @@ module.exports = {
       deploy: ['deploy/polygon'],
       tags: ['testnet'],
     },
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
+      accounts: { mnemonic: MNEMONIC },
+    },
     mumbai: {
       url: MUMBAI_RPC_URL,
       accounts: [PRIVATE_KEY],

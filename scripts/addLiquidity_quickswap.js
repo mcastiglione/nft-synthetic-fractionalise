@@ -8,8 +8,8 @@ async function asyncCall() {
     /* address */
     [owner] = await ethers.getSigners();
 
-    const fundingTokenAdress = '0x2cA48b8c2d574b282FDAB69545646983A94a3286';
-    const jotAdress = '0x7B1E735F8539C4df23999AbEbC1dDf91C44Fbd99';
+    const fundingTokenAdress = '0x2ca48b8c2d574b282fdab69545646983a94a3286';
+    const jotAdress = '0x492012d2b3acc0acc987231b5d07593f6760a2c8';
 
     const fundingToken = await ethers.getContractAt('FundingMock', fundingTokenAdress);
     const jot = await ethers.getContractAt('Jot', jotAdress);

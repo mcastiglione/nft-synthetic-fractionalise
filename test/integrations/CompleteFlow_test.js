@@ -95,55 +95,6 @@ describe("Full flow test", function() {
       }
     }
     await buyJotTokensAll();
-
-    /**************************************************
-     * do some trading on quickswap, generating fees  *
-     *************************************************/
-
-     async function addLiquidity() {
-      for(let i = 0; i < nftIDs.length - 1; i++) {
-        await manager.addLiquidityToFuturePool(nftIDs[i], parseAmount('0.1'));
-        await manager.addLiquidityToQuickswap(nftIDs[i], parseAmount('0.1'));
-        
-      }
-    }
-    await addLiquidity();
-    await fundingToken.approve(uniswapAddress, parseAmount('100'));
-
-    const UniswapV2Router02 = await ethers.getContractAt(UniswapV2Router02ABI, uniswapAddress);
-
-    await UniswapV2Router02.swapTokensForExactTokens(
-      parseAmount('1'), // uint amountOut
-      parseAmount('1'), // uint amountInMax
-      [ fundingTokenAddress, jotAddress ], // address[] calldata path
-      managerAddress, // address to
-      0 , // uint deadlin
-    );
-
-    async function claimLiquidityTokens() {
-      for(let i = 0; i < nftIDs.length - 1; i++) {
-        let liquidityTokens = (await manager.tokens(nftIDs[i])).liquidityTokenBalance;
-        
-        await manager.claimLiquidityTokens(nftIDs[i], liquidityTokens);
-      }
-    }
-
-    await claimLiquidityTokens();
-
-    const perpetualPoolAddress = await manager.perpetualPoolLiteAddress();
-
-    const perpetualPool = await ethers.getContractAt('PerpetualPoolLite', perpetualPoolAddress);
-
-
-    await fundingToken.approve(perpetualPoolAddress, parseAmount('10'));
-    perpetualPool["trade(int256)"](parseAmount('1'));
-    perpetualPool["trade(int256)"](parseAmount('1'));
-    perpetualPool["trade(int256)"](parseAmount('1'));
-    perpetualPool["trade(int256)"](parseAmount('1'));
-    perpetualPool["trade(int256)"](parseAmount('1'));
-    perpetualPool["trade(int256)"](parseAmount('1'));
-
-
   });
 
 

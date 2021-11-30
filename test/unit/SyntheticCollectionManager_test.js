@@ -477,8 +477,7 @@ describe('SyntheticCollectionManager', async function () {
     it('case ok', async () => {
       // register NFT
       // 10.000 tokens are minted, 9.000 are kept for the owner
-      // 500 are kept for Uniswap liquidity
-      // 500 are kept for selling supply
+      // 1000 are kept for selling supply
 
       const managerBeforeRegisterBalance = parseReverse(await jot.balanceOf(managerAddress));
 
@@ -490,19 +489,11 @@ describe('SyntheticCollectionManager', async function () {
       await fundingToken.mint(owner.address, parseAmount('2500'));
       await fundingToken.approve(managerAddress, parseAmount('2500'));
       await manager.buyJotTokens(tokenId, parseAmount('500'));
-      // Now addLiquidity to Uniswap
-      // Should be 500 Jots and 500 funding Tokens
-      const UniswapPairAddress = await jot.uniswapV2Pair();
       
       let ManagerBalance = await jot.balanceOf(manager.address);
-
-      
-      await manager.addLiquidityToQuickswap(tokenId, parseAmount('500'));
-      
       
       // Pair balance in jots and funding after add liquidity
       ManagerBalance = await jot.balanceOf(manager.address);
-      PairBalanceFunding = await fundingToken.balanceOf(UniswapPairAddress);
       
       // Owner funding token before removeLiquidity
       const FundingBalanceOwner = await fundingToken.balanceOf(owner.address);
@@ -518,15 +509,8 @@ describe('SyntheticCollectionManager', async function () {
 
       const managerAfterExitProtocolBalance = parseReverse(await jot.balanceOf(managerAddress));
 
-      // Check that amounts were actually executed
-      const PairBalanceAfter = (await jot.balanceOf(UniswapPairAddress)).toString();
-      const PairBalanceFundingAfter = (await fundingToken.balanceOf(UniswapPairAddress)).toString();
       const FundingBalanceOwnerAfter = (await fundingToken.balanceOf(owner.address)).toString();
 
-      expect(FundingBalanceOwnerAfter).to.be.equal(FundingBalanceOwner.add(PairBalanceFunding));
-      expect(PairBalanceAfter).to.be.equal('0');
-      expect(PairBalanceFundingAfter).to.be.equal('0');
-      expect(PairBalanceFundingAfter).to.be.equal('0');
       expect(managerBeforeRegisterBalance).to.be.equal(managerBeforeRegisterBalance);
 
     });
@@ -556,7 +540,7 @@ describe('SyntheticCollectionManager', async function () {
       
       // Now addLiquidity to Uniswap
       // Should be 500 Jots and 500 funding Tokens
-      await manager.addLiquidityToQuickswap(tokenID, parseAmount('500'));
+      // await manager.addLiquidityToQuickswap(tokenID, parseAmount('500'));
       
       // mint and approve and deposit remaining jots to reach JOTS_SUPPLY (1000)
       await jot.mint(owner.address, parseAmount('1000'));
@@ -596,7 +580,7 @@ describe('SyntheticCollectionManager', async function () {
       
       // Now addLiquidity to Uniswap
       // Should be 500 Jots and 500 funding Tokens
-      await manager.addLiquidityToQuickswap(tokenID, parseAmount('500'));
+      //await manager.addLiquidityToQuickswap(tokenID, parseAmount('500'));
 
       await manager.withdrawJotTokens(tokenID, parseAmount('1000'));
 
