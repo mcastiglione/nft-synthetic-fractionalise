@@ -17,7 +17,7 @@ async function asyncCall() {
     const timestampLimit = 2638838254; // the timestamp this transaction will expire
 
     uniswapRouterAdress = '0x4CeBfcDA07A08B1C7169E5eb77AC117FF87EEae9';
-    uniswapRouter = await ethers.getContractAt('UniswapRouter', uniswapRouterAdress);
+    uniswapRouter = await ethers.getContractAt('UniSwapRouterMock', uniswapRouterAdress);
     
     await fundingToken.approve(uniswapRouterAdress, 1000000);
 

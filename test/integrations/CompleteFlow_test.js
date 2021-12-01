@@ -64,27 +64,6 @@ describe("Full flow test", function() {
 
     await fundingToken.approve(managerAddress, parseAmount('8'));
 
-    uniswapRouter = await ethers.getContractAt('UniswapRouter', uniswapAddress);
-
-    await fundingToken.approve(
-      uniswapAddress, 
-      parseAmount('1')
-    );
-
-    await jot.mint(deployer, parseAmount('1'));
-    await jot.approve(uniswapAddress, parseAmount('1'));
-
-    await uniswapRouter.addLiquidity(
-      jot.address,
-      fundingTokenAddress, 
-      parseAmount('1'), 
-      parseAmount('1'), 
-      1, 
-      1, 
-      manager.address,
-      parseAmount('2147483647')
-    );
-
     /*******************************************************************
      * buy JOTs from same collection from different fractionalisations *
      ******************************************************************/
