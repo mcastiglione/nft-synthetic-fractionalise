@@ -135,14 +135,14 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         if (!isSyntheticCollectionRegistered(collection)) {
             // deploys and initialize a Jot
             address jotAddress = _deployAndInitJot(
-                string(abi.encodePacked("Privi Jot ", registrationMetadata.originalName)),
-                string(abi.encodePacked("JOT_", registrationMetadata.originalSymbol))
+                registrationMetadata.originalName,
+                registrationMetadata.originalSymbol
             );
 
             // deploys and initialize a JotPool
             address jotPoolAddress = _deployAndInitJotPool(
                 jotAddress,
-                string(abi.encodePacked("Privi Jot ", registrationMetadata.originalName))
+                registrationMetadata.originalName
             );
 
             // deploys a SyntheticNFT
