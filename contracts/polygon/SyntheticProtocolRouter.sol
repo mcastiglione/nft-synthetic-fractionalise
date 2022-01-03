@@ -45,6 +45,11 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     mapping(uint256 => address) private _collectionIdToAddress;
 
     /**
+     * @dev collection => bool whitelisted collections
+     */ 
+    mapping (address => bool) private _whitelistedCollections;
+
+    /**
      * @notice number of registered collections
      */
     Counters.Counter public protocolVaults;
@@ -73,16 +78,16 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     );
 
     event TokenChanged(
-        address collectionAddress, 
-        uint256 syntheticID, 
+        address collectionAddress,
+        uint256 syntheticID,
         uint256 newID
         );
 
     constructor(
         /* array composed by:
-            swapAddress, 
-            jot.address, 
-            jotPool.address, 
+            swapAddress,
+            jot.address,
+            jotPool.address,
             redemptionPool.address,
             collectionManager.address,
             syntheticNFT.address,
@@ -119,6 +124,7 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
         uint256 priceFraction,
         RegistrationMetadata calldata registrationMetadata
     ) external {
+        require(isCollectionWhitelisted(collection), "Collection is not whitelisted");
         require(priceFraction > 0, "Price fraction can't be zero");
         require(collection != address(0), "Invalid collection");
         require(supplyToKeep <= ProtocolConstants.JOT_SUPPLY, "Invalid supply to keep");
@@ -313,6 +319,13 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
     }
 
     /**
+     * @dev whitelist an NFT for fractionalisation
+     */
+    function whitelistNFT(address collection) public onlyOwner {
+        _whitelistedCollections[collection] = !_whitelistedCollections[collection];
+    }
+
+    /**
      * @notice checks whether a collection is registered or not
      */
     function isSyntheticCollectionRegistered(address collection) public view returns (bool) {
@@ -400,5 +413,9 @@ contract SyntheticProtocolRouter is AccessControl, Ownable {
 
     function getCollectionUniswapPair(address collection) public view returns (address) {
         return _collections[collection].jotPairAddress;
+    }
+
+    function isCollectionWhitelisted(address collection) public view returns (bool) {
+        return _whitelistedCollections[collection];
     }
 }

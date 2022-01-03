@@ -25,6 +25,8 @@ describe("Full flow test", function() {
     const router = await ethers.getContract('SyntheticProtocolRouter');
     const uniswapAddress = await router.swapAddress();
 
+    await router.whitelistNFT(collectionAddress);
+
     /*************************************
     * register 6 NFTs of same collection *
     *************************************/
