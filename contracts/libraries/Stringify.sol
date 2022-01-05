@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.2;
+pragma solidity 0.8.4;
 
 /**
  * @title library for string parsing to and from

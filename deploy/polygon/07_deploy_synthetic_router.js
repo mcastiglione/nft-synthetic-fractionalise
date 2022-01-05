@@ -5,6 +5,8 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId, network }) 
   const { deployer } = await getNamedAccounts();
   const chainId = await getChainId();
 
+  console.log("deployer", deployer);
+
   // get the previously deployed contracts
   let jot = await ethers.getContract('Jot');
   let jotPool = await ethers.getContract('JotPool');

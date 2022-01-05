@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity 0.8.4;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
@@ -52,6 +52,8 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
      * @param oracleInfo_ the struct with the oracle specifications
      */
     constructor(APIOracleInfo memory oracleInfo_) {
+        require(oracleInfo_.chainlinkNode != address(0), "chainlinkNode can't be address 0");
+        require(oracleInfo_.linkToken != address(0), "linkToken can't be address 0");
         chainlinkNode = oracleInfo_.chainlinkNode;
         nodeFee = oracleInfo_.nodeFee;
 
@@ -79,6 +81,7 @@ contract ETHValidatorOracle is ChainlinkClient, Ownable, Initializable {
      * @param vault_ the address of the vault contract
      */
     function initialize(address vault_) external initializer onlyOwner {
+        require(vault_ != address(0), "Vault address can't be zero");
         vaultManagerAddress = vault_;
         renounceOwnership();
     }

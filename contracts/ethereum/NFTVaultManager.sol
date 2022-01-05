@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity 0.8.4;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -98,6 +98,7 @@ contract NFTVaultManager is AccessControl {
      * @param validatorOracleAddress_ the address of the validator oracle (Chainlink client)
      */
     constructor(address validatorOracleAddress_) {
+        require(validatorOracleAddress_ != address(0), "Validator Oracle Address can't be 0");
         validatorOracleAddress = validatorOracleAddress_;
 
         // set the role to fulfill requests
